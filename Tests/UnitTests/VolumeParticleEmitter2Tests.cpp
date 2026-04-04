@@ -34,7 +34,7 @@ TEST(VolumeParticleEmitter2, Emit)
 
     BoundingBox2D box({ 0.0, 0.0 }, { 3.0, 3.0 });
 
-    VolumeParticleEmitter2 emitter(sphere, box, 0.3, { -1.0, 0.5 },
+    VolumeParticleEmitter2 emitter(sphere, box, 0.35, { -1.0, 0.5 },
                                    { 3.0, 4.0 }, 5.0, 30, 0.0, false, false);
 
     auto particles = std::make_shared<ParticleSystemData2>();
@@ -62,7 +62,7 @@ TEST(VolumeParticleEmitter2, Emit)
     emitter.SetMaxNumberOfParticles(60);
     emitter.Update(frame.TimeInSeconds(), frame.timeIntervalInSeconds);
 
-    EXPECT_EQ(51u, particles->NumberOfParticles());
+    EXPECT_EQ(41u, particles->NumberOfParticles());
 
     pos = particles->Positions();
     for (size_t i = 0; i < particles->NumberOfParticles(); ++i)
@@ -72,7 +72,7 @@ TEST(VolumeParticleEmitter2, Emit)
 
     ++frame;
     emitter.Update(frame.TimeInSeconds(), frame.timeIntervalInSeconds);
-    EXPECT_LT(51u, particles->NumberOfParticles());
+    EXPECT_LT(41u, particles->NumberOfParticles());
 }
 
 TEST(VolumeParticleEmitter2, Builder)
