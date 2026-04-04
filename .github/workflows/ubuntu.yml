@@ -11,33 +11,45 @@ env:
 
 jobs:
   build-ubuntu:
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }}
     strategy:
       matrix:
         include:
-          # Ubuntu 18.04 + gcc-9
-          - name: "Ubuntu 18.04 + gcc-9"
-            os: ubuntu-18.04
+          # Ubuntu 24.04 + gcc-14
+          - name: "Ubuntu 24.04 + gcc-14"
+            os: ubuntu-24.04
             compiler: gcc
-            version: "9"
-          # Ubuntu 20.04 + gcc-10
-          - name: "Ubuntu 20.04 + gcc-10"
-            os: ubuntu-20.04
+            version: "14"
+          # Ubuntu 24.04 + gcc-13
+          - name: "Ubuntu 24.04 + gcc-13"
+            os: ubuntu-24.04
             compiler: gcc
-            version: "10"
-          # Ubuntu 18.04 + clang-9
-          - name: "Ubuntu 18.04 + clang-9"
-            os: ubuntu-18.04
+            version: "13"
+          # Ubuntu 24.04 + gcc-12
+          - name: "Ubuntu 24.04 + gcc-12"
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "12"
+          # Ubuntu 24.04 + clang-18
+          - name: "Ubuntu 24.04 + clang-18"
+            os: ubuntu-24.04
             compiler: clang
-            version: "9"
-          # Ubuntu 20.04 + clang-10
-          - name: "Ubuntu 20.04 + clang-10"
-            os: ubuntu-20.04
+            version: "18"
+          # Ubuntu 24.04 + clang-17
+          - name: "Ubuntu 24.04 + clang-17"
+            os: ubuntu-24.04
             compiler: clang
-            version: "10"
+            version: "17"
+          # Ubuntu 24.04 + clang-16
+          - name: "Ubuntu 24.04 + clang-16"
+            os: ubuntu-24.04
+            compiler: clang
+            version: "16"
+
+    runs-on: ${{ matrix.os }}
+    name: 🐧 Build - ${{ matrix.name }}
+
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: Setup Python
@@ -45,7 +57,7 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install packages
-      run: sudo apt-get install -yq python3-setuptools
+      run: sudo apt-get update && sudo apt-get install -yq python3-setuptools
     - name: Configure Compiler
       run: |
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
