@@ -11,6 +11,7 @@
 #ifndef CUBBYFLOW_LOGGER_HPP
 #define CUBBYFLOW_LOGGER_HPP
 
+#include <cstdint>
 #include <sstream>
 
 namespace CubbyFlow
