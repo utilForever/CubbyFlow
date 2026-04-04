@@ -11,6 +11,7 @@
 #include <Core/Utils/Logging.hpp>
 #include <Core/Utils/Macros.hpp>
 
+#include <chrono>
 #include <iostream>
 #include <mutex>
 
