@@ -80,6 +80,7 @@ if (USE_CUDA)
                 endif()
             endif()
             list(APPEND DEFAULT_COMPILE_OPTIONS
+                /Zc:preprocessor # required by CUDA 13 CCCL headers on MSVC
                 /wd4515 # -> disable warning: [Thrust issue] 'detail': namespace uses itself
                 /wd4996 # -> disable warning: [Thrust issue] 'strerror': This function or variable may be unsafe.
                 /wd4800 # -> disable warning: [Thrust issue] forcing value to bool 'true' or 'false' (performance warning)
