@@ -62,6 +62,7 @@ if (USE_CUDA)
             "--std=c++17" "-Wno-deprecated-gpu-targets")
         if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
             list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/FS") # prevent race on PDB
+            list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/Zc:preprocessor") # required by CUDA 13 + VS 2026
             if (CUDA_CRT_LINKAGE STREQUAL "dynamic")
                 if (CMAKE_BUILD_TYPE MATCHES Debug)
                     list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/MDd" "--debug" "-O0")
