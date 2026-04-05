@@ -1,78 +1,69 @@
-name: Windows-CUDA
+name: Windows CUDA
 
 on:
   push:
-    branches: [ main, "gpu*" ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, "gpu*" ]
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  CUDA_CACHE_ROOT: "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
 
 jobs:
   build-windows-cuda:
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }}
     strategy:
       matrix:
         include:
-          - name: "Windows Server 2019 + Visual Studio 2019 + CUDA 11.3.1 (Debug)"
-            os: windows-2019
+          # Windows Server 2025 + Visual Studio 2026 + CUDA 12.6
+          - name: "Windows Server 2025 + Visual Studio 2026 + CUDA 12.6 (Release)"
+            os: windows-2025-vs2026
+            cuda: "12.6"
+            visual_studio: "Visual Studio 18 2026"
+            solution: CubbyFlow.slnx
+          # Windows Server 2022 + Visual Studio 2022 + CUDA 11.3.1
+          - name: "Windows Server 2022 + Visual Studio 2022 + CUDA 11.3.1 (Release)"
+            os: windows-2022
             cuda: "11.3.1"
-            visual_studio: "Visual Studio 16 2019"
-            configuration: Debug
-          - name: "Windows Server 2019 + Visual Studio 2019 + CUDA 11.3.1 (Release)"
-            os: windows-2019
-            cuda: "11.3.1"
-            visual_studio: "Visual Studio 16 2019"
-            configuration: Release
-    env:
-      CUDA_CACHE_ROOT: "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA"
+            visual_studio: "Visual Studio 17 2022"
+            solution: CubbyFlow.sln
+
+    runs-on: ${{ matrix.os }}
+    name: 🪟 CUDA Build - ${{ matrix.name }}
+
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
-    # Install CUDA to the runner's env
-    - name: "Cache: CUDA"
-      uses: actions/cache@v2
+    - name: Setup Python
+      uses: actions/setup-python@v5
       with:
-        path: ${{ env.CUDA_CACHE_ROOT }}
-        key: ${{ matrix.os }}_cuda-${{ matrix.cuda }}
-    # todo: work with https://github.com/marketplace/actions/cuda-toolkit
-    - name: "Install/Check: CUDA"
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install CUDA
       shell: powershell
       env:
         cuda: ${{ matrix.cuda }}
         visual_studio: ${{ matrix.visual_studio }}
-        CUDA_PATH: "${{ env.CUDA_CACHE_ROOT }}\\v11.3" # using fixed path
-        CUDA_PATH_V11_3: "${{ env.CUDA_CACHE_ROOT }}\\v11.3"
       run: |
-        Write-Output "$env:CUDA_CACHE_ROOT"
-        # Install CUDA via a powershell script
         .\.github\workflows\scripts\actions\install_cuda_windows.ps1
-        if((Test-Path "$env:CUDA_CACHE_ROOT") -eq $False){
+        $cudaMajorMinor = ([regex]::Match("${{ matrix.cuda }}", "^\d+\.\d+")).Value
+        if (-not $cudaMajorMinor) {
+          throw "Failed to parse CUDA major.minor version from '${{ matrix.cuda }}'."
         }
-        $env:PATH="$env:CUDA_PATH\bin;$env:PATH"
+        $cudaVersionVarName = "CUDA_PATH_V$($cudaMajorMinor.Replace('.', '_'))"
+        $cudaPath = [Environment]::GetEnvironmentVariable($cudaVersionVarName, "Machine")
+        if (-not $cudaPath) {
+          $cudaPath = "$env:CUDA_CACHE_ROOT\v$cudaMajorMinor"
+        }
+        if (-not (Test-Path $cudaPath)) {
+          throw "CUDA path '$cudaPath' does not exist."
+        }
+        "CUDA_PATH=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        "$cudaPath\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         nvcc -V
-        ls $env:CUDA_PATH
-        ls $env:CUDA_PATH\bin
-        ls $env:CUDA_PATH\include
-        Write-Output $(Get-Command nvcc).Path
-    - name: "Setup: MSBuild"
-      uses: microsoft/setup-msbuild@v1.0.2
-    - name: "Configure CMake"
-      shell: powershell
-      run: |
-        $env:PATH="$env:CUDA_PATH\\bin;$env:PATH"
-        $NVCC_PATH=$(Get-Command nvcc).Path
-        New-Item -Type Directory -Name build -Force
-        Push-Location build
-          cmake .. `
-            -DCMAKE_GENERATOR_PLATFORM=x64 `
-            -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} `
-            -DBUILD_SHARED_LIBS=false `
-            -DUSE_CUDA=ON -DCUDA_CRT_LINKAGE=dynamic -DCMAKE_CUDA_COMPILER="$NVCC_PATH"
-        Pop-Location
-      env:
-        CUDA_PATH: "${{ env.CUDA_CACHE_ROOT }}\\v11.3" # using fixed path
-        CUDA_PATH_V11_3: "${{ env.CUDA_CACHE_ROOT }}\\v11.3"
-    - name: "Build with MSBuild"
-      run: MSBuild.exe CubbyFlow.sln /p:Configuration=${{ matrix.configuration }}
-      working-directory: ${{ github.workspace }}/build
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+    - name: Configure Build
+      run: mkdir build && cd build && cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON ..
+    - name: Build
+      run: cd build && MSBuild.exe ${{ matrix.solution }} /p:Configuration=Release
