@@ -4,6 +4,9 @@ cmake_policy(SET CMP0063 NEW) # visibility
 if (POLICY CMP0146)
     cmake_policy(SET CMP0146 OLD) # Keep legacy FindCUDA module behavior on newer CMake.
 endif()
+if (POLICY CMP0147)
+    cmake_policy(SET CMP0147 OLD) # Required for legacy FindCUDA with Visual Studio generators.
+endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
