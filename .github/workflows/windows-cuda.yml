@@ -82,3 +82,6 @@ jobs:
     - name: Build
       shell: powershell
       run: MSBuild.exe "build\\${{ matrix.solution }}" /p:Configuration=Release
+    - name: Run CUDA Unit Test
+      shell: powershell
+      run: /a/CubbyFlow/CubbyFlow/build/bin/Release/CUDATests.exe
