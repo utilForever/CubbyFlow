@@ -1,6 +1,12 @@
 # CMake version
-cmake_minimum_required(VERSION 3.18.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.31.6 FATAL_ERROR)
 cmake_policy(SET CMP0063 NEW) # visibility
+if (POLICY CMP0146)
+    cmake_policy(SET CMP0146 OLD) # Keep legacy FindCUDA module behavior on newer CMake.
+endif()
+if (POLICY CMP0147)
+    cmake_policy(SET CMP0147 OLD) # Required for legacy FindCUDA with Visual Studio generators.
+endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
@@ -49,13 +55,18 @@ if (USE_CUDA)
     find_package(CUDA)
     if (CUDA_FOUND) # Modify project options for CUDA build
         enable_language(CUDA)
+        if (EXISTS "${CUDA_TOOLKIT_ROOT_DIR}/include/cccl")
+            include_directories("${CUDA_TOOLKIT_ROOT_DIR}/include/cccl")
+        endif()
         cuda_select_nvcc_arch_flags(CUDA_NVCC_FLAGS "7.5" "Turing")
         # We will use CUDA_TARGET_OPTIONS instead of CUDA_NVCC_FLAGS to be explicit.
         # start with architecture options
         list(APPEND CUDA_TARGET_OPTIONS
             "--std=c++17" "-Wno-deprecated-gpu-targets")
         if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:preprocessor")
             list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/FS") # prevent race on PDB
+            list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/Zc:preprocessor") # required by CUDA 13 + VS 2026
             if (CUDA_CRT_LINKAGE STREQUAL "dynamic")
                 if (CMAKE_BUILD_TYPE MATCHES Debug)
                     list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/MDd" "--debug" "-O0")
@@ -100,6 +111,9 @@ include(Builds/CMake/TaskingSystemOptions.cmake)
 
 # Compile options
 include(Builds/CMake/CompileOptions.cmake)
+if (USE_CUDA AND CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    list(APPEND DEFAULT_COMPILE_OPTIONS /wd4505)
+endif()
 
 # Code coverage - Debug only
 # NOTE: Code coverage results with an optimized (non-Debug) build may be misleading

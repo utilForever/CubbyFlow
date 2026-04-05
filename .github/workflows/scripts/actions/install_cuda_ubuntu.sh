@@ -17,6 +17,7 @@
 # Ideally choose from the list of meta-packages to minimise variance between cuda versions (although it does change too)
 CUDA_PACKAGES_IN=(
     "command-line-tools"
+    "compiler"
     "libraries-dev"
 )
 

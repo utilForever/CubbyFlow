@@ -16,10 +16,14 @@ $CUDA_KNOWN_URLS = @{
     "10.2.89" = "http://developer.download.nvidia.com/compute/cuda/10.2/Prod/network_installers/cuda_10.2.89_win10_network.exe";
     "11.0.167" = "http://developer.download.nvidia.com/compute/cuda/11.0.1/network_installers/cuda_11.0.1_win10_network.exe"
     "11.3.1" = "http://developer.download.nvidia.com/compute/cuda/11.3.1/network_installers/cuda_11.3.1_win10_network.exe"
+    "12.6.3" = "https://developer.download.nvidia.com/compute/cuda/12.6.3/network_installers/cuda_12.6.3_windows_network.exe"
+    "13.2.0" = "https://developer.download.nvidia.com/compute/cuda/13.2.0/network_installers/cuda_13.2.0_windows_network.exe"
 }
 
 # @todo - change this to be based on _MSC_VER intead, or invert it to be CUDA keyed instead?
 $VISUAL_STUDIO_MIN_CUDA = @{
+    "2026" = "13.2";
+    "2022" = "11.6";
     "2019" = "10.1";
     "2017" = "10.0"; # Depends on which version of 2017! 9.0 to 10.0 depending on  version
     "2015" = "8.0"; # might support older, unsure.
@@ -80,6 +84,15 @@ $VISUAL_STUDIO_YEAR = $VISUAL_STUDIO.Substring($VISUAL_STUDIO.Length-4)
 
 $CUDA_PACKAGES = ""
 
+# CUDA 13+ separates runtime headers such as crt/host_config.h into the crt package.
+if ([version]$CUDA_VERSION_FULL -ge [version]"13.0" -and -not ($CUDA_PACKAGES_IN -contains "crt")) {
+    $CUDA_PACKAGES_IN += "crt"
+}
+# CUDA 13+ requires NVVM tooling (cicc) for nvcc compilation.
+if ([version]$CUDA_VERSION_FULL -ge [version]"13.0" -and -not ($CUDA_PACKAGES_IN -contains "nvvm")) {
+    $CUDA_PACKAGES_IN += "nvvm"
+}
+
 # for CUDA >= 11 cudart is a required package.
 # if([version]$CUDA_VERSION_FULL -ge [version]"11.0") {
 #     if(-not $CUDA_PACKAGES_IN -contains "cudart") {
@@ -131,12 +144,12 @@ if(Test-Path -Path $CUDA_REPO_PKG_LOCAL){
 
 # Invoke silent install of CUDA (via network installer)
 Write-Output "Installing CUDA $($CUDA_VERSION_FULL). Subpackages $($CUDA_PACKAGES)"
-Start-Process -Wait -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
+$installerProcess = Start-Process -Wait -PassThru -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
 
 # Check the return status of the CUDA installer.
-if (!$?) {
-    Write-Output "Error: CUDA installer reported error. $($LASTEXITCODE)"
-    exit 1
+if ($installerProcess.ExitCode -ne 0) {
+    Write-Output "Error: CUDA installer reported error. Exit code: $($installerProcess.ExitCode)"
+    exit $installerProcess.ExitCode
 }
 
 # Store the CUDA_PATH in the environment for the current session, to be forwarded in the action.

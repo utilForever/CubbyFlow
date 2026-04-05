@@ -6,22 +6,31 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  PYTHON_VERSION: '3.12'
+
 jobs:
   build-ubuntu:
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }}
     strategy:
       matrix:
         include:
-          # Ubuntu 20.04 + gcc-9
-          - name: "Ubuntu 20.04 + gcc-9"
-            os: ubuntu-20.04
+          # Ubuntu 24.04 + gcc-14
+          - name: "Ubuntu 24.04 + gcc-14"
+            os: ubuntu-24.04
             compiler: gcc
-            version: "9"
+            version: "14"
+
+    runs-on: ${{ matrix.os }}
+    name: 🧪 Code Coverage - Codecov
+
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
     - name: Install packages
       run: sudo apt-get install -yq lcov
     - name: Configure Compiler
@@ -39,5 +48,17 @@ jobs:
       run: cd build && make
     - name: Run Unit Test
       run: /home/runner/work/CubbyFlow/CubbyFlow/build/bin/UnitTests
-    - name: Upload coverage to Codecov
-      run: bash <(curl -s https://codecov.io/bash)
+    - name: Collect coverage report
+      run: |
+        GCOV_TOOL="$(command -v gcov-${{ matrix.version }})"
+        lcov --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch --directory build --capture --output-file build/coverage.info
+        lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch --remove build/coverage.info '/usr/*' '*/Tests/*' --output-file build/coverage.info.cleaned
+    - name: Upload Coverage Reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        fail_ci_if_error: true
+        files: ./build/coverage.info.cleaned
+        flags: unittests
+        name: ubuntu-codecov
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true
