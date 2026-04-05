@@ -1,42 +1,49 @@
-name: Ubuntu-CUDA
+name: Ubuntu CUDA
 
 on:
   push:
-    branches: [ main, "gpu*" ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, "gpu*" ]
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.12'
 
 jobs:
   build-ubuntu-cuda:
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }}
     strategy:
       matrix:
         include:
-          - name: "Ubuntu 20.04 + gcc-10 + CUDA 11.7 (Disable Test)"
-            os: ubuntu-20.04
-            cuda: "11.7"
+          # Ubuntu 24.04 + gcc-12 + CUDA 12.6
+          - name: "Ubuntu 24.04 + gcc-12 + CUDA 12.6 (Disable Test)"
+            os: ubuntu-24.04
+            cuda: "12.6"
             compiler: gcc
-            version: "10"
+            version: "12"
+
+    runs-on: ${{ matrix.os }}
+    name: 🐧 CUDA Build - ${{ matrix.name }}
+
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install packages
+      run: sudo apt-get update && sudo apt-get install -yq python3-setuptools
     - name: Install CUDA
       env:
         cuda: ${{ matrix.cuda }}
+      shell: bash
       run: |
         source ./.github/workflows/scripts/actions/install_cuda_ubuntu.sh
-        if [[ $? -eq 0 ]]; then
-          # Set paths for subsequent steps, using ${CUDA_PATH}
-          echo "Adding CUDA to CUDA_PATH, PATH and LD_LIBRARY_PATH"
-          echo "CUDA_PATH=${CUDA_PATH}" >> $GITHUB_ENV
-          echo "${CUDA_PATH}/bin" >> $GITHUB_PATH
-          echo "LD_LIBRARY_PATH=${CUDA_PATH}/lib:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
-        fi
-      shell: bash
-    - name: Install Packages
-      run: sudo apt-get install -yq python3-setuptools
+        echo "Adding CUDA to CUDA_PATH, PATH and LD_LIBRARY_PATH"
+        echo "CUDA_PATH=${CUDA_PATH}" >> "$GITHUB_ENV"
+        echo "${CUDA_PATH}/bin" >> "$GITHUB_PATH"
+        echo "LD_LIBRARY_PATH=${CUDA_PATH}/lib64:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
     - name: Configure Compiler
       run: |
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -47,6 +54,6 @@ jobs:
           echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
         fi
     - name: Configure Build
-      run: mkdir build && cd build && cmake -DENABLE_CUDA=ON -DCMAKE_BUILD_TYPE=Release ..
+      run: mkdir build && cd build && cmake -DUSE_CUDA=ON -DCMAKE_BUILD_TYPE=Release ..
     - name: Build
       run: cd build && make
