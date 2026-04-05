@@ -64,6 +64,7 @@ if (USE_CUDA)
         list(APPEND CUDA_TARGET_OPTIONS
             "--std=c++17" "-Wno-deprecated-gpu-targets")
         if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:preprocessor")
             list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/FS") # prevent race on PDB
             list(APPEND CUDA_TARGET_OPTIONS "-Xcompiler" "/Zc:preprocessor") # required by CUDA 13 + VS 2026
             if (CUDA_CRT_LINKAGE STREQUAL "dynamic")
@@ -80,7 +81,6 @@ if (USE_CUDA)
                 endif()
             endif()
             list(APPEND DEFAULT_COMPILE_OPTIONS
-                /Zc:preprocessor # required by CUDA 13 CCCL headers on MSVC
                 /wd4515 # -> disable warning: [Thrust issue] 'detail': namespace uses itself
                 /wd4996 # -> disable warning: [Thrust issue] 'strerror': This function or variable may be unsafe.
                 /wd4800 # -> disable warning: [Thrust issue] forcing value to bool 'true' or 'false' (performance warning)
