@@ -63,11 +63,19 @@ jobs:
           throw "nvcc executable '$nvccExe' does not exist."
         }
         "CUDA_PATH=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        "$cudaVersionVarName=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        "CUDAToolkitDir=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         "$cudaPath\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         & $nvccExe -V
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
     - name: Configure Build
-      run: mkdir build && cd build && cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON ..
+      shell: powershell
+      run: |
+        $nvccExe = Join-Path $env:CUDA_PATH "bin\nvcc.exe"
+        if (-not (Test-Path $nvccExe)) {
+          throw "nvcc executable '$nvccExe' does not exist."
+        }
+        mkdir build && cd build && cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON -DCUDA_CRT_LINKAGE=dynamic -DCMAKE_CUDA_COMPILER="$nvccExe" -DCUDAToolkit_ROOT="$env:CUDA_PATH" ..
     - name: Build
       run: cd build && MSBuild.exe ${{ matrix.solution }} /p:Configuration=Release
