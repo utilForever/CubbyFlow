@@ -98,9 +98,9 @@ if ([version]$CUDA_VERSION_FULL -ge [version]"13.0" -and -not ($CUDA_PACKAGES_IN
 
 Foreach ($package in $CUDA_PACKAGES_IN) {
     # Make sure the correct package name is used for nvcc.
-    if($package -eq "nvcc" -and [version]$CUDA_VERSION_FULL -lt [version]"9.1"){
+    if($package -eq "nvcc" -and [version]$CUDA_VERSION_FULL -ge [version]"9.1"){
         $package="compiler"
-    } elseif($package -eq "compiler" -and [version]$CUDA_VERSION_FULL -ge [version]"9.1") {
+    } elseif($package -eq "compiler" -and [version]$CUDA_VERSION_FULL -lt [version]"9.1") {
         $package="nvcc"
     }
     $CUDA_PACKAGES += " $($package)_$($CUDA_MAJOR).$($CUDA_MINOR)"
