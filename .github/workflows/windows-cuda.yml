@@ -76,6 +76,8 @@ jobs:
         if (-not (Test-Path $nvccExe)) {
           throw "nvcc executable '$nvccExe' does not exist."
         }
-        mkdir build && cd build && cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON -DCUDA_CRT_LINKAGE=dynamic -DCMAKE_CUDA_COMPILER="$nvccExe" -DCUDAToolkit_ROOT="$env:CUDA_PATH" ..
+        New-Item -ItemType Directory -Path build -Force | Out-Null
+        cmake -S . -B build -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON -DCUDA_CRT_LINKAGE=dynamic -DCMAKE_CUDA_COMPILER="$nvccExe" -DCUDAToolkit_ROOT="$env:CUDA_PATH"
     - name: Build
-      run: cd build && MSBuild.exe ${{ matrix.solution }} /p:Configuration=Release
+      shell: powershell
+      run: MSBuild.exe "build\\${{ matrix.solution }}" /p:Configuration=Release
