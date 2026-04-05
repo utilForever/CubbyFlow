@@ -13,6 +13,7 @@ env:
 jobs:
   build-windows-cuda:
     strategy:
+      fail-fast: false
       matrix:
         include:
           # Windows Server 2025 + Visual Studio 2026 + CUDA 13.2.0

@@ -88,6 +88,10 @@ $CUDA_PACKAGES = ""
 if ([version]$CUDA_VERSION_FULL -ge [version]"13.0" -and -not ($CUDA_PACKAGES_IN -contains "crt")) {
     $CUDA_PACKAGES_IN += "crt"
 }
+# CUDA 13+ requires NVVM tooling (cicc) for nvcc compilation.
+if ([version]$CUDA_VERSION_FULL -ge [version]"13.0" -and -not ($CUDA_PACKAGES_IN -contains "nvvm")) {
+    $CUDA_PACKAGES_IN += "nvvm"
+}
 
 # for CUDA >= 11 cudart is a required package.
 # if([version]$CUDA_VERSION_FULL -ge [version]"11.0") {
@@ -98,9 +102,9 @@ if ([version]$CUDA_VERSION_FULL -ge [version]"13.0" -and -not ($CUDA_PACKAGES_IN
 
 Foreach ($package in $CUDA_PACKAGES_IN) {
     # Make sure the correct package name is used for nvcc.
-    if($package -eq "nvcc" -and [version]$CUDA_VERSION_FULL -ge [version]"9.1"){
+    if($package -eq "nvcc" -and [version]$CUDA_VERSION_FULL -lt [version]"9.1"){
         $package="compiler"
-    } elseif($package -eq "compiler" -and [version]$CUDA_VERSION_FULL -lt [version]"9.1") {
+    } elseif($package -eq "compiler" -and [version]$CUDA_VERSION_FULL -ge [version]"9.1") {
         $package="nvcc"
     }
     $CUDA_PACKAGES += " $($package)_$($CUDA_MAJOR).$($CUDA_MINOR)"
@@ -140,12 +144,12 @@ if(Test-Path -Path $CUDA_REPO_PKG_LOCAL){
 
 # Invoke silent install of CUDA (via network installer)
 Write-Output "Installing CUDA $($CUDA_VERSION_FULL). Subpackages $($CUDA_PACKAGES)"
-Start-Process -Wait -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
+$installerProcess = Start-Process -Wait -PassThru -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
 
 # Check the return status of the CUDA installer.
-if (!$?) {
-    Write-Output "Error: CUDA installer reported error. $($LASTEXITCODE)"
-    exit 1
+if ($installerProcess.ExitCode -ne 0) {
+    Write-Output "Error: CUDA installer reported error. Exit code: $($installerProcess.ExitCode)"
+    exit $installerProcess.ExitCode
 }
 
 # Store the CUDA_PATH in the environment for the current session, to be forwarded in the action.
