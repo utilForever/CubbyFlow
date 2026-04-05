@@ -55,6 +55,9 @@ if (USE_CUDA)
     find_package(CUDA)
     if (CUDA_FOUND) # Modify project options for CUDA build
         enable_language(CUDA)
+        if (EXISTS "${CUDA_TOOLKIT_ROOT_DIR}/include/cccl")
+            include_directories("${CUDA_TOOLKIT_ROOT_DIR}/include/cccl")
+        endif()
         cuda_select_nvcc_arch_flags(CUDA_NVCC_FLAGS "7.5" "Turing")
         # We will use CUDA_TARGET_OPTIONS instead of CUDA_NVCC_FLAGS to be explicit.
         # start with architecture options
