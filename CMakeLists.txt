@@ -1,6 +1,9 @@
 # CMake version
 cmake_minimum_required(VERSION 3.31.6 FATAL_ERROR)
 cmake_policy(SET CMP0063 NEW) # visibility
+if (POLICY CMP0146)
+    cmake_policy(SET CMP0146 OLD) # Keep legacy FindCUDA module behavior on newer CMake.
+endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
