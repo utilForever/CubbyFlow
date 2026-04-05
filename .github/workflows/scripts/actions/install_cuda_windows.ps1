@@ -84,6 +84,11 @@ $VISUAL_STUDIO_YEAR = $VISUAL_STUDIO.Substring($VISUAL_STUDIO.Length-4)
 
 $CUDA_PACKAGES = ""
 
+# CUDA 13+ separates runtime headers such as crt/host_config.h into the crt package.
+if ([version]$CUDA_VERSION_FULL -ge [version]"13.0" -and -not ($CUDA_PACKAGES_IN -contains "crt")) {
+    $CUDA_PACKAGES_IN += "crt"
+}
+
 # for CUDA >= 11 cudart is a required package.
 # if([version]$CUDA_VERSION_FULL -ge [version]"11.0") {
 #     if(-not $CUDA_PACKAGES_IN -contains "cudart") {
