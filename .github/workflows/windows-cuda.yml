@@ -15,10 +15,10 @@ jobs:
     strategy:
       matrix:
         include:
-          # Windows Server 2025 + Visual Studio 2026 + CUDA 12.6
-          - name: "Windows Server 2025 + Visual Studio 2026 + CUDA 12.6 (Release)"
+          # Windows Server 2025 + Visual Studio 2026 + CUDA 12.6.3
+          - name: "Windows Server 2025 + Visual Studio 2026 + CUDA 12.6.3 (Release)"
             os: windows-2025-vs2026
-            cuda: "12.6"
+            cuda: "12.6.3"
             visual_studio: "Visual Studio 18 2026"
             solution: CubbyFlow.slnx
           # Windows Server 2022 + Visual Studio 2022 + CUDA 11.3.1
