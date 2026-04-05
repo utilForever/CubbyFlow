@@ -84,4 +84,14 @@ jobs:
       run: MSBuild.exe "build\\${{ matrix.solution }}" /p:Configuration=Release
     - name: Run CUDA Unit Test
       shell: powershell
-      run: /a/CubbyFlow/CubbyFlow/build/bin/Release/CUDATests.exe
+      run: |
+        $nvidiaSmi = Get-Command "nvidia-smi.exe" -ErrorAction SilentlyContinue
+        if ($null -ne $nvidiaSmi) {
+          & nvidia-smi.exe -L | Out-Host
+          if ($LASTEXITCODE -eq 0) {
+            & /a/CubbyFlow/CubbyFlow/build/bin/Release/CUDATests.exe
+            exit $LASTEXITCODE
+          }
+        }
+
+        Write-Host "No CUDA-capable GPU detected on runner. Skipping CUDA unit tests."

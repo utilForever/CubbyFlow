@@ -58,4 +58,9 @@ jobs:
     - name: Build
       run: cd build && make
     - name: Run CUDA Unit Test
-      run: /home/runner/work/CubbyFlow/CubbyFlow/build/bin/CUDATests
+      run: |
+        if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
+          /home/runner/work/CubbyFlow/CubbyFlow/build/bin/CUDATests
+        else
+          echo "No CUDA-capable GPU detected on runner. Skipping CUDA unit tests."
+        fi
