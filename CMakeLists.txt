@@ -81,6 +81,7 @@ if (USE_CUDA)
                 endif()
             endif()
             list(APPEND DEFAULT_COMPILE_OPTIONS
+                /wd4505 # -> disable warning: unreferenced function with internal linkage has been removed (CUDA 13 headers)
                 /wd4515 # -> disable warning: [Thrust issue] 'detail': namespace uses itself
                 /wd4996 # -> disable warning: [Thrust issue] 'strerror': This function or variable may be unsafe.
                 /wd4800 # -> disable warning: [Thrust issue] forcing value to bool 'true' or 'false' (performance warning)
