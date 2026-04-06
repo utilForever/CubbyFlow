@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        recursive: "recursive"
+        submodules: recursive
     - name: Installation
       run: sudo apt-get -y install ps2eps texlive-latex-extra doxygen
     - name: Build
