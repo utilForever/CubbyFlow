@@ -62,13 +62,12 @@ if (USE_HIP)
     # spelling resolves regardless of each file's own include order, and so the
     # device-vs-host __CUDA_ARCH__ idiom is defined before any header uses it.
     set(CMAKE_HIP_FLAGS
-        "${CMAKE_HIP_FLAGS} -include ${CUBBYFLOW_CUDA_TO_HIP_HEADER}")
+        "${CMAKE_HIP_FLAGS} -include \"${CUBBYFLOW_CUDA_TO_HIP_HEADER}\"")
     add_compile_definitions(CUBBYFLOW_USE_CUDA)
     # The shim defines __CUDACC__ to keep the project's kernel/device guards
     # visible, but that flips rocThrust's auto-detect to its CUDA backend (which
     # then includes a CUDA-only CUB header). Pin Thrust to its HIP backend.
-    # THRUST_DEVICE_SYSTEM_HIP == 5 in thrust/detail/config/device_system.h.
-    add_compile_definitions(THRUST_DEVICE_SYSTEM=5)
+    add_compile_definitions(THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_HIP)
     message(STATUS "Using HIP: arch ${CMAKE_HIP_ARCHITECTURES}")
 endif()
 set(CUDA_CRT_LINKAGE "dynamic" CACHE STRING

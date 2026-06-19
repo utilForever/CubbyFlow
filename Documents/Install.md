@@ -234,7 +234,7 @@ CubbyFlow's CUDA SPH solvers can be built for either NVIDIA or AMD GPUs. The two
 
 To build the same solvers for AMD GPUs with ROCm/HIP instead, configure with `USE_HIP=ON` (which turns `USE_CUDA` off) and, if desired, set the target GPU architecture:
 
-```
+```bash
 mkdir build
 cd build
 cmake .. -DUSE_HIP=ON -DCMAKE_HIP_ARCHITECTURES=gfx90a
