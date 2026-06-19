@@ -16,14 +16,15 @@
 namespace CubbyFlow
 {
 template <typename T, size_t N>
-CUDAStdArray<T, N>::CUDAStdArray()
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAStdArray<T, N>::CUDAStdArray()
 {
     Fill(T{});
 }
 
 template <typename T, size_t N>
 template <typename... Args>
-CUDAStdArray<T, N>::CUDAStdArray(ConstReference first, Args... rest)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAStdArray<T, N>::CUDAStdArray(ConstReference first,
+                                                            Args... rest)
 {
     static_assert(
         sizeof...(Args) == N - 1,
@@ -32,7 +33,7 @@ CUDAStdArray<T, N>::CUDAStdArray(ConstReference first, Args... rest)
 }
 
 template <typename T, size_t N>
-CUDAStdArray<T, N>::CUDAStdArray(const std::array<T, N>& other)
+CUBBYFLOW_CUDA_HOST CUDAStdArray<T, N>::CUDAStdArray(const std::array<T, N>& other)
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -41,7 +42,7 @@ CUDAStdArray<T, N>::CUDAStdArray(const std::array<T, N>& other)
 }
 
 template <typename T, size_t N>
-CUDAStdArray<T, N>::CUDAStdArray(const Vector<T, N>& other)
+CUBBYFLOW_CUDA_HOST CUDAStdArray<T, N>::CUDAStdArray(const Vector<T, N>& other)
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -50,7 +51,8 @@ CUDAStdArray<T, N>::CUDAStdArray(const Vector<T, N>& other)
 }
 
 template <typename T, size_t N>
-CUDAStdArray<T, N>::CUDAStdArray(const CUDAStdArray& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAStdArray<T, N>::CUDAStdArray(
+    const CUDAStdArray& other)
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -59,7 +61,8 @@ CUDAStdArray<T, N>::CUDAStdArray(const CUDAStdArray& other)
 }
 
 template <typename T, size_t N>
-CUDAStdArray<T, N>::CUDAStdArray(CUDAStdArray&& other) noexcept
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAStdArray<T, N>::CUDAStdArray(
+    CUDAStdArray&& other) noexcept
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -68,7 +71,8 @@ CUDAStdArray<T, N>::CUDAStdArray(CUDAStdArray&& other) noexcept
 }
 
 template <typename T, size_t N>
-CUDAStdArray<T, N>& CUDAStdArray<T, N>::operator=(const CUDAStdArray& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAStdArray<T, N>& CUDAStdArray<T, N>::operator=(
+    const CUDAStdArray& other)
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -79,7 +83,8 @@ CUDAStdArray<T, N>& CUDAStdArray<T, N>::operator=(const CUDAStdArray& other)
 }
 
 template <typename T, size_t N>
-CUDAStdArray<T, N>& CUDAStdArray<T, N>::operator=(CUDAStdArray&& other) noexcept
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAStdArray<T, N>& CUDAStdArray<T, N>::operator=(
+    CUDAStdArray&& other) noexcept
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -90,7 +95,7 @@ CUDAStdArray<T, N>& CUDAStdArray<T, N>::operator=(CUDAStdArray&& other) noexcept
 }
 
 template <typename T, size_t N>
-void CUDAStdArray<T, N>::Fill(ConstReference val)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAStdArray<T, N>::Fill(ConstReference val)
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -112,20 +117,22 @@ CUBBYFLOW_CUDA_HOST Vector<T, N> CUDAStdArray<T, N>::ToVector() const
 }
 
 template <typename T, size_t N>
-typename CUDAStdArray<T, N>::Reference CUDAStdArray<T, N>::operator[](size_t i)
+CUBBYFLOW_CUDA_HOST_DEVICE typename CUDAStdArray<T, N>::Reference
+CUDAStdArray<T, N>::operator[](size_t i)
 {
     return m_elements[i];
 }
 
 template <typename T, size_t N>
-typename CUDAStdArray<T, N>::ConstReference CUDAStdArray<T, N>::operator[](
-    size_t i) const
+CUBBYFLOW_CUDA_HOST_DEVICE typename CUDAStdArray<T, N>::ConstReference
+CUDAStdArray<T, N>::operator[](size_t i) const
 {
     return m_elements[i];
 }
 
 template <typename T, size_t N>
-bool CUDAStdArray<T, N>::operator==(const CUDAStdArray& other) const
+CUBBYFLOW_CUDA_HOST_DEVICE bool CUDAStdArray<T, N>::operator==(
+    const CUDAStdArray& other) const
 {
     for (size_t i = 0; i < N; ++i)
     {
@@ -139,14 +146,17 @@ bool CUDAStdArray<T, N>::operator==(const CUDAStdArray& other) const
 }
 
 template <typename T, size_t N>
-bool CUDAStdArray<T, N>::operator!=(const CUDAStdArray& other) const
+CUBBYFLOW_CUDA_HOST_DEVICE bool CUDAStdArray<T, N>::operator!=(
+    const CUDAStdArray& other) const
 {
     return !(*this == other);
 }
 
 template <typename T, size_t N>
 template <typename... Args>
-void CUDAStdArray<T, N>::SetAt(size_t i, ConstReference first, Args... rest)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAStdArray<T, N>::SetAt(size_t i,
+                                                         ConstReference first,
+                                                         Args... rest)
 {
     m_elements[i] = first;
     SetAt(i + 1, rest...);
@@ -154,7 +164,8 @@ void CUDAStdArray<T, N>::SetAt(size_t i, ConstReference first, Args... rest)
 
 template <typename T, size_t N>
 template <typename... Args>
-void CUDAStdArray<T, N>::SetAt(size_t i, ConstReference first)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAStdArray<T, N>::SetAt(size_t i,
+                                                         ConstReference first)
 {
     m_elements[i] = first;
 }

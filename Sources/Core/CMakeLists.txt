@@ -18,6 +18,16 @@ if (USE_CUDA)
     file(GLOB_RECURSE sources
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/CUDA/*.cu)
+elseif (USE_HIP)
+    file(GLOB_RECURSE sources
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/CUDA/*.cu)
+    # The CUDA directory's .cpp host sources also touch device types (device
+    # memory, thrust device_ptr), so compile the whole directory with hipcc.
+    file(GLOB_RECURSE hip_sources
+        ${CMAKE_CURRENT_SOURCE_DIR}/CUDA/*.cu
+        ${CMAKE_CURRENT_SOURCE_DIR}/CUDA/*.cpp)
+    set_source_files_properties(${hip_sources} PROPERTIES LANGUAGE HIP)
 else()
     file(GLOB_RECURSE sources
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)

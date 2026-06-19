@@ -65,7 +65,7 @@ class CUDAStdVector final
             return *this;
         }
 
-#ifdef __CUDA_ARCH__
+#if defined(__HIP__) || defined(__CUDA_ARCH__)
         __device__ ReferenceType& operator=(const ValueType& val)
         {
             *m_ptr = val;
@@ -76,7 +76,8 @@ class CUDAStdVector final
         {
             return *m_ptr;
         }
-#else
+#endif
+#if defined(__HIP__) || !defined(__CUDA_ARCH__)
         CUBBYFLOW_CUDA_HOST ReferenceType& operator=(const ValueType& val)
         {
             CUDACopyHostToDevice(&val, 1, m_ptr);
@@ -121,11 +122,12 @@ class CUDAStdVector final
 
     size_t Size() const;
 
-#ifdef __CUDA_ARCH__
+#if defined(__HIP__) || defined(__CUDA_ARCH__)
     __device__ Reference At(size_t i);
 
     __device__ ConstReference At(size_t i) const;
-#else
+#endif
+#if defined(__HIP__) || !defined(__CUDA_ARCH__)
     CUBBYFLOW_CUDA_HOST ReferenceType At(size_t i);
 
     CUBBYFLOW_CUDA_HOST T At(size_t i) const;
@@ -155,14 +157,15 @@ class CUDAStdVector final
     template <typename A>
     void CopyTo(std::vector<T, A>& other);
 
-#ifdef __CUDA_ARCH__
-    Reference operator[](size_t i);
+#if defined(__HIP__) || defined(__CUDA_ARCH__)
+    __device__ Reference operator[](size_t i);
 
-    ConstReference operator[](size_t i) const;
-#else
-    ReferenceType operator[](size_t i);
+    __device__ ConstReference operator[](size_t i) const;
+#endif
+#if defined(__HIP__) || !defined(__CUDA_ARCH__)
+    CUBBYFLOW_CUDA_HOST ReferenceType operator[](size_t i);
 
-    T operator[](size_t i) const;
+    CUBBYFLOW_CUDA_HOST T operator[](size_t i) const;
 #endif
 
  private:

@@ -95,7 +95,7 @@ size_t CUDAStdVector<T>::Size() const
     return m_size;
 }
 
-#ifdef __CUDA_ARCH__
+#if defined(__HIP__) || defined(__CUDA_ARCH__)
 template <typename T>
 __device__ typename CUDAStdVector<T>::Reference CUDAStdVector<T>::At(size_t i)
 {
@@ -108,16 +108,18 @@ __device__ typename CUDAStdVector<T>::ConstReference CUDAStdVector<T>::At(
 {
     return m_ptr[i];
 }
-#else
+#endif
+#if defined(__HIP__) || !defined(__CUDA_ARCH__)
 template <typename T>
-typename CUDAStdVector<T>::ReferenceType CUDAStdVector<T>::At(size_t i)
+CUBBYFLOW_CUDA_HOST typename CUDAStdVector<T>::ReferenceType
+CUDAStdVector<T>::At(size_t i)
 {
     ReferenceType r(m_ptr + i);
     return r;
 }
 
 template <typename T>
-T CUDAStdVector<T>::At(size_t i) const
+CUBBYFLOW_CUDA_HOST T CUDAStdVector<T>::At(size_t i) const
 {
     T tmp;
     CUDACopyDeviceToHost(m_ptr + i, 1, &tmp);
@@ -233,28 +235,31 @@ void CUDAStdVector<T>::CopyTo(std::vector<T, A>& other)
     CUDACopyDeviceToHost(m_ptr, m_size, other.data());
 }
 
-#ifdef __CUDA_ARCH__
+#if defined(__HIP__) || defined(__CUDA_ARCH__)
 template <typename T>
-typename CUDAStdVector<T>::Reference CUDAStdVector<T>::operator[](size_t i)
+__device__ typename CUDAStdVector<T>::Reference CUDAStdVector<T>::operator[](
+    size_t i)
 {
     return At(i);
 }
 
 template <typename T>
-typename CUDAStdVector<T>::ConstReference CUDAStdVector<T>::operator[](
-    size_t i) const
+__device__ typename CUDAStdVector<T>::ConstReference
+CUDAStdVector<T>::operator[](size_t i) const
 {
     return At(i);
 }
-#else
+#endif
+#if defined(__HIP__) || !defined(__CUDA_ARCH__)
 template <typename T>
-typename CUDAStdVector<T>::ReferenceType CUDAStdVector<T>::operator[](size_t i)
+CUBBYFLOW_CUDA_HOST typename CUDAStdVector<T>::ReferenceType
+CUDAStdVector<T>::operator[](size_t i)
 {
     return At(i);
 }
 
 template <typename T>
-T CUDAStdVector<T>::operator[](size_t i) const
+CUBBYFLOW_CUDA_HOST T CUDAStdVector<T>::operator[](size_t i) const
 {
     return At(i);
 }

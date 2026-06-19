@@ -5,7 +5,7 @@ set(target CUDASPHSim)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Sources
-if (USE_CUDA)
+if (USE_CUDA OR USE_HIP)
     file(GLOB_RECURSE sources
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
@@ -19,6 +19,10 @@ if (USE_CUDA)
     cuda_add_executable(${target} ${sources}
         OPTIONS ${CUDA_TARGET_OPTIONS}
     )
+elseif (USE_HIP)
+    file(GLOB_RECURSE hip_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
+    set_source_files_properties(${hip_sources} PROPERTIES LANGUAGE HIP)
+    add_executable(${target} ${sources})
 else()
     add_executable(${target} ${sources})
 endif()

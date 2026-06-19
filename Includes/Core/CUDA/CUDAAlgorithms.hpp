@@ -19,7 +19,7 @@
 
 namespace CubbyFlow
 {
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 
 template <typename T>
 __global__ void CUDAFillKernel(T* dst, size_t n, T val)

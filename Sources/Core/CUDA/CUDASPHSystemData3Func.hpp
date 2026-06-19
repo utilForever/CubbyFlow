@@ -17,7 +17,11 @@
 
 #include <Core/CUDA/CUDASPHKernels3.hpp>
 
+#if defined(__HIP__)
+#include <Core/CUDA/cuda_to_hip.h>
+#else
 #include <cuda_runtime.h>
+#endif
 
 namespace CubbyFlow
 {
