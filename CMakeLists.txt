@@ -54,10 +54,9 @@ if (USE_HIP)
     set(USE_CUDA OFF)
     set(CUBBYFLOW_CUDA_TO_HIP_HEADER
         ${CMAKE_CURRENT_SOURCE_DIR}/Includes/Core/CUDA/cuda_to_hip.h)
+    # enable_language(HIP) honors -DCMAKE_HIP_ARCHITECTURES, else auto-detects the
+    # host GPU, else errors on a no-GPU host.
     enable_language(HIP)
-    if (NOT CMAKE_HIP_ARCHITECTURES)
-        set(CMAKE_HIP_ARCHITECTURES gfx90a CACHE STRING "ROCm GPU architectures")
-    endif()
     # Force-include the compat shim on every HIP translation unit so the CUDA
     # spelling resolves regardless of each file's own include order, and so the
     # device-vs-host __CUDA_ARCH__ idiom is defined before any header uses it.
