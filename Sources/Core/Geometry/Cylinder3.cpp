@@ -208,13 +208,13 @@ SurfaceRayIntersection3 Cylinder3::ClosestIntersectionLocal(
         return intersection;
     }
 
-    double t1 = (-B + std::sqrt(B * B - A * C)) / A;
-    double t2 = (-B - std::sqrt(B * B - A * C)) / A;
+    const double sqrtDiscriminant = std::sqrt(B * B - A * C);
+    const double t2 = (-B - sqrtDiscriminant) / A;
     double tCylinder = t2;
 
     if (t2 < 0.0)
     {
-        tCylinder = t1;
+        tCylinder = (-B + sqrtDiscriminant) / A;
     }
 
     Vector3D pointOnCylinder = ray.PointAt(tCylinder);
