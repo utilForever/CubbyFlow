@@ -1,4 +1,4 @@
-from pyCubbyFlow import * # lgtm [py/polluting-import]
+from pyCubbyFlow import *
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,7 +9,7 @@ def main():
 
     grid = CellCenteredScalarGrid2((512, 512), (1.0 / 512.0, 1.0 / 512.0))
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.set_aspect("equal")
 
     kernel_radius = 0.1

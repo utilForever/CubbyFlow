@@ -1,4 +1,4 @@
-from pyCubbyFlow import * # lgtm [py/polluting-import]
+from pyCubbyFlow import *
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,7 +25,8 @@ def main():
         maxRegion=solver.gridSystemData.boundingBox,
         spacing=1.0 / (2 * resX),
         isOneShot=False,
-        initialVelocity=(0, 0, 0))
+        initialVelocity=(0, 0, 0),
+    )
     solver.particleEmitter = emitter
 
     # Setup collider
@@ -36,8 +37,10 @@ def main():
     # Visualization
     fig = plt.figure(figsize=(3, 6))
     ax = fig.add_axes([0, 0, 1, 1], frameon=False)
-    ax.set_xlim(0, 1), ax.set_xticks([])
-    ax.set_ylim(0, 2), ax.set_yticks([])
+    ax.set_xlim(0, 1)
+    ax.set_xticks([])
+    ax.set_ylim(0, 2)
+    ax.set_yticks([])
 
     # Make first frame
     frame = Frame(0, 1.0 / ANIM_FPS)
@@ -57,28 +60,29 @@ def main():
         if frame.index == 100:
             emitter.isOneShot = True
         # Animate emitter's position (and thus the velocity which is its derivative)
-        emitter.surface.transform = Transform3(translation=(
-            0.1 * math.sin(5 * frame.TimeInSeconds()), 0, 0))
-        emitter.linearVelocity = (
-            0.5 * math.cos(5 * frame.TimeInSeconds()), 0, 0)
+        emitter.surface.transform = Transform3(
+            translation=(0.1 * math.sin(5 * frame.TimeInSeconds()), 0, 0)
+        )
+        emitter.linearVelocity = (0.5 * math.cos(5 * frame.TimeInSeconds()), 0, 0)
 
         # Animate collider's position (and thus the velocity which is its derivative)
-        collider.surface.transform = Transform3(translation=(
-            0.2 * math.sin(10 * frame.TimeInSeconds()), 0, 0))
-        collider.linearVelocity = (
-            2.0 * math.cos(10 * frame.TimeInSeconds()), 0, 0)
+        collider.surface.transform = Transform3(
+            translation=(0.2 * math.sin(10 * frame.TimeInSeconds()), 0, 0)
+        )
+        collider.linearVelocity = (2.0 * math.cos(10 * frame.TimeInSeconds()), 0, 0)
 
         solver.Update(frame)
         frame.Advance()
         pos = np.array(solver.particleSystemData.positions, copy=False)
         scat.set_offsets(np.vstack((pos[:, 0], pos[:, 1])).transpose())
-        return scat,
+        return (scat,)
 
-    animation.FuncAnimation(fig, updateFig, frames=ANIM_NUM_FRAMES,
-                            interval=1, blit=True)
+    animation.FuncAnimation(
+        fig, updateFig, frames=ANIM_NUM_FRAMES, interval=1, blit=True
+    )
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Logging.Mute()
     main()

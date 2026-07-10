@@ -1,4 +1,4 @@
-from pyCubbyFlow import * # lgtm [py/polluting-import]
+from pyCubbyFlow import *
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,8 +28,15 @@ def main():
     # Visualization
     fig = plt.figure()
     den = np.array(solver.smokeDensity.GetDataAccessor(), copy=False)
-    im = plt.imshow(den, vmin=0, vmax=1, cmap=plt.cm.gray,
-                    interpolation='nearest', animated=True, origin='lower')
+    im = plt.imshow(
+        den,
+        vmin=0,
+        vmax=1,
+        cmap=plt.cm.gray,
+        interpolation="nearest",
+        animated=True,
+        origin="lower",
+    )
 
     # Animation
     frame = Frame(0, 1.0 / ANIM_FPS)
@@ -39,27 +46,27 @@ def main():
         frame.Advance()
         den = np.array(solver.smokeDensity.GetDataAccessor(), copy=False)
         im.set_data(den)
-        return im,
+        return (im,)
 
     if len(sys.argv) > 1:
-        format = sys.argv[1]
-        if format == 'gif':
-            anim = animation.FuncAnimation(fig, updateFig,
-                                           frames=ANIM_NUM_FRAMES,
-                                           interval=ANIM_FPS, blit=True)
-            anim.Save('SmokeExample1.gif', fps=ANIM_FPS, dpi=72,
-                      writer='imagemagick')
-        elif format == 'mp4':
-            anim = animation.FuncAnimation(fig, updateFig,
-                                           frames=ANIM_NUM_FRAMES,
-                                           interval=ANIM_FPS, blit=True)
-            anim.Save('SmokeExample1.mp4', fps=ANIM_FPS, writer='ffmpeg')
+        output_format = sys.argv[1]
+        if output_format == "gif":
+            anim = animation.FuncAnimation(
+                fig, updateFig, frames=ANIM_NUM_FRAMES, interval=ANIM_FPS, blit=True
+            )
+            anim.Save("SmokeExample1.gif", fps=ANIM_FPS, dpi=72, writer="imagemagick")
+        elif output_format == "mp4":
+            anim = animation.FuncAnimation(
+                fig, updateFig, frames=ANIM_NUM_FRAMES, interval=ANIM_FPS, blit=True
+            )
+            anim.Save("SmokeExample1.mp4", fps=ANIM_FPS, writer="ffmpeg")
     else:
-        animation.FuncAnimation(fig, updateFig, frames=ANIM_NUM_FRAMES,
-                                interval=1, blit=True)
+        animation.FuncAnimation(
+            fig, updateFig, frames=ANIM_NUM_FRAMES, interval=1, blit=True
+        )
         plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Logging.Mute()
     main()
