@@ -52,9 +52,9 @@ class CMakeBuild(build_ext):
             os.environ.get("CXXFLAGS", ""), self.distribution.get_version()
         )
         self.spawn(
-            ["cmake", "-S", ext.sourcedir, "-B", self.build_temp] + cmake_args
+            ["cmake", "-S", ext.sourcedir, "-B", self.build_temp, *cmake_args]
         )
-        self.spawn(["cmake", "--build", self.build_temp] + build_args)
+        self.spawn(["cmake", "--build", self.build_temp, *build_args])
 
 
 setup(
