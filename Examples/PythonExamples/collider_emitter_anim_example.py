@@ -1,4 +1,12 @@
-from pyCubbyFlow import *
+from pyCubbyFlow import (
+    APICSolver3,
+    Frame,
+    Logging,
+    RigidBodyCollider3,
+    Sphere3,
+    Transform3,
+    VolumeParticleEmitter3,
+)
 import math
 import numpy as np
 import matplotlib.pyplot as plt

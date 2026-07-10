@@ -1,7 +1,7 @@
 import numpy as np
 import pyCubbyFlow
 from pytest import approx
-from pytest_utils import *
+from pytest_utils import assert_bounding_box_similar, assert_vector_similar
 
 cnt = 0
 

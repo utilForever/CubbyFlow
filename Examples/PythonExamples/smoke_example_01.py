@@ -1,4 +1,12 @@
-from pyCubbyFlow import *
+from pyCubbyFlow import (
+    FDMGaussSeidelSolver2,
+    Frame,
+    GridFractionalSinglePhasePressureSolver2,
+    GridSmokeSolver2,
+    Logging,
+    Sphere2,
+    VolumeGridEmitter2,
+)
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
