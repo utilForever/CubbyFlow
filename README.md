@@ -154,7 +154,7 @@ You can contact me via e-mail (utilForever at gmail.com). I am always happy to a
 
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png" alt="OSI approved license">
 
-The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
+This project is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
 Copyright (c) 2018-2020 CubbyFlow Team
 
