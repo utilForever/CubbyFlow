@@ -53,8 +53,8 @@ class CUDAPointHashGridSearcher3 final
         GetHashKeyFromPosition(float4 position) const;
 
      private:
-        float m_gridSpacing;
-        uint3 m_resolution;
+        float m_gridSpacing = 1.0f;
+        uint3 m_resolution = make_uint3(1, 1, 1);
     };
 
     template <typename Callback>

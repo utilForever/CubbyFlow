@@ -1,4 +1,3 @@
-import pyCubbyFlow
 from pytest import approx
 
 

@@ -1,11 +1,11 @@
 # CubbyFlow
 
-<img src="./Medias/Logos/Logo.png" width=256 height=256 />
+<img src="./Medias/Logos/Logo.png" width=256 height=256 alt="CubbyFlow logo" />
 
 [![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](./LICENSE) ![Windows](https://github.com/CubbyFlow/CubbyFlow/workflows/Windows/badge.svg) ![Ubuntu](https://github.com/CubbyFlow/CubbyFlow/workflows/Ubuntu/badge.svg) ![macOS](https://github.com/CubbyFlow/CubbyFlow/workflows/macOS/badge.svg) ![Ubuntu - Codecov](https://github.com/CubbyFlow/CubbyFlow/workflows/Ubuntu%20-%20Codecov/badge.svg) [![Build Status](https://travis-ci.com/CubbyFlow/CubbyFlow.svg?branch=main)](https://travis-ci.com/CubbyFlow/CubbyFlow)
 
 [![codecov](https://codecov.io/gh/CubbyFlow/CubbyFlow/branch/master/graph/badge.svg)](https://codecov.io/gh/CubbyFlow/CubbyFlow)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/54d8ed92a3ce4ad988be48dd2dbdeada)](https://www.codacy.com/gh/CubbyFlow/CubbyFlow/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CubbyFlow/CubbyFlow&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/54d8ed92a3ce4ad988be48dd2dbdeada)](https://www.codacy.com/gh/CubbyFlow/CubbyFlow/dashboard?utm_source=github.com&utm_medium=referral&utm_content=CubbyFlow/CubbyFlow&utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/CubbyFlow/CubbyFlow/badge)](https://www.codefactor.io/repository/github/CubbyFlow/CubbyFlow)
 [![Discord](https://img.shields.io/discord/667686826093445129.svg)](https://discord.gg/3gsWZM8)
 
@@ -134,13 +134,13 @@ Here are some of the example simulations generated using CubbyFlow framework. Co
 
 ## Presentations
 
-  * [NDC 2018](https://www.slideshare.net/utilforever/ndc-2018-95260566)
+- [NDC 2018](https://www.slideshare.net/utilforever/ndc-2018-95260566)
 
 ## Articles
 
-  * NDC 2018
-    * [[NDC2018] 유체역학 엔진이 직면한 문제와 미래](http://www.inven.co.kr/webzine/news/?news=198413)
-    * [[NDC18] 게임에 쓸 수 있는 유체역학 엔진, 어렵지만 꿈은 아니다](http://www.gamevu.co.kr/news/articleView.html?idxno=8464)
+- NDC 2018
+  - [[NDC2018] 유체역학 엔진이 직면한 문제와 미래](http://www.inven.co.kr/webzine/news/?news=198413)
+  - [[NDC18] 게임에 쓸 수 있는 유체역학 엔진, 어렵지만 꿈은 아니다](http://www.gamevu.co.kr/news/articleView.html?idxno=8464)
 
 ## How To Contribute
 
@@ -152,18 +152,18 @@ You can contact me via e-mail (utilForever at gmail.com). I am always happy to a
 
 ## License
 
-<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png" alt="OSI approved license">
 
-The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
+This project is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
 Copyright (c) 2018-2020 CubbyFlow Team
 
-  * [Chris Ohk](http://www.github.com/utilForever)
-  * [Junwoo Hwang](https://github.com/junwoo091400)
-  * [Jihong Sin](https://github.com/Snowapril)
-  * [Seungwoo Yoo](https://github.com/DveloperY0115)
-  * [Dongheon Cho](https://github.com/davinnovation)
-  * [Minseo Kim](https://github.com/sanggubot)
+- [Chris Ohk](http://www.github.com/utilForever)
+- [Junwoo Hwang](https://github.com/junwoo091400)
+- [Jihong Sin](https://github.com/Snowapril)
+- [Seungwoo Yoo](https://github.com/DveloperY0115)
+- [Dongheon Cho](https://github.com/davinnovation)
+- [Minseo Kim](https://github.com/sanggubot)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

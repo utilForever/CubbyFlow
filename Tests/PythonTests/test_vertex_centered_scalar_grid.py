@@ -1,8 +1,7 @@
 import numpy as np
 import pyCubbyFlow
 from pytest import approx
-from pytest_utils import *
-
+from pytest_utils import assert_bounding_box_similar, assert_vector_similar
 
 cnt = 0
 
@@ -10,21 +9,22 @@ cnt = 0
 def test_grid2():
     global cnt
 
-    a = pyCubbyFlow.VertexCenteredScalarGrid2(resolution=(3, 4),
-                                              gridSpacing=(1, 2),
-                                              gridOrigin=(7, 5))
+    a = pyCubbyFlow.VertexCenteredScalarGrid2(
+        resolution=(3, 4), gridSpacing=(1, 2), gridOrigin=(7, 5)
+    )
 
     assert a.resolution == (3, 4)
     assert_vector_similar(a.gridOrigin, (7, 5))
     assert_vector_similar(a.gridSpacing, (1, 2))
     assert_bounding_box_similar(
-        a.boundingBox, pyCubbyFlow.BoundingBox2D((7, 5), (10, 13)))
+        a.boundingBox, pyCubbyFlow.BoundingBox2D((7, 5), (10, 13))
+    )
     f = a.cellCenterPosition
     assert_vector_similar(f(0, 0), (7.5, 6))
 
-    b = pyCubbyFlow.VertexCenteredScalarGrid2(resolution=(3, 4),
-                                              gridSpacing=(1, 2),
-                                              gridOrigin=(7, 5))
+    b = pyCubbyFlow.VertexCenteredScalarGrid2(
+        resolution=(3, 4), gridSpacing=(1, 2), gridOrigin=(7, 5)
+    )
     assert a.HasSameShape(b)
 
     def func(idx):
@@ -32,6 +32,7 @@ def test_grid2():
         assert idx[0] >= 0 and idx[0] < 3
         assert idx[1] >= 0 and idx[1] < 4
         cnt += 1
+
     cnt = 0
     a.ForEachCellIndex(func)
     assert cnt == 12
@@ -39,13 +40,11 @@ def test_grid2():
 
 def test_scalar_grid2():
     global cnt
-    a = pyCubbyFlow.VertexCenteredScalarGrid2(resolution=(3, 4),
-                                              gridSpacing=(1, 2),
-                                              gridOrigin=(7, 5))
+    a = pyCubbyFlow.VertexCenteredScalarGrid2(
+        resolution=(3, 4), gridSpacing=(1, 2), gridOrigin=(7, 5)
+    )
 
-    a.Resize(resolution=(12, 7),
-             gridSpacing=(3, 4),
-             gridOrigin=(9, 2))
+    a.Resize(resolution=(12, 7), gridSpacing=(3, 4), gridOrigin=(9, 2))
     assert a.resolution == (12, 7)
     assert_vector_similar(a.gridOrigin, (9, 2))
     assert_vector_similar(a.gridSpacing, (3, 4))
@@ -63,7 +62,7 @@ def test_scalar_grid2():
             assert a[i, j] == 42.0
 
     def func(pt):
-        return pt.x ** 2 + pt.y ** 2
+        return pt.x**2 + pt.y**2
 
     a.Fill(func)
     pos = a.DataPosition()
@@ -79,13 +78,14 @@ def test_scalar_grid2():
             assert_vector_similar(a.GradientAtDataPoint((i, j)), a.Gradient(pt))
             assert a.LaplacianAtDataPoint((i, j)) == a.Laplacian(pt)
 
-    def func(idx):
+    def index_func(idx):
         global cnt
         assert idx[0] >= 0 and idx[0] < a.resolution.x + 1
         assert idx[1] >= 0 and idx[1] < a.resolution.y + 1
         cnt += 1
+
     cnt = 0
-    a.ForEachDataPointIndex(func)
+    a.ForEachDataPointIndex(index_func)
     assert cnt == (a.resolution.x + 1) * (a.resolution.y + 1)
 
     blob = a.Serialize()
@@ -111,31 +111,31 @@ def test_cell_centered_scalar_grid2():
     assert_vector_similar(a.gridOrigin, (7, 5))
     assert_vector_similar(a.gridSpacing, (1, 2))
 
-    a = pyCubbyFlow.VertexCenteredScalarGrid2(resolution=(3, 4),
-                                              gridSpacing=(1, 2),
-                                              gridOrigin=(7, 5))
+    a = pyCubbyFlow.VertexCenteredScalarGrid2(
+        resolution=(3, 4), gridSpacing=(1, 2), gridOrigin=(7, 5)
+    )
     assert a.resolution == (3, 4)
     assert_vector_similar(a.gridOrigin, (7, 5))
     assert_vector_similar(a.gridSpacing, (1, 2))
 
-    a = pyCubbyFlow.VertexCenteredScalarGrid2(resolution=(3, 4),
-                                              domainSizeX=12.0,
-                                              gridOrigin=(7, 5))
+    a = pyCubbyFlow.VertexCenteredScalarGrid2(
+        resolution=(3, 4), domainSizeX=12.0, gridOrigin=(7, 5)
+    )
     assert a.resolution == (3, 4)
     assert_vector_similar(a.gridOrigin, (7, 5))
     assert_vector_similar(a.gridSpacing, (4, 4))
 
     # Properties
-    a = pyCubbyFlow.VertexCenteredScalarGrid2(resolution=(3, 4),
-                                              gridSpacing=(1, 2),
-                                              gridOrigin=(7, 5))
+    a = pyCubbyFlow.VertexCenteredScalarGrid2(
+        resolution=(3, 4), gridSpacing=(1, 2), gridOrigin=(7, 5)
+    )
     assert_vector_similar(a.dataSize, (4, 5))
     assert_vector_similar(a.dataOrigin, (7, 5))
 
     # Modifiers
-    b = pyCubbyFlow.VertexCenteredScalarGrid2(resolution=(6, 3),
-                                              gridSpacing=(5, 9),
-                                              gridOrigin=(1, 2))
+    b = pyCubbyFlow.VertexCenteredScalarGrid2(
+        resolution=(6, 3), gridSpacing=(5, 9), gridOrigin=(1, 2)
+    )
     a.Fill(42.0)
     for j in range(a.resolution.y):
         for i in range(a.resolution.x):
@@ -171,27 +171,29 @@ def test_cell_centered_scalar_grid2():
         for i in range(c.resolution.x):
             assert c[i, j] == 42.0
 
+
 # ------------------------------------------------------------------------------
 
 
 def test_grid3():
     global cnt
 
-    a = pyCubbyFlow.CellCenteredScalarGrid3(resolution=(3, 4, 5),
-                                            gridSpacing=(1, 2, 3),
-                                            gridOrigin=(7, 5, 3))
+    a = pyCubbyFlow.CellCenteredScalarGrid3(
+        resolution=(3, 4, 5), gridSpacing=(1, 2, 3), gridOrigin=(7, 5, 3)
+    )
 
     assert a.resolution == (3, 4, 5)
     assert_vector_similar(a.gridOrigin, (7, 5, 3))
     assert_vector_similar(a.gridSpacing, (1, 2, 3))
     assert_bounding_box_similar(
-        a.boundingBox, pyCubbyFlow.BoundingBox3D((7, 5, 3), (10, 13, 18)))
+        a.boundingBox, pyCubbyFlow.BoundingBox3D((7, 5, 3), (10, 13, 18))
+    )
     f = a.cellCenterPosition
     assert_vector_similar(f(0, 0, 0), (7.5, 6, 4.5))
 
-    b = pyCubbyFlow.CellCenteredScalarGrid3(resolution=(3, 4, 5),
-                                            gridSpacing=(1, 2, 3),
-                                            gridOrigin=(7, 5, 3))
+    b = pyCubbyFlow.CellCenteredScalarGrid3(
+        resolution=(3, 4, 5), gridSpacing=(1, 2, 3), gridOrigin=(7, 5, 3)
+    )
     assert a.HasSameShape(b)
 
     def func(idx):
@@ -200,6 +202,7 @@ def test_grid3():
         assert idx[1] >= 0 and idx[1] < 4
         assert idx[2] >= 0 and idx[2] < 5
         cnt += 1
+
     cnt = 0
     a.ForEachCellIndex(func)
     assert cnt == 60
@@ -207,13 +210,11 @@ def test_grid3():
 
 def test_scalar_grid3():
     global cnt
-    a = pyCubbyFlow.CellCenteredScalarGrid3(resolution=(3, 4, 5),
-                                            gridSpacing=(1, 2, 3),
-                                            gridOrigin=(7, 5, 3))
+    a = pyCubbyFlow.CellCenteredScalarGrid3(
+        resolution=(3, 4, 5), gridSpacing=(1, 2, 3), gridOrigin=(7, 5, 3)
+    )
 
-    a.Resize(resolution=(12, 7, 2),
-             gridSpacing=(3, 4, 5),
-             gridOrigin=(9, 2, 5))
+    a.Resize(resolution=(12, 7, 2), gridSpacing=(3, 4, 5), gridOrigin=(9, 2, 5))
     assert a.resolution == (12, 7, 2)
     assert_vector_similar(a.gridOrigin, (9, 2, 5))
     assert_vector_similar(a.gridSpacing, (3, 4, 5))
@@ -233,7 +234,7 @@ def test_scalar_grid3():
                 assert a[i, j, k] == 42.0
 
     def func(pt):
-        return pt.x ** 2 + pt.y ** 2 + pt.z ** 2
+        return pt.x**2 + pt.y**2 + pt.z**2
 
     a.Fill(func)
     pos = a.DataPosition()
@@ -247,8 +248,7 @@ def test_scalar_grid3():
                 assert acc[k, j, i] == a[i, j, k]
                 # Can't compare to analytic solution because FDM with such a
                 # coarse grid will return inaccurate results by design.
-                assert_vector_similar(
-                    a.GradientAtDataPoint((i, j, k)), a.Gradient(pt))
+                assert_vector_similar(a.GradientAtDataPoint((i, j, k)), a.Gradient(pt))
                 assert a.LaplacianAtDataPoint((i, j, k)) == a.Laplacian(pt)
 
     def func(idx):
@@ -257,6 +257,7 @@ def test_scalar_grid3():
         assert idx[1] >= 0 and idx[1] < a.resolution.y
         assert idx[2] >= 0 and idx[2] < a.resolution.z
         cnt += 1
+
     cnt = 0
     a.ForEachDataPointIndex(func)
     assert cnt == a.resolution.x * a.resolution.y * a.resolution.z
@@ -285,31 +286,31 @@ def test_cell_centered_scalar_grid3():
     assert_vector_similar(a.gridOrigin, (7, 5, 2))
     assert_vector_similar(a.gridSpacing, (1, 2, 3))
 
-    a = pyCubbyFlow.CellCenteredScalarGrid3(resolution=(3, 4, 5),
-                                            gridSpacing=(1, 2, 3),
-                                            gridOrigin=(7, 5, 2))
+    a = pyCubbyFlow.CellCenteredScalarGrid3(
+        resolution=(3, 4, 5), gridSpacing=(1, 2, 3), gridOrigin=(7, 5, 2)
+    )
     assert a.resolution == (3, 4, 5)
     assert_vector_similar(a.gridOrigin, (7, 5, 2))
     assert_vector_similar(a.gridSpacing, (1, 2, 3))
 
-    a = pyCubbyFlow.CellCenteredScalarGrid3(resolution=(3, 4, 5),
-                                            domainSizeX=12.0,
-                                            gridOrigin=(7, 5, 2))
+    a = pyCubbyFlow.CellCenteredScalarGrid3(
+        resolution=(3, 4, 5), domainSizeX=12.0, gridOrigin=(7, 5, 2)
+    )
     assert a.resolution == (3, 4, 5)
     assert_vector_similar(a.gridOrigin, (7, 5, 2))
     assert_vector_similar(a.gridSpacing, (4, 4, 4))
 
     # Properties
-    a = pyCubbyFlow.CellCenteredScalarGrid3(resolution=(3, 4, 5),
-                                            gridSpacing=(1, 2, 3),
-                                            gridOrigin=(7, 5, 2))
+    a = pyCubbyFlow.CellCenteredScalarGrid3(
+        resolution=(3, 4, 5), gridSpacing=(1, 2, 3), gridOrigin=(7, 5, 2)
+    )
     assert_vector_similar(a.dataSize, (3, 4, 5))
     assert_vector_similar(a.dataOrigin, (7.5, 6, 3.5))
 
     # Modifiers
-    b = pyCubbyFlow.CellCenteredScalarGrid3(resolution=(6, 3, 7),
-                                            gridSpacing=(5, 9, 3),
-                                            gridOrigin=(1, 2, 8))
+    b = pyCubbyFlow.CellCenteredScalarGrid3(
+        resolution=(6, 3, 7), gridSpacing=(5, 9, 3), gridOrigin=(1, 2, 8)
+    )
     a.Fill(42.0)
     for k in range(a.resolution.z):
         for j in range(a.resolution.y):

@@ -56,7 +56,7 @@ void SVD(const MatrixMxN<T>& a, MatrixMxN<T>& u, VectorN<T>& w, MatrixMxN<T>& v)
     const int m = static_cast<int>(a.GetRows());
     const int n = static_cast<int>(a.GetCols());
 
-    int i, j = 0, jj = 0, k = 0, l = 0, nm = 0;
+    int i, j, jj = 0, k = 0, l = 0, nm = 0;
     T c = 0, f = 0, h = 0, s = 0, x = 0, y = 0, z = 0;
     T anorm = 0, g = 0, scale = 0;
 
@@ -444,7 +444,7 @@ void SVD(const Matrix<T, M, N>& a, Matrix<T, M, N>& u, Vector<T, N>& w,
     const int m = static_cast<int>(M);
     const int n = static_cast<int>(N);
 
-    int i, its, j = 0, jj = 0, k = 0, l = 0, nm = 0;
+    int i, its, j, jj = 0, k = 0, l = 0, nm = 0;
     T c = 0, f = 0, h = 0, s = 0, x = 0, y = 0, z = 0;
     T anorm = 0, g = 0, scale = 0;
 

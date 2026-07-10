@@ -168,11 +168,9 @@ TEST(Vector2, EqualOperator)
 {
     Vector2F vec, vec2(3.f, 7.f), vec3(3.f, 5.f), vec4(5.f, 1.f);
     vec = vec2;
-    EXPECT_TRUE(vec == vec2);
-    EXPECT_FALSE(vec == vec3);
-    EXPECT_FALSE(vec != vec2);
-    EXPECT_TRUE(vec != vec3);
-    EXPECT_TRUE(vec != vec4);
+    EXPECT_EQ(vec, vec2);
+    EXPECT_NE(vec, vec3);
+    EXPECT_NE(vec, vec4);
 }
 
 TEST(Vector2, MinMaxFunction)

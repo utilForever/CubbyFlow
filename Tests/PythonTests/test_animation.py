@@ -3,6 +3,7 @@ import pyCubbyFlow
 
 class MyAnimation(pyCubbyFlow.Animation):
     def __init__(self):
+        """Initialize the test animation state."""
         self.lastFrame = None
         super(MyAnimation, self).__init__()
 

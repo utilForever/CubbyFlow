@@ -33,6 +33,8 @@
 #include <sys/stat.h>
 #endif
 
+#include <array>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -73,21 +75,25 @@ void SaveVolumeAsVol(const ScalarGrid3Ptr& density, const std::string& rootDir,
         header[2] = 'L';
         header[3] = 3;
 
-        int32_t* encoding = reinterpret_cast<int32_t*>(header + 4);
-        encoding[0] = 1;  // 32-bit float
-        encoding[1] = static_cast<int32_t>(density->DataSize().x);
-        encoding[2] = static_cast<int32_t>(density->DataSize().y);
-        encoding[3] = static_cast<int32_t>(density->DataSize().z);
-        encoding[4] = 1;  // number of channels
+        const std::array<int32_t, 5> encoding = {
+            1,  // 32-bit float
+            static_cast<int32_t>(density->DataSize().x),
+            static_cast<int32_t>(density->DataSize().y),
+            static_cast<int32_t>(density->DataSize().z),
+            1  // number of channels
+        };
+        std::memcpy(header + 4, encoding.data(), sizeof(encoding));
 
         const BoundingBox3D domain = density->GetBoundingBox();
-        float* bbox = reinterpret_cast<float*>(encoding + 5);
-        bbox[0] = static_cast<float>(domain.lowerCorner.x);
-        bbox[1] = static_cast<float>(domain.lowerCorner.y);
-        bbox[2] = static_cast<float>(domain.lowerCorner.z);
-        bbox[3] = static_cast<float>(domain.upperCorner.x);
-        bbox[4] = static_cast<float>(domain.upperCorner.y);
-        bbox[5] = static_cast<float>(domain.upperCorner.z);
+        const std::array<float, 6> bbox = {
+            static_cast<float>(domain.lowerCorner.x),
+            static_cast<float>(domain.lowerCorner.y),
+            static_cast<float>(domain.lowerCorner.z),
+            static_cast<float>(domain.upperCorner.x),
+            static_cast<float>(domain.upperCorner.y),
+            static_cast<float>(domain.upperCorner.z)
+        };
+        std::memcpy(header + 4 + sizeof(encoding), bbox.data(), sizeof(bbox));
 
         file.write(header, sizeof(header));
 

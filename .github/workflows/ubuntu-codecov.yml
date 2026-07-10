@@ -54,7 +54,7 @@ jobs:
         lcov --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch --directory build --capture --output-file build/coverage.info
         lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch --remove build/coverage.info '/usr/*' '*/Tests/*' --output-file build/coverage.info.cleaned
     - name: Upload Coverage Reports to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@04b047e8bb82a0c002c8312c1c880fbc6a999d45 # v5
       with:
         fail_ci_if_error: true
         files: ./build/coverage.info.cleaned

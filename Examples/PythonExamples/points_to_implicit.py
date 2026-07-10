@@ -1,4 +1,11 @@
-from pyCubbyFlow import * # lgtm [py/polluting-import]
+from pyCubbyFlow import (
+    AnisotropicPointsToImplicit2,
+    CellCenteredScalarGrid2,
+    Logging,
+    SPHPointsToImplicit2,
+    SphericalPointsToImplicit2,
+    ZhuBridsonPointsToImplicit2,
+)
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,7 +16,7 @@ def main():
 
     grid = CellCenteredScalarGrid2((512, 512), (1.0 / 512.0, 1.0 / 512.0))
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.set_aspect("equal")
 
     kernel_radius = 0.1

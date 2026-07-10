@@ -4,6 +4,7 @@ import pyCubbyFlow
 
 class MyPhysicsAnimation(pyCubbyFlow.PhysicsAnimation):
     def __init__(self):
+        """Initialize the test animation counters."""
         self.init_data = 0
         self.adv_data = 0
         super(MyPhysicsAnimation, self).__init__()
