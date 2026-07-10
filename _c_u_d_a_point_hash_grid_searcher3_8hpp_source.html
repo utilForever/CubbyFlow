@@ -139,8 +139,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        GetHashKeyFromPosition(float4 position) <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>     <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        <span class="keywordtype">float</span> m_gridSpacing;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        uint3 m_resolution;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        <span class="keywordtype">float</span> m_gridSpacing = 1.0f;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        uint3 m_resolution = make_uint3(1, 1, 1);</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    };</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> Callback&gt;</div>
@@ -257,7 +257,7 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Apr 6 2026 15:46:03 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jul 10 2026 14:15:35 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>
