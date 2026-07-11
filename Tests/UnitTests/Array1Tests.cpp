@@ -140,3 +140,34 @@ TEST(Array1, ParallelForEachIndex)
         EXPECT_EQ(ans, arr1[i]);
     });
 }
+
+TEST(Array1, DeserializeValidatesData)
+{
+    const std::vector<uint8_t> emptyBuffer;
+    const std::vector<uint8_t> truncatedBuffer(1);
+    Array1<double> invalidResult(1, 42.0);
+
+    EXPECT_THROW(Deserialize(emptyBuffer, &invalidResult),
+                 std::invalid_argument);
+    EXPECT_THROW(Deserialize(truncatedBuffer, &invalidResult),
+                 std::invalid_argument);
+    ASSERT_EQ(1u, invalidResult.Length());
+    EXPECT_DOUBLE_EQ(42.0, invalidResult[0]);
+
+    std::vector<uint8_t> buffer;
+    Serialize(static_cast<const uint8_t*>(nullptr), 0, &buffer);
+
+    Array1<double> emptyResult(1, 42.0);
+    Deserialize(buffer, &emptyResult);
+
+    EXPECT_EQ(0u, emptyResult.Length());
+
+    const uint8_t byte = 0;
+    Serialize(&byte, sizeof(byte), &buffer);
+
+    Array1<double> array(1, 42.0);
+
+    EXPECT_THROW(Deserialize(buffer, &array), std::invalid_argument);
+    ASSERT_EQ(1u, array.Length());
+    EXPECT_DOUBLE_EQ(42.0, array[0]);
+}

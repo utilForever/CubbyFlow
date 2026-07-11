@@ -12,6 +12,7 @@
 
 #include <Flatbuffers/generated/FlatData_generated.h>
 
+#include <stdexcept>
 #include <vector>
 
 namespace CubbyFlow
@@ -26,7 +27,9 @@ void Serialize(const uint8_t* data, size_t size, std::vector<uint8_t>* buffer)
     flatbuffers::FlatBufferBuilder builder(1024);
 
     const auto fbsData =
-        fbs::CreateFlatData(builder, builder.CreateVector(data, size));
+        (size == 0)
+            ? fbs::CreateFlatData(builder)
+            : fbs::CreateFlatData(builder, builder.CreateVector(data, size));
 
     builder.Finish(fbsData);
 
@@ -44,8 +47,27 @@ void Deserialize(const std::vector<uint8_t>& buffer, Serializable* serializable)
 
 void Deserialize(const std::vector<uint8_t>& buffer, std::vector<uint8_t>* data)
 {
+    if (buffer.empty())
+    {
+        throw std::invalid_argument{ "Invalid serialized data." };
+    }
+
+    flatbuffers::Verifier verifier(buffer.data(), buffer.size());
+
+    if (!fbs::VerifyFlatDataBuffer(verifier))
+    {
+        throw std::invalid_argument{ "Invalid serialized data." };
+    }
+
     const auto fbsData = fbs::GetFlatData(buffer.data());
-    data->resize(fbsData->data()->size());
-    std::copy(fbsData->data()->begin(), fbsData->data()->end(), data->begin());
+    const auto fbsBytes = fbsData->data();
+
+    if (fbsBytes == nullptr)
+    {
+        data->clear();
+        return;
+    }
+
+    data->assign(fbsBytes->begin(), fbsBytes->end());
 }
 }  // namespace CubbyFlow
