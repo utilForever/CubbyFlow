@@ -348,32 +348,13 @@ class Matrix<T, 3, 1> final : public MatrixExpression<T, 3, 1, Matrix<T, 3, 1>>,
 
     ~Matrix() = default;
 
-    constexpr Matrix(const Matrix& other) : x(other.x), y(other.y), z(other.z)
-    {
-        // Do nothing
-    }
+    constexpr Matrix(const Matrix&) = default;
 
-    constexpr Matrix(Matrix&& other) noexcept
-        : x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z))
-    {
-        // Do nothing
-    }
+    constexpr Matrix(Matrix&&) noexcept = default;
 
-    Matrix& operator=(const Matrix& other)
-    {
-        x = other.x;
-        y = other.y;
-        z = other.z;
-        return *this;
-    }
+    Matrix& operator=(const Matrix&) = default;
 
-    Matrix& operator=(Matrix&& other) noexcept
-    {
-        x = std::move(other.x);
-        y = std::move(other.y);
-        z = std::move(other.z);
-        return *this;
-    }
+    Matrix& operator=(Matrix&&) noexcept = default;
 
     void Fill(const T& val);
 
