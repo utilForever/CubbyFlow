@@ -53,9 +53,9 @@ jobs:
         run: |
           cd build
           GCOV_TOOL="$(command -v gcov-${{ matrix.version }})"
-          lcov --gcov-tool "${GCOV_TOOL}" -c -i -d Tests/UnitTests -o base.info
+          lcov --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch -c -i -d Tests/UnitTests -o base.info
           bin/UnitTests
-          lcov --gcov-tool "${GCOV_TOOL}" -c -d Tests/UnitTests -o test.info
+          lcov --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch -c -d Tests/UnitTests -o test.info
           lcov --gcov-tool "${GCOV_TOOL}" -a base.info -a test.info -o coverage.info
           lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" -r coverage.info '*/Includes/*' -o coverage.info
           lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" -r coverage.info '*/Libraries/*' -o coverage.info
