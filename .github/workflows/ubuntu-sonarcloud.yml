@@ -25,11 +25,11 @@ jobs:
           fetch-depth: 0
       - name: Prepare Sonar scanner
         run: |
-          wget -nv https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-8.0.1.6346-linux-x64.zip
+          wget -nv --max-redirect=0 https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-8.0.1.6346-linux-x64.zip
           unzip -q sonar-scanner-cli-8.0.1.6346-linux-x64.zip
           SONAR_SCANNER_DIR="$(echo sonar-scanner-*-linux-x64)"
           echo "${PWD}/${SONAR_SCANNER_DIR}/bin" >> $GITHUB_PATH
-          wget -nv https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
+          wget -nv --max-redirect=0 https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
           unzip -q build-wrapper-linux-x86.zip
           echo "${PWD}/build-wrapper-linux-x86" >> $GITHUB_PATH
       - name: Install packages
