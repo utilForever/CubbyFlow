@@ -32,7 +32,7 @@ inline void CreateDirectory(const std::string& dirName)
 #ifdef CUBBYFLOW_WINDOWS
         _mkdir(partialDir.c_str());
 #else
-        mkdir(partialDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+        mkdir(partialDir.c_str(), S_IRWXU);
 #endif
     }
 }

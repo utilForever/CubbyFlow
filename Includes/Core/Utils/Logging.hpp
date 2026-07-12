@@ -57,7 +57,7 @@ class Logger final
 
     //! Writes a value to the buffer stream.
     template <typename T>
-    const Logger& operator<<(const T& x) const
+    Logger& operator<<(const T& x)
     {
         m_buffer << x;
         return *this;
@@ -65,7 +65,7 @@ class Logger final
 
  private:
     LogLevel m_level;
-    mutable std::stringstream m_buffer{};
+    std::stringstream m_buffer{};
 };
 
 //! Helper class for logging.

@@ -26,13 +26,13 @@ CUDA_PACKAGES_IN=(
 ## -------------------
 # returns 0 (true) if a >= b
 function version_ge() {
-    [ "$#" != "2" ] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
-    [ "$(printf '%s\n' "$@" | sort -V | head -n 1)" == "$2" ]
+    [[ "$#" != "2" ]] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
+    [[ "$(printf '%s\n' "$@" | sort -V | head -n 1)" == "$2" ]]
 }
 # returns 0 (true) if a > b
 function version_gt() {
-    [ "$#" != "2" ] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
-    if [ "$1" = "$2" ]
+    [[ "$#" != "2" ]] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
+    if [[ "$1" = "$2" ]]
     then
       return 1
     else
@@ -41,13 +41,13 @@ function version_gt() {
 }
 # returns 0 (true) if a <= b
 function version_le() {
-    [ "$#" != "2" ] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
-    [ "$(printf '%s\n' "$@" | sort -V | head -n 1)" == "$1" ]
+    [[ "$#" != "2" ]] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
+    [[ "$(printf '%s\n' "$@" | sort -V | head -n 1)" == "$1" ]]
 }
 # returns 0 (true) if a < b
 function version_lt() {
-    [ "$#" != "2" ] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
-    if [ "$1" = "$2" ]
+    [[ "$#" != "2" ]] && echo "${FUNCNAME[0]} requires exactly 2 arguments." && exit 1
+    if [[ "$1" = "$2" ]]
     then
       return 1
     else
@@ -78,16 +78,16 @@ echo "CUDA_PATCH: ${CUDA_PATCH}"
 echo "UBUNTU_VERSION: ${UBUNTU_VERSION}"
 
 # If we don't know the CUDA_MAJOR or MINOR, error.
-if [ -z "${CUDA_MAJOR}" ] ; then
+if [[ -z "${CUDA_MAJOR}" ]] ; then
     echo "Error: Unknown CUDA Major version. Aborting."
     exit 1
 fi
-if [ -z "${CUDA_MINOR}" ] ; then
+if [[ -z "${CUDA_MINOR}" ]] ; then
     echo "Error: Unknown CUDA Minor version. Aborting."
     exit 1
 fi
 # If we don't know the Ubuntu version, error.
-if [ -z ${UBUNTU_VERSION} ]; then
+if [[ -z "${UBUNTU_VERSION}" ]]; then
     echo "Error: Unknown Ubuntu version. Aborting."
     exit 1
 fi
