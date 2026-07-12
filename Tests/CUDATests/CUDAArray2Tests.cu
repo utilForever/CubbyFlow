@@ -299,7 +299,7 @@ TEST_CASE("[CUDAArray2] - Resize")
         }
 
         arr.Resize(CUDAStdArray<size_t, 2>(8, 13), 4.f);
-        cudaDeviceSynchronize();
+        CHECK_EQ(cudaSuccess, cudaDeviceSynchronize());
         CHECK_EQ(8u, arr.Width());
         CHECK_EQ(13u, arr.Height());
         for (size_t i = 0; i < 8; ++i)
@@ -328,6 +328,7 @@ TEST_CASE("[CUDAArray2] - Resize")
         }
 
         arr.Resize(1, 9, 3.f);
+        CHECK_EQ(cudaSuccess, cudaDeviceSynchronize());
         CHECK_EQ(1u, arr.Width());
         CHECK_EQ(9u, arr.Height());
         for (size_t i = 0; i < 1; ++i)

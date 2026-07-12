@@ -228,6 +228,21 @@ bin/UnitTests
 
 It should show all the tests are passing.
 
+### Building with GPU Acceleration
+
+CubbyFlow's CUDA SPH solvers can be built for either NVIDIA or AMD GPUs. The two backends are mutually exclusive and are selected at configure time. NVIDIA CUDA is enabled by default (`USE_CUDA=ON`), so the build instructions above already produce the CUDA solvers when a CUDA toolkit is found.
+
+To build the same solvers for AMD GPUs with ROCm/HIP instead, configure with `USE_HIP=ON` (which turns `USE_CUDA` off) and, if desired, set the target GPU architecture:
+
+```bash
+mkdir build
+cd build
+cmake .. -DUSE_HIP=ON -DCMAKE_HIP_ARCHITECTURES=gfx90a
+make
+```
+
+`CMAKE_HIP_ARCHITECTURES` accepts a semicolon-separated list of AMD GPU targets (for example `gfx90a` or `gfx1100`); when omitted it defaults to `gfx90a`. A working ROCm installation with HIP is required, and `hipcc` should be on the path so CMake can enable the HIP language.
+
 ### Running Tests
 
 There are two different tests in the codebase including the unit test and manual test. For the detailed instruction on how to run those tests, please checkout the documentation page from [the project website](https://utilforever.github.io/CubbyFlow/Documentation/).

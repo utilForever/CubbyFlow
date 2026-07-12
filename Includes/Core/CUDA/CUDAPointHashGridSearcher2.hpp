@@ -16,7 +16,11 @@
 #include <Core/CUDA/CUDAArrayView.hpp>
 #include <Core/Matrix/Matrix.hpp>
 
+#if defined(__HIP__)
+#include <Core/CUDA/cuda_to_hip.h>
+#else
 #include <cuda_runtime.h>
+#endif
 
 namespace CubbyFlow
 {

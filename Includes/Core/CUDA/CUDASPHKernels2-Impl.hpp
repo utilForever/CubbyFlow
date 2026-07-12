@@ -18,18 +18,18 @@
 
 namespace CubbyFlow
 {
-inline CUDASPHStdKernel2::CUDASPHStdKernel2() : h(0), h2(0), h3(0), h4(0)
+inline CUBBYFLOW_CUDA_HOST_DEVICE CUDASPHStdKernel2::CUDASPHStdKernel2() : h(0), h2(0), h3(0), h4(0)
 {
     // Do nothing
 }
 
-inline CUDASPHStdKernel2::CUDASPHStdKernel2(float kernelRadius)
+inline CUBBYFLOW_CUDA_HOST_DEVICE CUDASPHStdKernel2::CUDASPHStdKernel2(float kernelRadius)
     : h(kernelRadius), h2(h * h), h3(h2 * h), h4(h2 * h2)
 {
     // Do nothing
 }
 
-inline float CUDASPHStdKernel2::operator()(float distance) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float CUDASPHStdKernel2::operator()(float distance) const
 {
     const float distanceSquared = distance * distance;
 
@@ -42,7 +42,7 @@ inline float CUDASPHStdKernel2::operator()(float distance) const
     return 4.0f / (PI_FLOAT * h2) * x * x * x;
 }
 
-inline float CUDASPHStdKernel2::FirstDerivative(float distance) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float CUDASPHStdKernel2::FirstDerivative(float distance) const
 {
     if (distance >= h)
     {
@@ -53,7 +53,7 @@ inline float CUDASPHStdKernel2::FirstDerivative(float distance) const
     return -24.0f * distance / (PI_FLOAT * h4) * x * x;
 }
 
-inline float CUDASPHStdKernel2::SecondDerivative(float distance) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float CUDASPHStdKernel2::SecondDerivative(float distance) const
 {
     float distanceSquared = distance * distance;
 
@@ -66,7 +66,7 @@ inline float CUDASPHStdKernel2::SecondDerivative(float distance) const
     return 24.0f / (PI_FLOAT * h4) * (1 - x) * (5 * x - 1);
 }
 
-inline float2 CUDASPHStdKernel2::Gradient(const float2& point) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float2 CUDASPHStdKernel2::Gradient(const float2& point) const
 {
     float dist = Length(point);
 
@@ -78,25 +78,25 @@ inline float2 CUDASPHStdKernel2::Gradient(const float2& point) const
     return make_float2(0, 0);
 }
 
-inline float2 CUDASPHStdKernel2::Gradient(float distance,
+inline CUBBYFLOW_CUDA_HOST_DEVICE float2 CUDASPHStdKernel2::Gradient(float distance,
                                           const float2& directionToCenter) const
 {
     return -FirstDerivative(distance) * directionToCenter;
 }
 
-inline CUDASPHSpikyKernel2::CUDASPHSpikyKernel2()
+inline CUBBYFLOW_CUDA_HOST_DEVICE CUDASPHSpikyKernel2::CUDASPHSpikyKernel2()
     : h(0), h2(0), h3(0), h4(0), h5(0)
 {
     // Do nothing
 }
 
-inline CUDASPHSpikyKernel2::CUDASPHSpikyKernel2(float kernelRadius)
+inline CUBBYFLOW_CUDA_HOST_DEVICE CUDASPHSpikyKernel2::CUDASPHSpikyKernel2(float kernelRadius)
     : h(kernelRadius), h2(h * h), h3(h2 * h), h4(h2 * h2), h5(h3 * h2)
 {
     // Do nothing
 }
 
-inline float CUDASPHSpikyKernel2::operator()(float distance) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float CUDASPHSpikyKernel2::operator()(float distance) const
 {
     if (distance >= h)
     {
@@ -107,7 +107,7 @@ inline float CUDASPHSpikyKernel2::operator()(float distance) const
     return 10.0f / (PI_FLOAT * h2) * x * x * x;
 }
 
-inline float CUDASPHSpikyKernel2::FirstDerivative(float distance) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float CUDASPHSpikyKernel2::FirstDerivative(float distance) const
 {
     if (distance >= h)
     {
@@ -118,7 +118,7 @@ inline float CUDASPHSpikyKernel2::FirstDerivative(float distance) const
     return -30.0f / (PI_FLOAT * h3) * x * x;
 }
 
-inline float CUDASPHSpikyKernel2::SecondDerivative(float distance) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float CUDASPHSpikyKernel2::SecondDerivative(float distance) const
 {
     if (distance >= h)
     {
@@ -129,7 +129,7 @@ inline float CUDASPHSpikyKernel2::SecondDerivative(float distance) const
     return 60.0f / (PI_FLOAT * h4) * x;
 }
 
-inline float2 CUDASPHSpikyKernel2::Gradient(const float2& point) const
+inline CUBBYFLOW_CUDA_HOST_DEVICE float2 CUDASPHSpikyKernel2::Gradient(const float2& point) const
 {
     float dist = Length(point);
 
@@ -141,7 +141,7 @@ inline float2 CUDASPHSpikyKernel2::Gradient(const float2& point) const
     return make_float2(0, 0);
 }
 
-inline float2 CUDASPHSpikyKernel2::Gradient(
+inline CUBBYFLOW_CUDA_HOST_DEVICE float2 CUDASPHSpikyKernel2::Gradient(
     float distance, const float2& directionToCenter) const
 {
     return -FirstDerivative(distance) * directionToCenter;

@@ -44,9 +44,32 @@ elseif (CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
 
-# CUDA
+# GPU backend selection
+#   USE_CUDA -> NVIDIA CUDA (default)
+#   USE_HIP  -> AMD ROCm/HIP
+# The two are mutually exclusive; enabling HIP turns CUDA off.
 option(USE_CUDA "Use CUDA features" ON)
-set(CUDA_CRT_LINKAGE "dynamic" CACHE STRING 
+option(USE_HIP "Use AMD ROCm/HIP features" OFF)
+if (USE_HIP)
+    set(USE_CUDA OFF)
+    set(CUBBYFLOW_CUDA_TO_HIP_HEADER
+        ${CMAKE_CURRENT_SOURCE_DIR}/Includes/Core/CUDA/cuda_to_hip.h)
+    # enable_language(HIP) honors -DCMAKE_HIP_ARCHITECTURES, else auto-detects the
+    # host GPU, else errors on a no-GPU host.
+    enable_language(HIP)
+    # Force-include the compat shim on every HIP translation unit so the CUDA
+    # spelling resolves regardless of each file's own include order, and so the
+    # device-vs-host __CUDA_ARCH__ idiom is defined before any header uses it.
+    set(CMAKE_HIP_FLAGS
+        "${CMAKE_HIP_FLAGS} -include \"${CUBBYFLOW_CUDA_TO_HIP_HEADER}\"")
+    add_compile_definitions(CUBBYFLOW_USE_CUDA)
+    # The shim defines __CUDACC__ to keep the project's kernel/device guards
+    # visible, but that flips rocThrust's auto-detect to its CUDA backend (which
+    # then includes a CUDA-only CUB header). Pin Thrust to its HIP backend.
+    add_compile_definitions(THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_HIP)
+    message(STATUS "Using HIP: arch ${CMAKE_HIP_ARCHITECTURES}")
+endif()
+set(CUDA_CRT_LINKAGE "dynamic" CACHE STRING
                      "CUDA targets' CRT options. For 'static', use /MT or /MTd. For 'dynamic', use /MD or /MDd")
 if (USE_CUDA)
     set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
@@ -156,7 +179,7 @@ option(BUILD_TESTS "Build the CubbyFlow test programs" ON)
 if (BUILD_TESTS)
     add_subdirectory(Tests/ManualTests)
     add_subdirectory(Tests/UnitTests)
-    if (USE_CUDA)
+    if (USE_CUDA OR USE_HIP)
         add_subdirectory(Tests/CUDATests)
     endif()
     if (NOT BUILD_SONARCLOUD)
@@ -167,7 +190,7 @@ endif()
 
 option(BUILD_EXAMPLES "Build the CubbyFlow example programs" ON)
 if (BUILD_EXAMPLES)
-    if (USE_CUDA)
+    if (USE_CUDA OR USE_HIP)
         add_subdirectory(Examples/CUDASPHSim)
     endif()
     if (NOT BUILD_SONARCLOUD)
@@ -182,7 +205,7 @@ if (BUILD_EXAMPLES)
     endif()
 endif()
 
-if (NOT USE_CUDA AND NOT BUILD_SONARCLOUD)
+if (NOT (USE_CUDA OR USE_HIP) AND NOT BUILD_SONARCLOUD)
     add_subdirectory(Libraries/pybind11)
     if (BUILD_FROM_PIP)
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY})

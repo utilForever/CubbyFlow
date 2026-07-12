@@ -15,7 +15,7 @@
 
 namespace CubbyFlow
 {
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 namespace Internal
 {
 template <typename T, size_t N, size_t I>
@@ -140,7 +140,7 @@ CUDAArray<T, N>::CUDAArray(const CUDAStdArray<size_t, N>& size,
     Base::SetPtrAndSize(m_data.data(), size);
 }
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 template <typename T, size_t N>
 template <typename... Args>
 CUDAArray<T, N>::CUDAArray(size_t nx, Args... args) : CUDAArray{}
@@ -354,7 +354,7 @@ void CUDAArray<T, N>::Fill(const T& val)
     m_data.Fill(val);
 }
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 template <typename T, size_t N>
 void CUDAArray<T, N>::Resize(CUDAStdArray<size_t, N> newSize, const T& initVal)
 {

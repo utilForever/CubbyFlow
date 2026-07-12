@@ -16,13 +16,13 @@
 namespace CubbyFlow
 {
 template <typename T, size_t N>
-CUDAArrayView<T, N>::CUDAArrayView() : Base()
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>::CUDAArrayView() : Base()
 {
     // Do nothing
 }
 
 template <typename T, size_t N>
-CUDAArrayView<T, N>::CUDAArrayView(T* ptr, const CUDAStdArray<size_t, N>& size)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>::CUDAArrayView(T* ptr, const CUDAStdArray<size_t, N>& size)
     : CUDAArrayView{}
 {
     Base::SetPtrAndSize(ptr, size);
@@ -30,7 +30,7 @@ CUDAArrayView<T, N>::CUDAArrayView(T* ptr, const CUDAStdArray<size_t, N>& size)
 
 template <typename T, size_t N>
 template <size_t M>
-CUDAArrayView<T, N>::CUDAArrayView(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>::CUDAArrayView(
     typename std::enable_if<(M == 1), T>::type* ptr, size_t size)
     : CUDAArrayView(ptr, CUDAStdArray<size_t, N>{ size })
 {
@@ -38,33 +38,33 @@ CUDAArrayView<T, N>::CUDAArrayView(
 }
 
 template <typename T, size_t N>
-CUDAArrayView<T, N>::CUDAArrayView(CUDAArray<T, N>& other) : CUDAArrayView{}
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>::CUDAArrayView(CUDAArray<T, N>& other) : CUDAArrayView{}
 {
     Set(other);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<T, N>::CUDAArrayView(const CUDAArrayView& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>::CUDAArrayView(const CUDAArrayView& other)
 {
     Set(other);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<T, N>::CUDAArrayView(CUDAArrayView&& other) noexcept
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>::CUDAArrayView(CUDAArrayView&& other) noexcept
     : CUDAArrayView{}
 {
     *this = std::move(other);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<T, N>& CUDAArrayView<T, N>::operator=(const CUDAArrayView& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>& CUDAArrayView<T, N>::operator=(const CUDAArrayView& other)
 {
     Set(other);
     return *this;
 }
 
 template <typename T, size_t N>
-CUDAArrayView<T, N>& CUDAArrayView<T, N>::operator=(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<T, N>& CUDAArrayView<T, N>::operator=(
     CUDAArrayView&& other) noexcept
 {
     Base::SetPtrAndSize(other.data(), other.Size());
@@ -73,31 +73,31 @@ CUDAArrayView<T, N>& CUDAArrayView<T, N>::operator=(
 }
 
 template <typename T, size_t N>
-void CUDAArrayView<T, N>::Set(CUDAArray<T, N>& other)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayView<T, N>::Set(CUDAArray<T, N>& other)
 {
     Base::SetPtrAndSize(other.data(), other.Size());
 }
 
 template <typename T, size_t N>
-void CUDAArrayView<T, N>::Set(const CUDAArrayView& other)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayView<T, N>::Set(const CUDAArrayView& other)
 {
     Base::SetPtrAndSize(const_cast<T*>(other.data()), other.Size());
 }
 
 template <typename T, size_t N>
-void CUDAArrayView<T, N>::Fill(const T& val)
+CUBBYFLOW_CUDA_HOST void CUDAArrayView<T, N>::Fill(const T& val)
 {
     CUDAFill(data(), val);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>::CUDAArrayView() : Base()
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>::CUDAArrayView() : Base()
 {
     // Do nothing
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>::CUDAArrayView(const T* ptr,
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>::CUDAArrayView(const T* ptr,
                                          const CUDAStdArray<size_t, N>& size)
     : CUDAArrayView{}
 {
@@ -106,7 +106,7 @@ CUDAArrayView<const T, N>::CUDAArrayView(const T* ptr,
 
 template <typename T, size_t N>
 template <size_t M>
-CUDAArrayView<const T, N>::CUDAArrayView(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>::CUDAArrayView(
     const typename std::enable_if<(M == 1), T>::type* ptr, size_t size)
     : CUDAArrayView(ptr, CUDAStdArray<size_t, N>{ size })
 {
@@ -114,33 +114,33 @@ CUDAArrayView<const T, N>::CUDAArrayView(
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>::CUDAArrayView(const CUDAArray<T, N>& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>::CUDAArrayView(const CUDAArray<T, N>& other)
     : CUDAArrayView{}
 {
     Set(other);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>::CUDAArrayView(const CUDAArrayView<T, N>& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>::CUDAArrayView(const CUDAArrayView<T, N>& other)
 {
     Set(other);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>::CUDAArrayView(const CUDAArrayView& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>::CUDAArrayView(const CUDAArrayView& other)
 {
     Set(other);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>::CUDAArrayView(CUDAArrayView&& other) noexcept
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>::CUDAArrayView(CUDAArrayView&& other) noexcept
     : CUDAArrayView{}
 {
     *this = std::move(other);
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
     const CUDAArrayView<T, N>& other)
 {
     Set(other);
@@ -148,7 +148,7 @@ CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
     const CUDAArrayView& other)
 {
     Set(other);
@@ -156,7 +156,7 @@ CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
 }
 
 template <typename T, size_t N>
-CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
     CUDAArrayView&& other) noexcept
 {
     Base::SetPtrAndSize(other.data(), other.Size());
@@ -165,19 +165,19 @@ CUDAArrayView<const T, N>& CUDAArrayView<const T, N>::operator=(
 }
 
 template <typename T, size_t N>
-void CUDAArrayView<const T, N>::Set(const CUDAArray<T, N>& other)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayView<const T, N>::Set(const CUDAArray<T, N>& other)
 {
     Base::SetPtrAndSize(other.data(), other.Size());
 }
 
 template <typename T, size_t N>
-void CUDAArrayView<const T, N>::Set(const CUDAArrayView<T, N>& other)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayView<const T, N>::Set(const CUDAArrayView<T, N>& other)
 {
     Base::SetPtrAndSize(other.data(), other.Size());
 }
 
 template <typename T, size_t N>
-void CUDAArrayView<const T, N>::Set(const CUDAArrayView& other)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayView<const T, N>::Set(const CUDAArrayView& other)
 {
     Base::SetPtrAndSize(other.data(), other.Size());
 }

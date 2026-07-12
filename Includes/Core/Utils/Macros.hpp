@@ -14,17 +14,17 @@
 #ifdef CUBBYFLOW_USE_CUDA
 
 // Host vs. device
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #define CUBBYFLOW_CUDA_DEVICE __device__
 #define CUBBYFLOW_CUDA_HOST __host__
 #else
 #define CUBBYFLOW_CUDA_DEVICE
 #define CUBBYFLOW_CUDA_HOST
-#endif  // __CUDACC__
+#endif  // __CUDACC__ || __HIPCC__
 #define CUBBYFLOW_CUDA_HOST_DEVICE CUBBYFLOW_CUDA_HOST CUBBYFLOW_CUDA_DEVICE
 
 // Alignment
-#ifdef __CUDACC__  // NVCC
+#if defined(__CUDACC__) || defined(__HIPCC__)  // NVCC or hipcc
 #define CUBBYFLOW_CUDA_ALIGN(n) __align__(n)
 #elif defined(__GNUC__)  // GCC
 #define CUBBYFLOW_CUDA_ALIGN(n) __attribute__((aligned(n)))
@@ -32,17 +32,24 @@
 #define CUBBYFLOW_CUDA_ALIGN(n) __declspec(align(n))
 #else
 #error "Don't know how to handle CUBBYFLOW_CUDA_ALIGN"
-#endif  // __CUDACC__
+#endif  // __CUDACC__ || __HIPCC__
 
 // Exception
+// The result is bound to a typed local first: HIP marks the runtime error type
+// nodiscard, so feeding an API call straight into the comparison trips
+// -Werror=unused-value under clang. Binding consumes the value explicitly.
 #define _CUBBYFLOW_CUDA_CHECK(result, msg, file, line)                      \
-    if (result != cudaSuccess)                                              \
     {                                                                       \
-        fprintf(stderr, "CUDA error at %s:%d code=%d (%s) \"%s\" \n", file, \
-                line, static_cast<unsigned int>(result),                    \
-                cudaGetErrorString(result), msg);                           \
-        cudaDeviceReset();                                                  \
-        exit(EXIT_FAILURE);                                                 \
+        cudaError_t _cubbyflow_cuda_err = (result);                         \
+        if (_cubbyflow_cuda_err != cudaSuccess)                             \
+        {                                                                   \
+            fprintf(stderr, "CUDA error at %s:%d code=%d (%s) \"%s\" \n",    \
+                    file, line,                                             \
+                    static_cast<unsigned int>(_cubbyflow_cuda_err),         \
+                    cudaGetErrorString(_cubbyflow_cuda_err), msg);          \
+            static_cast<void>(cudaDeviceReset());                           \
+            exit(EXIT_FAILURE);                                            \
+        }                                                                   \
     }
 
 #define CUBBYFLOW_CUDA_CHECK(expression) \

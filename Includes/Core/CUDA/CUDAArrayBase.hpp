@@ -56,7 +56,63 @@ class CUDAArrayBase
 
     CUBBYFLOW_CUDA_HOST_DEVICE size_t Length() const;
 
-#ifdef __CUDA_ARCH__
+// Device accessors return live references into device memory; host accessors
+// return a copy-back wrapper (or a value). nvcc selects between them with
+// __CUDA_ARCH__ because it does not parse __host__ function bodies during the
+// device pass. clang (HIP) parses both spaces in both passes and resolves these
+// by the __host__/__device__ attributes instead, so under HIP both overload
+// sets must be declared at once and overload resolution picks by call context.
+#if defined(__HIP__)
+    CUBBYFLOW_CUDA_DEVICE Reference At(size_t i);
+    CUBBYFLOW_CUDA_HOST HostReference At(size_t i);
+
+    CUBBYFLOW_CUDA_DEVICE ConstReference At(size_t i) const;
+    CUBBYFLOW_CUDA_HOST ValueType At(size_t i) const;
+
+    template <typename... Args>
+    CUBBYFLOW_CUDA_DEVICE Reference At(size_t i, Args... args);
+    template <typename... Args>
+    CUBBYFLOW_CUDA_HOST HostReference At(size_t i, Args... args);
+
+    template <typename... Args>
+    CUBBYFLOW_CUDA_DEVICE ConstReference At(size_t i, Args... args) const;
+    template <typename... Args>
+    CUBBYFLOW_CUDA_HOST ValueType At(size_t i, Args... args) const;
+
+    CUBBYFLOW_CUDA_DEVICE Reference At(const CUDAStdArray<size_t, N>& idx);
+    CUBBYFLOW_CUDA_HOST HostReference At(const CUDAStdArray<size_t, N>& idx);
+
+    CUBBYFLOW_CUDA_DEVICE ConstReference
+    At(const CUDAStdArray<size_t, N>& idx) const;
+    CUBBYFLOW_CUDA_HOST ValueType At(const CUDAStdArray<size_t, N>& idx) const;
+
+    CUBBYFLOW_CUDA_DEVICE Reference operator[](size_t i);
+    CUBBYFLOW_CUDA_HOST HostReference operator[](size_t i);
+
+    CUBBYFLOW_CUDA_DEVICE ConstReference operator[](size_t i) const;
+    CUBBYFLOW_CUDA_HOST ValueType operator[](size_t i) const;
+
+    template <typename... Args>
+    CUBBYFLOW_CUDA_DEVICE Reference operator()(size_t i, Args... args);
+    template <typename... Args>
+    CUBBYFLOW_CUDA_HOST HostReference operator()(size_t i, Args... args);
+
+    template <typename... Args>
+    CUBBYFLOW_CUDA_DEVICE ConstReference operator()(size_t i,
+                                                    Args... args) const;
+    template <typename... Args>
+    CUBBYFLOW_CUDA_HOST ValueType operator()(size_t i, Args... args) const;
+
+    CUBBYFLOW_CUDA_DEVICE Reference
+    operator()(const CUDAStdArray<size_t, N>& idx);
+    CUBBYFLOW_CUDA_HOST HostReference
+    operator()(const CUDAStdArray<size_t, N>& idx);
+
+    CUBBYFLOW_CUDA_DEVICE ConstReference
+    operator()(const CUDAStdArray<size_t, N>& idx) const;
+    CUBBYFLOW_CUDA_HOST ValueType
+    operator()(const CUDAStdArray<size_t, N>& idx) const;
+#elif defined(__CUDA_ARCH__)
     CUBBYFLOW_CUDA_DEVICE Reference At(size_t i);
 
     CUBBYFLOW_CUDA_DEVICE ConstReference At(size_t i) const;

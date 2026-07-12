@@ -16,14 +16,14 @@
 namespace CubbyFlow
 {
 template <typename T, size_t N, typename Derived>
-size_t CUDAArrayBase<T, N, Derived>::Index(size_t i) const
+CUBBYFLOW_CUDA_HOST_DEVICE size_t CUDAArrayBase<T, N, Derived>::Index(size_t i) const
 {
     return i;
 }
 
 template <typename T, size_t N, typename Derived>
 template <typename... Args>
-size_t CUDAArrayBase<T, N, Derived>::Index(size_t i, Args... args) const
+CUBBYFLOW_CUDA_HOST_DEVICE size_t CUDAArrayBase<T, N, Derived>::Index(size_t i, Args... args) const
 {
     static_assert(sizeof...(args) == N - 1, "Invalid number of indices.");
     return i + m_size[0] * IndexInternal(1, args...);
@@ -31,53 +31,53 @@ size_t CUDAArrayBase<T, N, Derived>::Index(size_t i, Args... args) const
 
 template <typename T, size_t N, typename Derived>
 template <size_t... I>
-size_t CUDAArrayBase<T, N, Derived>::Index(
+CUBBYFLOW_CUDA_HOST_DEVICE size_t CUDAArrayBase<T, N, Derived>::Index(
     const CUDAStdArray<size_t, N>& idx) const
 {
     return IndexInternal(idx, std::make_index_sequence<N>{});
 }
 
 template <typename T, size_t N, typename Derived>
-T* CUDAArrayBase<T, N, Derived>::data()
+CUBBYFLOW_CUDA_HOST_DEVICE T* CUDAArrayBase<T, N, Derived>::data()
 {
     return m_ptr;
 }
 
 template <typename T, size_t N, typename Derived>
-const T* CUDAArrayBase<T, N, Derived>::data() const
+CUBBYFLOW_CUDA_HOST_DEVICE const T* CUDAArrayBase<T, N, Derived>::data() const
 {
     return m_ptr;
 }
 
 template <typename T, size_t N, typename Derived>
-const CUDAStdArray<size_t, N>& CUDAArrayBase<T, N, Derived>::Size() const
+CUBBYFLOW_CUDA_HOST_DEVICE const CUDAStdArray<size_t, N>& CUDAArrayBase<T, N, Derived>::Size() const
 {
     return m_size;
 }
 
 template <typename T, size_t N, typename Derived>
 template <size_t M>
-std::enable_if_t<(M > 0), size_t> CUDAArrayBase<T, N, Derived>::Width() const
+CUBBYFLOW_CUDA_HOST_DEVICE std::enable_if_t<(M > 0), size_t> CUDAArrayBase<T, N, Derived>::Width() const
 {
     return m_size[0];
 }
 
 template <typename T, size_t N, typename Derived>
 template <size_t M>
-std::enable_if_t<(M > 1), size_t> CUDAArrayBase<T, N, Derived>::Height() const
+CUBBYFLOW_CUDA_HOST_DEVICE std::enable_if_t<(M > 1), size_t> CUDAArrayBase<T, N, Derived>::Height() const
 {
     return m_size[1];
 }
 
 template <typename T, size_t N, typename Derived>
 template <size_t M>
-std::enable_if_t<(M > 2), size_t> CUDAArrayBase<T, N, Derived>::Depth() const
+CUBBYFLOW_CUDA_HOST_DEVICE std::enable_if_t<(M > 2), size_t> CUDAArrayBase<T, N, Derived>::Depth() const
 {
     return m_size[2];
 }
 
 template <typename T, size_t N, typename Derived>
-size_t CUDAArrayBase<T, N, Derived>::Length() const
+CUBBYFLOW_CUDA_HOST_DEVICE size_t CUDAArrayBase<T, N, Derived>::Length() const
 {
     size_t l = m_size[0];
 
@@ -89,7 +89,10 @@ size_t CUDAArrayBase<T, N, Derived>::Length() const
     return l;
 }
 
-#ifdef __CUDA_ARCH__
+// See CUDAArrayBase.hpp: under HIP both spaces are defined and resolved by
+// attribute, so emit device definitions when compiling for HIP or in nvcc's
+// device pass, and host definitions when compiling for HIP or nvcc's host pass.
+#if defined(__HIP__) || defined(__CUDA_ARCH__)
 template <typename T, size_t N, typename Derived>
 CUBBYFLOW_CUDA_DEVICE typename CUDAArrayBase<T, N, Derived>::Reference
 CUDAArrayBase<T, N, Derived>::At(size_t i)
@@ -178,23 +181,24 @@ CUDAArrayBase<T, N, Derived>::operator()(
 {
     return At(idx);
 }
-#else
+#endif
+#if defined(__HIP__) || !defined(__CUDA_ARCH__)
 template <typename T, size_t N, typename Derived>
-typename CUDAArrayBase<T, N, Derived>::HostReference
+CUBBYFLOW_CUDA_HOST typename CUDAArrayBase<T, N, Derived>::HostReference
 CUDAArrayBase<T, N, Derived>::At(size_t i)
 {
     return HostReference(m_ptr + i);
 }
 
 template <typename T, size_t N, typename Derived>
-T CUDAArrayBase<T, N, Derived>::At(size_t i) const
+CUBBYFLOW_CUDA_HOST T CUDAArrayBase<T, N, Derived>::At(size_t i) const
 {
     return (T)HostReference(m_ptr + i);
 }
 
 template <typename T, size_t N, typename Derived>
 template <typename... Args>
-typename CUDAArrayBase<T, N, Derived>::HostReference
+CUBBYFLOW_CUDA_HOST typename CUDAArrayBase<T, N, Derived>::HostReference
 CUDAArrayBase<T, N, Derived>::At(size_t i, Args... args)
 {
     return At(Index(i, args...));
@@ -202,40 +206,40 @@ CUDAArrayBase<T, N, Derived>::At(size_t i, Args... args)
 
 template <typename T, size_t N, typename Derived>
 template <typename... Args>
-T CUDAArrayBase<T, N, Derived>::At(size_t i, Args... args) const
+CUBBYFLOW_CUDA_HOST T CUDAArrayBase<T, N, Derived>::At(size_t i, Args... args) const
 {
     return At(Index(i, args...));
 }
 
 template <typename T, size_t N, typename Derived>
-typename CUDAArrayBase<T, N, Derived>::HostReference
+CUBBYFLOW_CUDA_HOST typename CUDAArrayBase<T, N, Derived>::HostReference
 CUDAArrayBase<T, N, Derived>::At(const CUDAStdArray<size_t, N>& idx)
 {
     return At(Index(idx));
 }
 
 template <typename T, size_t N, typename Derived>
-T CUDAArrayBase<T, N, Derived>::At(const CUDAStdArray<size_t, N>& idx) const
+CUBBYFLOW_CUDA_HOST T CUDAArrayBase<T, N, Derived>::At(const CUDAStdArray<size_t, N>& idx) const
 {
     return At(Index(idx));
 }
 
 template <typename T, size_t N, typename Derived>
-typename CUDAArrayBase<T, N, Derived>::HostReference
+CUBBYFLOW_CUDA_HOST typename CUDAArrayBase<T, N, Derived>::HostReference
 CUDAArrayBase<T, N, Derived>::operator[](size_t i)
 {
     return At(i);
 }
 
 template <typename T, size_t N, typename Derived>
-T CUDAArrayBase<T, N, Derived>::operator[](size_t i) const
+CUBBYFLOW_CUDA_HOST T CUDAArrayBase<T, N, Derived>::operator[](size_t i) const
 {
     return At(i);
 }
 
 template <typename T, size_t N, typename Derived>
 template <typename... Args>
-typename CUDAArrayBase<T, N, Derived>::HostReference
+CUBBYFLOW_CUDA_HOST typename CUDAArrayBase<T, N, Derived>::HostReference
 CUDAArrayBase<T, N, Derived>::operator()(size_t i, Args... args)
 {
     return At(i, args...);
@@ -243,20 +247,20 @@ CUDAArrayBase<T, N, Derived>::operator()(size_t i, Args... args)
 
 template <typename T, size_t N, typename Derived>
 template <typename... Args>
-T CUDAArrayBase<T, N, Derived>::operator()(size_t i, Args... args) const
+CUBBYFLOW_CUDA_HOST T CUDAArrayBase<T, N, Derived>::operator()(size_t i, Args... args) const
 {
     return At(i, args...);
 }
 
 template <typename T, size_t N, typename Derived>
-typename CUDAArrayBase<T, N, Derived>::HostReference
+CUBBYFLOW_CUDA_HOST typename CUDAArrayBase<T, N, Derived>::HostReference
 CUDAArrayBase<T, N, Derived>::operator()(const CUDAStdArray<size_t, N>& idx)
 {
     return At(idx);
 }
 
 template <typename T, size_t N, typename Derived>
-T CUDAArrayBase<T, N, Derived>::operator()(
+CUBBYFLOW_CUDA_HOST T CUDAArrayBase<T, N, Derived>::operator()(
     const CUDAStdArray<size_t, N>& idx) const
 {
     return At(idx);
@@ -264,25 +268,25 @@ T CUDAArrayBase<T, N, Derived>::operator()(
 #endif
 
 template <typename T, size_t N, typename Derived>
-CUDAArrayBase<T, N, Derived>::CUDAArrayBase() : m_size{}
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayBase<T, N, Derived>::CUDAArrayBase() : m_size{}
 {
     // Do nothing
 }
 
 template <typename T, size_t N, typename Derived>
-CUDAArrayBase<T, N, Derived>::CUDAArrayBase(const CUDAArrayBase& other)
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayBase<T, N, Derived>::CUDAArrayBase(const CUDAArrayBase& other)
 {
     SetPtrAndSize(other.m_ptr, other.m_size);
 }
 
 template <typename T, size_t N, typename Derived>
-CUDAArrayBase<T, N, Derived>::CUDAArrayBase(CUDAArrayBase&& other) noexcept
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayBase<T, N, Derived>::CUDAArrayBase(CUDAArrayBase&& other) noexcept
 {
     *this = std::move(other);
 }
 
 template <typename T, size_t N, typename Derived>
-CUDAArrayBase<T, N, Derived>& CUDAArrayBase<T, N, Derived>::operator=(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayBase<T, N, Derived>& CUDAArrayBase<T, N, Derived>::operator=(
     const CUDAArrayBase& other)
 {
     SetPtrAndSize(other.m_ptr, other.m_size);
@@ -290,7 +294,7 @@ CUDAArrayBase<T, N, Derived>& CUDAArrayBase<T, N, Derived>::operator=(
 }
 
 template <typename T, size_t N, typename Derived>
-CUDAArrayBase<T, N, Derived>& CUDAArrayBase<T, N, Derived>::operator=(
+CUBBYFLOW_CUDA_HOST_DEVICE CUDAArrayBase<T, N, Derived>& CUDAArrayBase<T, N, Derived>::operator=(
     CUDAArrayBase&& other) noexcept
 {
     SetPtrAndSize(other.m_ptr, other.m_size);
@@ -300,14 +304,14 @@ CUDAArrayBase<T, N, Derived>& CUDAArrayBase<T, N, Derived>::operator=(
 
 template <typename T, size_t N, typename Derived>
 template <typename... Args>
-void CUDAArrayBase<T, N, Derived>::SetPtrAndSize(Pointer ptr, size_t ni,
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayBase<T, N, Derived>::SetPtrAndSize(Pointer ptr, size_t ni,
                                                  Args... args)
 {
     SetPtrAndSize(ptr, CUDAStdArray<size_t, N>{ ni, args... });
 }
 
 template <typename T, size_t N, typename Derived>
-void CUDAArrayBase<T, N, Derived>::SetPtrAndSize(Pointer ptr,
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayBase<T, N, Derived>::SetPtrAndSize(Pointer ptr,
                                                  CUDAStdArray<size_t, N> size)
 {
     m_ptr = ptr;
@@ -315,35 +319,35 @@ void CUDAArrayBase<T, N, Derived>::SetPtrAndSize(Pointer ptr,
 }
 
 template <typename T, size_t N, typename Derived>
-void CUDAArrayBase<T, N, Derived>::SwapPtrAndSize(CUDAArrayBase& other)
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayBase<T, N, Derived>::SwapPtrAndSize(CUDAArrayBase& other)
 {
     CUDASwap(m_ptr, other.m_ptr);
     CUDASwap(m_size, other.m_size);
 }
 
 template <typename T, size_t N, typename Derived>
-void CUDAArrayBase<T, N, Derived>::ClearPtrAndSize()
+CUBBYFLOW_CUDA_HOST_DEVICE void CUDAArrayBase<T, N, Derived>::ClearPtrAndSize()
 {
     SetPtrAndSize(nullptr, CUDAStdArray<size_t, N>{});
 }
 
 template <typename T, size_t N, typename Derived>
 template <typename... Args>
-size_t CUDAArrayBase<T, N, Derived>::IndexInternal(size_t d, size_t i,
+CUBBYFLOW_CUDA_HOST_DEVICE size_t CUDAArrayBase<T, N, Derived>::IndexInternal(size_t d, size_t i,
                                                    Args... args) const
 {
     return i + m_size[d] * IndexInternal(d + 1, args...);
 }
 
 template <typename T, size_t N, typename Derived>
-size_t CUDAArrayBase<T, N, Derived>::IndexInternal(size_t, size_t i) const
+CUBBYFLOW_CUDA_HOST_DEVICE size_t CUDAArrayBase<T, N, Derived>::IndexInternal(size_t, size_t i) const
 {
     return i;
 }
 
 template <typename T, size_t N, typename Derived>
 template <size_t... I>
-size_t CUDAArrayBase<T, N, Derived>::IndexInternal(
+CUBBYFLOW_CUDA_HOST_DEVICE size_t CUDAArrayBase<T, N, Derived>::IndexInternal(
     const CUDAStdArray<size_t, N>& idx, std::index_sequence<I...>) const
 {
     return Index(idx[I]...);

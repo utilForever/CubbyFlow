@@ -15,7 +15,11 @@
 
 #include <Core/Utils/Macros.hpp>
 
+#if defined(__HIP__)
+#include <Core/CUDA/cuda_to_hip.h>
+#else
 #include <cuda_runtime.h>
+#endif
 
 #include <algorithm>
 #include <cstdint>
@@ -37,6 +41,11 @@ inline CUBBYFLOW_CUDA_HOST void CUDAComputeGridSize(unsigned int n,
     numBlocks = CUDADivRoundUp(n, numThreads);
 }
 
+// HIP's vector types (HIP_vector_type) already provide arithmetic, compound
+// assignment, and equality operators for floatN, so these CUDA-side definitions
+// would be ambiguous on ROCm. Only the named helpers below (Dot, Length, To*)
+// are kept on both backends.
+#if !defined(__HIP__)
 inline CUBBYFLOW_CUDA_HOST_DEVICE float2 operator+(float2 a, float2 b)
 {
     return make_float2(a.x + b.x, a.y + b.y);
@@ -341,6 +350,7 @@ inline CUBBYFLOW_CUDA_HOST_DEVICE bool operator==(float4 a, float4 b)
     return std::abs(a.x - b.x) < 1e-6f && std::abs(a.y - b.y) < 1e-6f &&
            std::abs(a.z - b.z) < 1e-6f && std::abs(a.w - b.w) < 1e-6f;
 }
+#endif  // !__HIP__
 
 inline CUBBYFLOW_CUDA_HOST_DEVICE float Dot(float2 a, float2 b)
 {

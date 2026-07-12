@@ -125,8 +125,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	# Scope to the C/C++ host compiler: hipcc/clang rejects -Wno-class-memaccess
+	# as an unknown warning option under -Werror when it sees HIP source files.
 	set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
-		-Wno-class-memaccess	# -> disable warning: error: 'void* memcpy(void*, const void*, size_t)' ... [-Werror=class-memaccess] (caused by imgui)
+		$<$<COMPILE_LANGUAGE:C,CXX>:-Wno-class-memaccess>	# -> disable warning: error: 'void* memcpy(void*, const void*, size_t)' ... [-Werror=class-memaccess] (caused by imgui)
 	)
 endif ()
 
@@ -135,6 +137,27 @@ endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
 		-fsized-deallocation
+	)
+endif ()
+
+# Clang on Windows fires -Wnontrivial-memcall on memset/memcpy calls in the
+# bundled Flatbuffers-generated headers (pre-existing upstream code, not the
+# port). This warning is not emitted by GCC or MSVC, so suppress it on
+# Windows+Clang only.
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND WIN32)
+	set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
+		-Wno-nontrivial-memcall
+	)
+endif ()
+
+# hipcc/clang flags warnings nvcc does not on the existing CUDA sources. These
+# must come AFTER -Werror (clang honors a later -Wno-* over an earlier -Werror),
+# so append them at the end and scope to the HIP language only.
+if (USE_HIP)
+	set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
+		$<$<COMPILE_LANGUAGE:HIP>:-Wno-reorder-ctor>
+		$<$<COMPILE_LANGUAGE:HIP>:-Wno-unused-private-field>
+		$<$<COMPILE_LANGUAGE:HIP>:-Wno-unused-variable>
 	)
 endif ()
 

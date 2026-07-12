@@ -15,7 +15,11 @@
 #include <Core/PointGenerator/GridPointGenerator3.hpp>
 #include <Core/Utils/Serialization.hpp>
 
+#if defined(__HIP__)
+#include <Core/CUDA/cuda_to_hip.h>
+#else
 #include <cuda_runtime.h>
+#endif
 #include <pystring/pystring.h>
 
 #include <fstream>
