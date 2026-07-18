@@ -21,7 +21,7 @@
 #include <sys/stat.h>
 #endif
 
-#include <Clara/include/clara.hpp>
+#include <clara.hpp>
 
 #include <fstream>
 #include <iostream>

@@ -70,9 +70,8 @@ inline void CreateDirectory(const std::string& dirName)
         void SaveData(const ArrayView1<T>& data, const std::string& name)      \
         {                                                                      \
             std::string fileName = GetFullFilePath(name);                      \
-            unsigned int dim[1] = { static_cast<unsigned int>(                 \
-                data.Length()) };                                              \
-            cnpy::npy_save(fileName, data.data(), dim, 1, "w");                \
+            std::vector<size_t> dim = { data.Length() };                       \
+            cnpy::npy_save(fileName, data.data(), dim, "w");                   \
         }                                                                      \
                                                                                \
         template <typename T>                                                  \
@@ -80,17 +79,16 @@ inline void CreateDirectory(const std::string& dirName)
                       const std::string& name)                                 \
         {                                                                      \
             std::string fileName = GetFullFilePath(name);                      \
-            unsigned int dim[1] = { static_cast<unsigned int>(size) };         \
-            cnpy::npy_save(fileName, data.data(), dim, 1, "w");                \
+            std::vector<size_t> dim = { size };                                \
+            cnpy::npy_save(fileName, data.data(), dim, "w");                   \
         }                                                                      \
                                                                                \
         template <typename T>                                                  \
         void SaveData(const ArrayView2<T>& data, const std::string& name)      \
         {                                                                      \
             std::string fileName = GetFullFilePath(name);                      \
-            unsigned int dim[2] = { static_cast<unsigned int>(data.Height()),  \
-                                    static_cast<unsigned int>(data.Width()) }; \
-            cnpy::npy_save(fileName, data.data(), dim, 2, "w");                \
+            std::vector<size_t> dim = { data.Height(), data.Width() };         \
+            cnpy::npy_save(fileName, data.data(), dim, "w");                   \
         }                                                                      \
                                                                                \
         template <typename T>                                                  \
@@ -106,10 +104,9 @@ inline void CreateDirectory(const std::string& dirName)
         void SaveData(const ArrayView3<T>& data, const std::string& name)      \
         {                                                                      \
             std::string fileName = GetFullFilePath(name);                      \
-            unsigned int dim[3] = { static_cast<unsigned int>(data.Depth()),   \
-                                    static_cast<unsigned int>(data.Height()),  \
-                                    static_cast<unsigned int>(data.Width()) }; \
-            cnpy::npy_save(fileName, data.data(), dim, 3, "w");                \
+            std::vector<size_t> dim = { data.Depth(), data.Height(),           \
+                                        data.Width() };                         \
+            cnpy::npy_save(fileName, data.data(), dim, "w");                   \
         }                                                                      \
                                                                                \
         template <typename T>                                                  \

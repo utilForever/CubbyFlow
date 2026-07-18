@@ -3,7 +3,6 @@ set(target TimePerfTests)
 
 # Includes
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(Libraries/googlebenchmark/include)
 
 # Sources
 file(GLOB sources

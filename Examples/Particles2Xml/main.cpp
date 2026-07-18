@@ -14,7 +14,7 @@
 #include <Core/Matrix/Matrix.hpp>
 #include <Core/Utils/Serialization.hpp>
 
-#include <Clara/include/clara.hpp>
+#include <clara.hpp>
 
 #include <fstream>
 #include <iostream>

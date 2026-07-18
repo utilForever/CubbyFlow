@@ -7,7 +7,6 @@ set(root_dir ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 # Includes
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Libraries
 )
 
 # Sources
@@ -42,6 +41,7 @@ set_target_properties(${target}
 # Compile options
 target_compile_options(${target}
     PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/wd4244>
 
     PUBLIC
     ${DEFAULT_COMPILE_OPTIONS}
@@ -56,7 +56,16 @@ target_link_libraries(${target}
     ${DEFAULT_LINKER_OPTIONS}
 	${DEFAULT_LIBRARIES}
 
+    PRIVATE
+    tinyobjloader::tinyobjloader_double
+
     INTERFACE
+)
+
+target_include_directories(${target}
+    SYSTEM
+    PRIVATE
+    ${FLATBUFFERS_INCLUDE_DIR}
 )
 
 # Install

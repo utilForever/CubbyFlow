@@ -12,11 +12,10 @@
 #include <Core/Math/MathUtils.hpp>
 #include <Core/Utils/Parallel.hpp>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#define TINYOBJLOADER_USE_DOUBLE
 #include <tiny_obj_loader.h>
 
 #include <array>
+#include <fstream>
 #include <cassert>
 #include <iostream>
 #include <utility>
