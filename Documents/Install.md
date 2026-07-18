@@ -2,13 +2,12 @@ This document explains how to build, test, and install the SDK.
 
 ## Building the Code
 
-To get started, clone the code from the repository and also download dependent libraries by running
+To get started, clone the code and set `VCPKG_ROOT` to a bootstrapped [vcpkg](https://github.com/microsoft/vcpkg) checkout. CMake will install the dependencies declared in `vcpkg.json`.
 
 ```
 git clone https://github.com/utilForever/CubbyFlow.git
-cd CubbyFlow.git
-git submodule init
-git submodule update
+cd CubbyFlow
+export VCPKG_ROOT=/path/to/vcpkg
 ```
 
 To build the code, a compiler that supports C++17 is required. Platform-specific build instructions are described below.
@@ -246,7 +245,6 @@ bin/UnitTests
 lcov -c -d Tests/UnitTests -o test.info
 lcov -a base.info -a test.info -o coverage.info
 lcov -r coverage.info '/usr/*' -o coverage.info
-lcov -r coverage.info '*/Libraries/*' -o coverage.info
 lcov -r coverage.info '*/Tests/*' -o coverage.info
 lcov -l coverage.info
 genhtml coverage.info -o out
