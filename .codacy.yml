@@ -1,5 +1,4 @@
 exclude_paths:
   - "3RD-PARTY.md"
   - "Documents/doxygen/**"
-  - "Libraries/**"
   - "Sources/Core/Flatbuffers/generated/**"
