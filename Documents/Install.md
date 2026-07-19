@@ -4,7 +4,7 @@ This document explains how to build, test, and install the SDK.
 
 To get started, clone the code and set `VCPKG_ROOT` to a bootstrapped [vcpkg](https://github.com/microsoft/vcpkg) checkout. CMake will install the dependencies declared in `vcpkg.json`.
 
-```
+```sh
 git clone https://github.com/utilForever/CubbyFlow.git
 cd CubbyFlow
 export VCPKG_ROOT=/path/to/vcpkg
