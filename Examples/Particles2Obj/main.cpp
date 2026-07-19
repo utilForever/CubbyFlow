@@ -23,7 +23,7 @@
 #include <Core/Utils/Serialization.hpp>
 
 #include <pystring/pystring.h>
-#include <Clara/include/clara.hpp>
+#include <clara.hpp>
 
 #include <fstream>
 #include <iostream>

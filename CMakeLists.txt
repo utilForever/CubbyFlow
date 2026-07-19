@@ -1,5 +1,17 @@
 # CMake version
 cmake_minimum_required(VERSION 3.31.6 FATAL_ERROR)
+
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    foreach(VCPKG_ENV VCPKG_ROOT VCPKG_INSTALLATION_ROOT)
+        if (DEFINED ENV{${VCPKG_ENV}})
+            set(CMAKE_TOOLCHAIN_FILE
+                "$ENV{${VCPKG_ENV}}/scripts/buildsystems/vcpkg.cmake"
+                CACHE FILEPATH "vcpkg toolchain file")
+            break()
+        endif()
+    endforeach()
+endif()
+
 cmake_policy(SET CMP0063 NEW) # visibility
 if (POLICY CMP0146)
     cmake_policy(SET CMP0146 OLD) # Keep legacy FindCUDA module behavior on newer CMake.
@@ -16,9 +28,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Builds/CMake")
 # Declare project
 project(CubbyFlow)
 
-# Useful paths
-set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Libraries)
-
 # Set output directories
 set(DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
@@ -27,11 +36,24 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 # Includes
 include_directories(Includes)
-include_directories(Libraries)
-include_directories(Libraries/pybind11/include)
-include_directories(Libraries/Clara/include)
-include_directories(Libraries/tinyobj)
-include_directories(Libraries/doctest/doctest)
+
+# Dependencies
+find_package(benchmark CONFIG REQUIRED)
+find_package(doctest CONFIG REQUIRED)
+find_package(GTest CONFIG REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
+find_package(pystring CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
+find_package(cnpy CONFIG REQUIRED)
+find_path(CLARA_INCLUDE_DIR clara.hpp REQUIRED)
+find_path(FLATBUFFERS_INCLUDE_DIR flatbuffers/flatbuffers.h REQUIRED)
+include_directories(${CLARA_INCLUDE_DIR})
+
+add_library(benchmark ALIAS benchmark::benchmark)
+add_library(cnpy ALIAS cnpy::cnpy)
+add_library(gmock ALIAS GTest::gmock)
+add_library(gtest ALIAS GTest::gtest)
+add_library(pystring ALIAS pystring::pystring)
 
 # Set enable output of compile commands during generation
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -137,19 +159,6 @@ set(RESOURCES_OBJS
         ${RESOURCES_DIR}/dragon.obj)
 
 # Project modules
-set(BUILD_GTEST ON CACHE BOOL "" FORCE)
-set(BUILD_GMOCK ON CACHE BOOL "" FORCE)
-find_package(GTest CONFIG)
-if(FALSE) # GTest_FOUND
-    # link_libraries(GTest::gmock GTest::gtest)
-else()
-    set(gtest_force_shared_crt ON CACHE BOOL "")
-    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-    add_subdirectory(Libraries/googletest EXCLUDE_FROM_ALL)
-    add_subdirectory(Libraries/googlebenchmark EXCLUDE_FROM_ALL)
-endif()
-add_subdirectory(Libraries/cnpy)
-add_subdirectory(Libraries/pystring)
 add_subdirectory(Sources/Core)
 
 option(BUILD_TESTS "Build the CubbyFlow test programs" ON)
@@ -183,7 +192,6 @@ if (BUILD_EXAMPLES)
 endif()
 
 if (NOT USE_CUDA AND NOT BUILD_SONARCLOUD)
-    add_subdirectory(Libraries/pybind11)
     if (BUILD_FROM_PIP)
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY})
     endif()

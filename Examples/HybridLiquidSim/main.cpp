@@ -28,7 +28,7 @@
 #include <Core/Utils/Logging.hpp>
 
 #include <pystring/pystring.h>
-#include <Clara/include/clara.hpp>
+#include <clara.hpp>
 
 #ifdef CUBBYFLOW_WINDOWS
 #include <direct.h>

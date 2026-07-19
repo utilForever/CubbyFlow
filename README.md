@@ -33,12 +33,12 @@ Every simulator has both 2-D and 3-D implementations.
 
 ## Quick Start
 
-You will need CMake to build the code. If you're using Windows, you need Visual Studio 2017 in addition to CMake.
+You will need CMake and [vcpkg](https://github.com/microsoft/vcpkg) to build the code. Set `VCPKG_ROOT` to your vcpkg checkout; CubbyFlow's manifest installs the required libraries during CMake configuration. If you're using Windows, you also need Visual Studio.
 
 First, clone the code:
 
-```
-git clone https://github.com/CubbyFlow/CubbyFlow.git --recursive
+```sh
+git clone https://github.com/CubbyFlow/CubbyFlow.git
 cd CubbyFlow
 ```
 
@@ -46,20 +46,16 @@ cd CubbyFlow
 
 For macOS or Linux or Windows Subsystem for Linux (WSL):
 
-```
-mkdir build
-cd build
-cmake ..
-make
+```sh
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+cmake --build build
 ```
 
 For Windows:
 
-```
-mkdir build
-cd build
-cmake .. -G"Visual Studio 15 2017 Win64"
-MSBuild CubbyFlow.sln /p:Configuration=Release
+```bat
+cmake -S . -B build -A x64 -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake"
+cmake --build build --config Release
 ```
 
 Now run some examples, such as:

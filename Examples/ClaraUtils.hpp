@@ -11,7 +11,7 @@
 #ifndef CUBBYFLOW_CLARA_UTILS_HPP
 #define CUBBYFLOW_CLARA_UTILS_HPP
 
-#include <Clara/include/clara.hpp>
+#include <clara.hpp>
 
 #include <string>
 

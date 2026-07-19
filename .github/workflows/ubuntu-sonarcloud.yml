@@ -21,7 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
           fetch-depth: 0
       - name: Prepare Sonar scanner
         run: |
@@ -35,7 +34,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -yq lcov curl
+          sudo apt-get install -yq autoconf autoconf-archive automake libtool lcov curl
       - name: Configure Compiler
         run: |
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -58,7 +57,6 @@ jobs:
           lcov --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch -c -d Tests/UnitTests -o test.info
           lcov --gcov-tool "${GCOV_TOOL}" -a base.info -a test.info -o coverage.info
           lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" -r coverage.info '*/Includes/*' -o coverage.info
-          lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" -r coverage.info '*/Libraries/*' -o coverage.info
           lcov --gcov-tool "${GCOV_TOOL}" -l coverage.info
       - name: SonarCloud Scan
         run: sonar-scanner -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=utilforever-github -Dsonar.login=$SONAR_TOKEN

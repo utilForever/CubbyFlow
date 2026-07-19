@@ -9,7 +9,7 @@
 // property of any third parties.
 
 #define DOCTEST_CONFIG_IMPLEMENT
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include <Core/Utils/Logging.hpp>
 

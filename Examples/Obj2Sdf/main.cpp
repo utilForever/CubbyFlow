@@ -15,7 +15,7 @@
 #include <Core/Geometry/TriangleMeshToSDF.hpp>
 #include <Core/Grid/VertexCenteredScalarGrid.hpp>
 
-#include <Clara/include/clara.hpp>
+#include <clara.hpp>
 
 #include <fstream>
 #include <iostream>

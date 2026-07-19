@@ -1,0 +1,25 @@
+{
+  "name": "cubbyflow",
+  "version-string": "0.0.0",
+  "builtin-baseline": "9432c416e5c543eded0b4df35a4d347b2e669208",
+  "dependencies": [
+    "benchmark",
+    "clara",
+    "cnpy",
+    "doctest",
+    "flatbuffers",
+    "gtest",
+    "pybind11",
+    "pystring",
+    {
+      "name": "tinyobjloader",
+      "features": [ "double" ]
+    }
+  ],
+  "overrides": [
+    {
+      "name": "flatbuffers",
+      "version-string": "1.7.1"
+    }
+  ]
+}

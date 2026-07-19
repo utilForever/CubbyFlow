@@ -1,55 +1,18 @@
-# Target name
-set(target cnpy)
+cmake_minimum_required(VERSION 3.12)
+project(cnpy LANGUAGES CXX)
 
-# Sources
-set(sources
-    ${CMAKE_CURRENT_SOURCE_DIR}/cnpy.cpp
-)
+find_package(ZLIB REQUIRED)
 
-# Build library
-add_library(${target}
-    ${sources}
-)
+add_library(cnpy cnpy.cpp)
+target_link_libraries(cnpy PUBLIC ZLIB::ZLIB)
+target_include_directories(cnpy PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>)
 
-# Project options
-set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cnpy-config.cmake"
+    "include(CMakeFindDependencyMacro)\nfind_dependency(ZLIB)\ninclude(\"\${CMAKE_CURRENT_LIST_DIR}/cnpy-targets.cmake\")\n")
 
-# Compile options
-if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
-        /wd4189       # -> disable warning: 'xxx': local variable is initialized but not referenced
-        /wd4244       # -> disable warning: 'initializing': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
-        /wd4267       # -> disable warning: '=': conversion from 'size_t' to 'int', possible loss of data
-        /wd4996       # -> disable warning: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-        )
-endif ()
-
-# GCC and Clang compiler options
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
-        -Wno-sign-compare
-        -Wno-unused-parameter
-        -Wno-strict-aliasing
-        )
-endif ()
-
-target_compile_options(${target}
-    PRIVATE
-
-    PUBLIC
-    ${DEFAULT_COMPILE_OPTIONS}
-
-    INTERFACE
-)
-
-target_link_libraries(${target}
-    PRIVATE
-
-    PUBLIC
-    ${DEFAULT_LINKER_OPTIONS}
-
-    INTERFACE
-)
+install(TARGETS cnpy EXPORT cnpy-targets)
+install(FILES cnpy.h DESTINATION include/cnpy)
+install(EXPORT cnpy-targets NAMESPACE cnpy:: DESTINATION share/cnpy)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cnpy-config.cmake" DESTINATION share/cnpy)

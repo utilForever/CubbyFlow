@@ -13,7 +13,7 @@ CUBBYFLOW_TESTS(ArrayUtils);
 CUBBYFLOW_BEGIN_TEST_F(ArrayUtils, ExtrapolateToRegion2)
 {
     Array2<double> data(128, 192, 0.0);
-    Array2<char> valid(128, 192, 0);
+    Array2<char> valid(128, 192, char{});
 
     for (int j = 0; j < 192; ++j)
     {
