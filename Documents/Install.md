@@ -17,7 +17,7 @@ To build the code, a compiler that supports C++17 is required. Platform-specific
 CubbyFlow supports OS X 10.12.6 Sierra or higher. Also, Xcode 9 or higher and the command line tools are required for building CubbyFlow. Once ready, install [Homebrew](http://brew.sh) and run the following command line to setup [CMake](https://cmake.org/):
 
 ```
-brew install cmake python
+brew install autoconf autoconf-archive automake cmake libtool python
 ```
 
 > Note that we want `brew` version of Python which is recommended. You can still use macOS's default Python.
@@ -46,7 +46,7 @@ It should show all the tests are passing.
 CubbyFlow supports Ubuntu 17.04 or higher. Using `apt-get`, install required tools and libraries by running,
 
 ```
-sudo apt-get install build-essential python-dev python-pip cmake
+sudo apt-get install autoconf autoconf-archive automake build-essential cmake libtool python-dev python-pip
 ```
 
 This will install GNU compilers, Python, and CMake. Once installed, build the code by running

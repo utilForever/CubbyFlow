@@ -34,7 +34,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -yq lcov curl
+          sudo apt-get install -yq autoconf autoconf-archive automake libtool lcov curl
       - name: Configure Compiler
         run: |
           if [ "${{ matrix.compiler }}" = "gcc" ]; then

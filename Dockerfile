@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y \
     build-essential=12.8ubuntu1.1 \
-    curl git tar unzip zip \
+    autoconf autoconf-archive automake curl git libtool tar unzip zip \
     python3-dev=3.8.2-0ubuntu2 \
     python3-pip=20.0.2-5ubuntu1.11 \
     --no-install-recommends \
