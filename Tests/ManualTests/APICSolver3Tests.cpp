@@ -188,7 +188,7 @@ CUBBYFLOW_BEGIN_TEST_F(APICSolver3, Spherical)
     std::mt19937 rng;
     std::uniform_real_distribution<> dist(0, 1);
 
-    for (int i = 0; i < 8 * resX * resX * resX; ++i)
+    for (size_t i = 0; i < 8 * resX * resX * resX; ++i)
     {
         Vector3D pt{ dist(rng), dist(rng), dist(rng) };
 
@@ -236,7 +236,7 @@ CUBBYFLOW_BEGIN_TEST_F(APICSolver3, SphericalNonVariational)
     std::mt19937 rng;
     std::uniform_real_distribution<> dist(0, 1);
 
-    for (int i = 0; i < 8 * resX * resX * resX; ++i)
+    for (size_t i = 0; i < 8 * resX * resX * resX; ++i)
     {
         Vector3D pt{ dist(rng), dist(rng), dist(rng) };
 
