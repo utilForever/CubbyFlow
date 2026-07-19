@@ -164,7 +164,7 @@ Prerequisites are CMake 3.31.6 or newer, a C++17 compiler, Python for the Python
 Disable examples and CUDA, then build only `UnitTests`:
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=OFF -DBUILD_EXAMPLES=OFF
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=ON
 cmake --build build --target UnitTests --config Release
 ```
 
@@ -220,7 +220,7 @@ python -m pytest Tests/PythonTests/
 ### CUDA tests
 
 ```sh
-cmake -S . -B build-cuda -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON -DBUILD_EXAMPLES=OFF
+cmake -S . -B build-cuda -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=ON
 cmake --build build-cuda --target CUDATests --config Release
 ./build-cuda/bin/CUDATests
 ```
