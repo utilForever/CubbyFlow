@@ -64,10 +64,12 @@ target_link_libraries(${target}
 
 target_include_directories(${target}
     SYSTEM
-    PRIVATE
+    PUBLIC
     ${FLATBUFFERS_INCLUDE_DIR}
 )
 
 # Install
 install(TARGETS ${target} DESTINATION lib)
 install(DIRECTORY ${header_dir} DESTINATION include)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Flatbuffers/generated
+    DESTINATION include/Flatbuffers)
