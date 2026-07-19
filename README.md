@@ -37,7 +37,7 @@ You will need CMake and [vcpkg](https://github.com/microsoft/vcpkg) to build the
 
 First, clone the code:
 
-```
+```sh
 git clone https://github.com/CubbyFlow/CubbyFlow.git
 cd CubbyFlow
 ```
@@ -46,14 +46,14 @@ cd CubbyFlow
 
 For macOS or Linux or Windows Subsystem for Linux (WSL):
 
-```
+```sh
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 cmake --build build
 ```
 
 For Windows:
 
-```
+```bat
 cmake -S . -B build -A x64 -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake"
 cmake --build build --config Release
 ```
