@@ -92,7 +92,8 @@ To learn how to build, test, and install the SDK, please check out [INSTALL.md](
 
 ## Documentation
 
-All the documentations for the framework can be found from [the project website](https://utilforever.github.io/CubbyFlow/) incluing the API reference.
+Project design is described in [ARCHITECTURE.md](./ARCHITECTURE.md). Generated
+API reference and other documentation are available on [the project website](https://utilforever.github.io/CubbyFlow/).
 
 ## Examples
 
