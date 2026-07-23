@@ -155,9 +155,8 @@ template <size_t N>
 std::shared_ptr<SurfaceToImplicit<N>>
 SurfaceToImplicit<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<SurfaceToImplicit>(
-        new SurfaceToImplicit{ m_surface, m_transform, m_isNormalFlipped },
-        [](SurfaceToImplicit* obj) { delete obj; });
+    return std::make_shared<SurfaceToImplicit>(m_surface, m_transform,
+                                               m_isNormalFlipped);
 }
 
 template class SurfaceToImplicit<2>;

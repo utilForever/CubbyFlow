@@ -350,8 +350,7 @@ PICSolver3 PICSolver3::Builder::Build() const
 
 PICSolver3Ptr PICSolver3::Builder::MakeShared() const
 {
-    return std::shared_ptr<PICSolver3>(
-        new PICSolver3{ m_resolution, GetGridSpacing(), m_gridOrigin },
-        [](PICSolver3* obj) { delete obj; });
+    return std::make_shared<PICSolver3>(m_resolution, GetGridSpacing(),
+                                        m_gridOrigin);
 }
 }  // namespace CubbyFlow

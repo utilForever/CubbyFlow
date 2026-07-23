@@ -58,9 +58,7 @@ template <size_t N>
 std::shared_ptr<ConstantScalarField<N>>
 ConstantScalarField<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<ConstantScalarField>(
-        new ConstantScalarField{ m_value },
-        [](ConstantScalarField* obj) { delete obj; });
+    return std::make_shared<ConstantScalarField>(m_value);
 }
 
 template class ConstantScalarField<2>;

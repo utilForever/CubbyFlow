@@ -170,10 +170,8 @@ Plane<N> Plane<N>::Builder::Build() const
 template <size_t N>
 std::shared_ptr<Plane<N>> Plane<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<Plane<N>>{
-        new Plane<N>(m_normal, m_point, m_transform, m_isNormalFlipped),
-        [](Plane<N>* obj) { delete obj; }
-    };
+    return std::make_shared<Plane<N>>(m_normal, m_point, m_transform,
+                                      m_isNormalFlipped);
 }
 
 template class Plane<2>;

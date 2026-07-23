@@ -111,9 +111,7 @@ void CellCenteredVectorGrid<N>::Fill(
 template <size_t N>
 std::shared_ptr<VectorGrid<N>> CellCenteredVectorGrid<N>::Clone() const
 {
-    return std::shared_ptr<CellCenteredVectorGrid<N>>(
-        new CellCenteredVectorGrid<N>{ *this },
-        [](CellCenteredVectorGrid<N>* obj) { delete obj; });
+    return std::make_shared<CellCenteredVectorGrid<N>>(*this);
 }
 
 template <size_t N>
@@ -172,20 +170,16 @@ std::shared_ptr<VectorGrid<N>> CellCenteredVectorGrid<N>::Builder::Build(
     const Vector<double, N>& gridOrigin,
     const Vector<double, N>& initialVal) const
 {
-    return std::shared_ptr<CellCenteredVectorGrid>(
-        new CellCenteredVectorGrid{ resolution, gridSpacing, gridOrigin,
-                                    initialVal },
-        [](CellCenteredVectorGrid* obj) { delete obj; });
+    return std::make_shared<CellCenteredVectorGrid>(resolution, gridSpacing,
+                                                    gridOrigin, initialVal);
 }
 
 template <size_t N>
 std::shared_ptr<CellCenteredVectorGrid<N>>
 CellCenteredVectorGrid<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<CellCenteredVectorGrid<N>>(
-        new CellCenteredVectorGrid{ m_resolution, m_gridSpacing, m_gridOrigin,
-                                    m_initialVal },
-        [](CellCenteredVectorGrid* obj) { delete obj; });
+    return std::make_shared<CellCenteredVectorGrid>(m_resolution, m_gridSpacing,
+                                                    m_gridOrigin, m_initialVal);
 }
 
 template class CellCenteredVectorGrid<2>;

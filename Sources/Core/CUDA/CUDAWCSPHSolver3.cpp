@@ -53,10 +53,8 @@ CUDAWCSPHSolver3 CUDAWCSPHSolver3::Builder::Build() const
 
 CUDAWCSPHSolver3Ptr CUDAWCSPHSolver3::Builder::MakeShared() const
 {
-    return std::shared_ptr<CUDAWCSPHSolver3>(
-        new CUDAWCSPHSolver3{ m_targetDensity, m_targetSpacing,
-                              m_relativeKernelRadius },
-        [](const CUDAWCSPHSolver3* obj) { delete obj; });
+    return std::make_shared<CUDAWCSPHSolver3>(m_targetDensity, m_targetSpacing,
+                                              m_relativeKernelRadius);
 }
 
 #endif

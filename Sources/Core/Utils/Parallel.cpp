@@ -31,7 +31,7 @@ void SetMaxNumberOfThreads(unsigned int numThreads)
 
     if (!tbbInit.get())
     {
-        tbbInit.reset(new tbb::task_scheduler_init(numThreads));
+        tbbInit = std::make_unique<tbb::task_scheduler_init>(numThreads);
     }
     else
     {

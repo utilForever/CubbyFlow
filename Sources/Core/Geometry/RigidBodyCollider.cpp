@@ -80,9 +80,8 @@ template <size_t N>
 std::shared_ptr<RigidBodyCollider<N>>
 RigidBodyCollider<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<RigidBodyCollider>(
-        new RigidBodyCollider{ m_surface, m_linearVelocity, m_angularVelocity },
-        [](RigidBodyCollider* obj) { delete obj; });
+    return std::make_shared<RigidBodyCollider>(m_surface, m_linearVelocity,
+                                               m_angularVelocity);
 }
 
 template class RigidBodyCollider<2>;

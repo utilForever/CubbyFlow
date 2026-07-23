@@ -15,8 +15,8 @@
 #include <tiny_obj_loader.h>
 
 #include <array>
-#include <fstream>
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <utility>
 
@@ -970,10 +970,8 @@ TriangleMesh3 TriangleMesh3::Builder::Build() const
 
 TriangleMesh3Ptr TriangleMesh3::Builder::MakeShared() const
 {
-    return std::shared_ptr<TriangleMesh3>(
-        new TriangleMesh3{ m_points, m_normals, m_uvs, m_pointIndices,
-                           m_normalIndices, m_uvIndices, m_transform,
-                           m_isNormalFlipped },
-        [](TriangleMesh3* obj) { delete obj; });
+    return std::make_shared<TriangleMesh3>(
+        m_points, m_normals, m_uvs, m_pointIndices, m_normalIndices,
+        m_uvIndices, m_transform, m_isNormalFlipped);
 }
 }  // namespace CubbyFlow

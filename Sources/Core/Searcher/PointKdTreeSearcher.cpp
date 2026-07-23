@@ -77,9 +77,7 @@ bool PointKdTreeSearcher<N>::HasNearbyPoint(const Vector<double, N>& origin,
 template <size_t N>
 std::shared_ptr<PointNeighborSearcher<N>> PointKdTreeSearcher<N>::Clone() const
 {
-    return std::shared_ptr<PointKdTreeSearcher>(
-        new PointKdTreeSearcher{ *this },
-        [](PointKdTreeSearcher* obj) { delete obj; });
+    return std::make_shared<PointKdTreeSearcher>(*this);
 }
 
 template <size_t N>
@@ -270,8 +268,7 @@ template <size_t N>
 std::shared_ptr<PointKdTreeSearcher<N>>
 PointKdTreeSearcher<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointKdTreeSearcher>(
-        new PointKdTreeSearcher, [](PointKdTreeSearcher* obj) { delete obj; });
+    return std::make_shared<PointKdTreeSearcher>();
 }
 
 template <size_t N>

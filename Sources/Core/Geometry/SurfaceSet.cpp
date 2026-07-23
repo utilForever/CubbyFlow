@@ -359,9 +359,8 @@ SurfaceSet<N> SurfaceSet<N>::Builder::Build() const
 template <size_t N>
 std::shared_ptr<SurfaceSet<N>> SurfaceSet<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<SurfaceSet>{ new SurfaceSet(m_surfaces, m_transform,
-                                                       m_isNormalFlipped),
-                                        [](SurfaceSet* obj) { delete obj; } };
+    return std::make_shared<SurfaceSet>(m_surfaces, m_transform,
+                                        m_isNormalFlipped);
 }
 
 template class SurfaceSet<2>;

@@ -273,11 +273,9 @@ template <size_t N>
 std::shared_ptr<CustomImplicitSurface<N>>
 CustomImplicitSurface<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<CustomImplicitSurface>(
-        new CustomImplicitSurface{
-            m_func, m_domain, m_resolution, m_rayMarchingResolution,
-            m_maxNumOfIterations, m_transform, m_isNormalFlipped },
-        [](CustomImplicitSurface* obj) { delete obj; });
+    return std::make_shared<CustomImplicitSurface>(
+        m_func, m_domain, m_resolution, m_rayMarchingResolution,
+        m_maxNumOfIterations, m_transform, m_isNormalFlipped);
 }
 
 template class CustomImplicitSurface<2>;

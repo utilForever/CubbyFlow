@@ -180,10 +180,8 @@ PointParticleEmitter2 PointParticleEmitter2::Builder::Build() const
 
 PointParticleEmitter2Ptr PointParticleEmitter2::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointParticleEmitter2>(
-        new PointParticleEmitter2(
-            m_origin, m_direction, m_speed, m_spreadAngleInDegrees,
-            m_maxNumberOfNewParticlesPerSecond, m_maxNumberOfParticles, m_seed),
-        [](PointParticleEmitter2* obj) { delete obj; });
+    return std::make_shared<PointParticleEmitter2>(
+        m_origin, m_direction, m_speed, m_spreadAngleInDegrees,
+        m_maxNumberOfNewParticlesPerSecond, m_maxNumberOfParticles, m_seed);
 }
 }  // namespace CubbyFlow

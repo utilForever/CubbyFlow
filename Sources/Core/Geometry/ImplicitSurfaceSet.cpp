@@ -410,9 +410,8 @@ template <size_t N>
 std::shared_ptr<ImplicitSurfaceSet<N>>
 ImplicitSurfaceSet<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<ImplicitSurfaceSet>(
-        new ImplicitSurfaceSet{ m_surfaces, m_transform, m_isNormalFlipped },
-        [](ImplicitSurfaceSet* obj) { delete obj; });
+    return std::make_shared<ImplicitSurfaceSet>(m_surfaces, m_transform,
+                                                m_isNormalFlipped);
 }
 
 template class ImplicitSurfaceSet<2>;

@@ -101,9 +101,7 @@ template <size_t N>
 std::shared_ptr<PointNeighborSearcher<N>> PointSimpleListSearcher<N>::Clone()
     const
 {
-    return std::shared_ptr<PointSimpleListSearcher>(
-        new PointSimpleListSearcher{ *this },
-        [](PointSimpleListSearcher* obj) { delete obj; });
+    return std::make_shared<PointSimpleListSearcher>(*this);
 }
 
 template <size_t N>
@@ -238,9 +236,7 @@ template <size_t N>
 std::shared_ptr<PointSimpleListSearcher<N>>
 PointSimpleListSearcher<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointSimpleListSearcher>(
-        new PointSimpleListSearcher{},
-        [](PointSimpleListSearcher* obj) { delete obj; });
+    return std::make_shared<PointSimpleListSearcher>();
 }
 
 template <size_t N>

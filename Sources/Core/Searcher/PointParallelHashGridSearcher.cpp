@@ -306,9 +306,7 @@ template <size_t N>
 std::shared_ptr<PointNeighborSearcher<N>>
 PointParallelHashGridSearcher<N>::Clone() const
 {
-    return std::shared_ptr<PointParallelHashGridSearcher>(
-        new PointParallelHashGridSearcher{ *this },
-        [](PointParallelHashGridSearcher* obj) { delete obj; });
+    return std::make_shared<PointParallelHashGridSearcher>(*this);
 }
 
 template <size_t N>
@@ -609,9 +607,8 @@ template <size_t N>
 std::shared_ptr<PointParallelHashGridSearcher<N>>
 PointParallelHashGridSearcher<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointParallelHashGridSearcher>(
-        new PointParallelHashGridSearcher{ m_resolution, m_gridSpacing },
-        [](PointParallelHashGridSearcher* obj) { delete obj; });
+    return std::make_shared<PointParallelHashGridSearcher>(m_resolution,
+                                                           m_gridSpacing);
 }
 
 template <size_t N>

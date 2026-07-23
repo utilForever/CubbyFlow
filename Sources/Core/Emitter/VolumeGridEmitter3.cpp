@@ -210,8 +210,6 @@ VolumeGridEmitter3 VolumeGridEmitter3::Builder::Build() const
 
 VolumeGridEmitter3Ptr VolumeGridEmitter3::Builder::MakeShared() const
 {
-    return std::shared_ptr<VolumeGridEmitter3>(
-        new VolumeGridEmitter3(m_sourceRegion, m_isOneShot),
-        [](VolumeGridEmitter3* obj) { delete obj; });
+    return std::make_shared<VolumeGridEmitter3>(m_sourceRegion, m_isOneShot);
 }
 }  // namespace CubbyFlow

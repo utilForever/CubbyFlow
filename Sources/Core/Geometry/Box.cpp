@@ -236,9 +236,8 @@ Box<N> Box<N>::Builder::Build() const
 template <size_t N>
 std::shared_ptr<Box<N>> Box<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<Box<N>>{ new Box<N>(m_lowerCorner, m_upperCorner,
-                                               m_transform, m_isNormalFlipped),
-                                    [](Box<N>* obj) { delete obj; } };
+    return std::make_shared<Box<N>>(m_lowerCorner, m_upperCorner, m_transform,
+                                    m_isNormalFlipped);
 }
 
 template class Box<2>;

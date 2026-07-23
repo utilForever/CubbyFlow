@@ -222,8 +222,7 @@ GridSmokeSolver2 GridSmokeSolver2::Builder::Build() const
 
 GridSmokeSolver2Ptr GridSmokeSolver2::Builder::MakeShared() const
 {
-    return std::shared_ptr<GridSmokeSolver2>(
-        new GridSmokeSolver2{ m_resolution, GetGridSpacing(), m_gridOrigin },
-        [](GridSmokeSolver2* obj) { delete obj; });
+    return std::make_shared<GridSmokeSolver2>(m_resolution, GetGridSpacing(),
+                                              m_gridOrigin);
 }
 }  // namespace CubbyFlow

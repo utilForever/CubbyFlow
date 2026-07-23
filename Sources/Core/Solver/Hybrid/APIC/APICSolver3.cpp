@@ -236,8 +236,7 @@ APICSolver3 APICSolver3::Builder::Build() const
 
 APICSolver3Ptr APICSolver3::Builder::MakeShared() const
 {
-    return std::shared_ptr<APICSolver3>(
-        new APICSolver3{ m_resolution, GetGridSpacing(), m_gridOrigin },
-        [](APICSolver3* obj) { delete obj; });
+    return std::make_shared<APICSolver3>(m_resolution, GetGridSpacing(),
+                                         m_gridOrigin);
 }
 }  // namespace CubbyFlow

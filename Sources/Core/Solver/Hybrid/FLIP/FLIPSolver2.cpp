@@ -111,8 +111,7 @@ FLIPSolver2 FLIPSolver2::Builder::Build() const
 
 FLIPSolver2Ptr FLIPSolver2::Builder::MakeShared() const
 {
-    return std::shared_ptr<FLIPSolver2>(
-        new FLIPSolver2{ m_resolution, GetGridSpacing(), m_gridOrigin },
-        [](FLIPSolver2* obj) { delete obj; });
+    return std::make_shared<FLIPSolver2>(m_resolution, GetGridSpacing(),
+                                         m_gridOrigin);
 }
 }  // namespace CubbyFlow
