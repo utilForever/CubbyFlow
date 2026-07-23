@@ -240,7 +240,7 @@ PointHashGridSearcher<N>::GetBuilder()
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointHashGridSearcher<N>::Serialize(
     const PointHashGridSearcher<2>& searcher, std::vector<uint8_t>* buffer)
 {
@@ -294,7 +294,7 @@ void PointHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointHashGridSearcher<N>::Serialize(
     const PointHashGridSearcher<3>& searcher, std::vector<uint8_t>* buffer)
 {
@@ -348,7 +348,7 @@ void PointHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointHashGridSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
                                            PointHashGridSearcher<2>& searcher)
 {
@@ -390,7 +390,7 @@ void PointHashGridSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointHashGridSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
                                            PointHashGridSearcher<3>& searcher)
 {

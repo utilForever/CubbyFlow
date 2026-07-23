@@ -131,7 +131,7 @@ PointSimpleListSearcher<N>::GetBuilder()
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointSimpleListSearcher<N>::Serialize(
     const PointSimpleListSearcher<2>& searcher, std::vector<uint8_t>* buffer)
 {
@@ -163,7 +163,7 @@ void PointSimpleListSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointSimpleListSearcher<N>::Serialize(
     const PointSimpleListSearcher<3>& searcher, std::vector<uint8_t>* buffer)
 {
@@ -194,7 +194,7 @@ void PointSimpleListSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointSimpleListSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer, PointSimpleListSearcher<2>& searcher)
 {
@@ -213,7 +213,7 @@ void PointSimpleListSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointSimpleListSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer, PointSimpleListSearcher<3>& searcher)
 {

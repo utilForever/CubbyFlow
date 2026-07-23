@@ -345,7 +345,7 @@ PointParallelHashGridSearcher<N>::GetBuilder()
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointParallelHashGridSearcher<N>::Serialize(
     const PointParallelHashGridSearcher<2>& searcher,
     std::vector<uint8_t>* buffer)
@@ -403,7 +403,7 @@ void PointParallelHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointParallelHashGridSearcher<N>::Serialize(
     const PointParallelHashGridSearcher<3>& searcher,
     std::vector<uint8_t>* buffer)
@@ -462,7 +462,7 @@ void PointParallelHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointParallelHashGridSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer,
     PointParallelHashGridSearcher<2>& searcher)
@@ -523,7 +523,7 @@ void PointParallelHashGridSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointParallelHashGridSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer,
     PointParallelHashGridSearcher<3>& searcher)

@@ -511,9 +511,7 @@ Value ParallelReduce(IndexType beginIndex, IndexType endIndex,
 }
 
 template <typename RandomIterator>
-#if defined(__cpp_concepts) && __cpp_concepts >= 201907L
-    requires std::random_access_iterator<RandomIterator>
-#endif
+CUBBYFLOW_REQUIRES(std::random_access_iterator<RandomIterator>)
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   ExecutionPolicy policy)
 {
@@ -524,9 +522,7 @@ void ParallelSort(RandomIterator begin, RandomIterator end,
 }
 
 template <typename RandomIterator, typename CompareFunction>
-#if defined(__cpp_concepts) && __cpp_concepts >= 201907L
-    requires std::random_access_iterator<RandomIterator>
-#endif
+CUBBYFLOW_REQUIRES(std::random_access_iterator<RandomIterator>)
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   CompareFunction compareFunction, ExecutionPolicy policy)
 {

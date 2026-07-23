@@ -100,7 +100,7 @@ void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer)
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<2>& searcher,
                                        std::vector<uint8_t>* buffer)
 {
@@ -144,7 +144,7 @@ void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<2>& searcher,
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<3>& searcher,
                                        std::vector<uint8_t>* buffer)
 {
@@ -188,7 +188,7 @@ void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<3>& searcher,
 
 template <size_t N>
 template <size_t M>
-    requires(M == 2)
+CUBBYFLOW_REQUIRES(M == 2)
 void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
                                          PointKdTreeSearcher<2>& searcher)
 {
@@ -223,7 +223,7 @@ void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
 
 template <size_t N>
 template <size_t M>
-    requires(M == 3)
+CUBBYFLOW_REQUIRES(M == 3)
 void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
                                          PointKdTreeSearcher<3>& searcher)
 {

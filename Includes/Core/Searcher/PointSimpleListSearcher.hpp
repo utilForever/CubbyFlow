@@ -12,6 +12,7 @@
 #define CUBBYFLOW_POINT_SIMPLE_LIST_SEARCHER_HPP
 
 #include <Core/Searcher/PointNeighborSearcher.hpp>
+#include <Core/Utils/Macros.hpp>
 
 namespace CubbyFlow
 {
@@ -112,22 +113,22 @@ class PointSimpleListSearcher final : public PointNeighborSearcher<N>
 
  private:
     template <size_t M = N>
-        requires(M == 2)
+    CUBBYFLOW_REQUIRES(M == 2)
     static void Serialize(const PointSimpleListSearcher<2>& searcher,
                           std::vector<uint8_t>* buffer);
 
     template <size_t M = N>
-        requires(M == 3)
+    CUBBYFLOW_REQUIRES(M == 3)
     static void Serialize(const PointSimpleListSearcher<3>& searcher,
                           std::vector<uint8_t>* buffer);
 
     template <size_t M = N>
-        requires(M == 2)
+    CUBBYFLOW_REQUIRES(M == 2)
     static void Deserialize(const std::vector<uint8_t>& buffer,
                             PointSimpleListSearcher<2>& searcher);
 
     template <size_t M = N>
-        requires(M == 3)
+    CUBBYFLOW_REQUIRES(M == 3)
     static void Deserialize(const std::vector<uint8_t>& buffer,
                             PointSimpleListSearcher<3>& searcher);
 
