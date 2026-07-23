@@ -112,6 +112,6 @@ TEST(VolumeParticleEmitter2, Builder)
     for (size_t i = 0; i < particles->NumberOfParticles(); ++i)
     {
         EXPECT_VECTOR2_EQ(particles->Positions()[i],
-                          sharedParticles->Positions()[i]);
+                          sharedParticles->Positions()[i])
     }
 }
