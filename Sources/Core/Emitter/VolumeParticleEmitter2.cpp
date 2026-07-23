@@ -416,6 +416,6 @@ VolumeParticleEmitter2Ptr VolumeParticleEmitter2::Builder::MakeShared() const
     return std::make_shared<VolumeParticleEmitter2>(
         m_implicitSurface, m_maxRegion, m_spacing, m_initialVel, m_linearVel,
         m_angularVel, m_maxNumberOfParticles, m_jitter, m_isOneShot,
-        m_allowOverlapping);
+        m_allowOverlapping, m_seed);
 }
 }  // namespace CubbyFlow
