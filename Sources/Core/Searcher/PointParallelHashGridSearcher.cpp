@@ -345,7 +345,8 @@ PointParallelHashGridSearcher<N>::GetBuilder()
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Serialize(
+    requires(M == 2)
+void PointParallelHashGridSearcher<N>::Serialize(
     const PointParallelHashGridSearcher<2>& searcher,
     std::vector<uint8_t>* buffer)
 {
@@ -402,7 +403,8 @@ std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointParallelHashGridSearcher<N>::Serialize(
+    requires(M == 3)
+void PointParallelHashGridSearcher<N>::Serialize(
     const PointParallelHashGridSearcher<3>& searcher,
     std::vector<uint8_t>* buffer)
 {
@@ -460,7 +462,8 @@ std::enable_if_t<M == 3, void> PointParallelHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Deserialize(
+    requires(M == 2)
+void PointParallelHashGridSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer,
     PointParallelHashGridSearcher<2>& searcher)
 {
@@ -520,7 +523,8 @@ std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointParallelHashGridSearcher<N>::Deserialize(
+    requires(M == 3)
+void PointParallelHashGridSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer,
     PointParallelHashGridSearcher<3>& searcher)
 {

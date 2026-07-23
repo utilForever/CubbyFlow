@@ -240,7 +240,8 @@ PointHashGridSearcher<N>::GetBuilder()
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointHashGridSearcher<N>::Serialize(
+    requires(M == 2)
+void PointHashGridSearcher<N>::Serialize(
     const PointHashGridSearcher<2>& searcher, std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -293,7 +294,8 @@ std::enable_if_t<M == 2, void> PointHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointHashGridSearcher<N>::Serialize(
+    requires(M == 3)
+void PointHashGridSearcher<N>::Serialize(
     const PointHashGridSearcher<3>& searcher, std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -346,8 +348,9 @@ std::enable_if_t<M == 3, void> PointHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointHashGridSearcher<N>::Deserialize(
-    const std::vector<uint8_t>& buffer, PointHashGridSearcher<2>& searcher)
+    requires(M == 2)
+void PointHashGridSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
+                                           PointHashGridSearcher<2>& searcher)
 {
     const fbs::PointHashGridSearcher2* fbsSearcher =
         fbs::GetPointHashGridSearcher2(buffer.data());
@@ -387,8 +390,9 @@ std::enable_if_t<M == 2, void> PointHashGridSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointHashGridSearcher<N>::Deserialize(
-    const std::vector<uint8_t>& buffer, PointHashGridSearcher<3>& searcher)
+    requires(M == 3)
+void PointHashGridSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
+                                           PointHashGridSearcher<3>& searcher)
 {
     const fbs::PointHashGridSearcher3* fbsSearcher =
         fbs::GetPointHashGridSearcher3(buffer.data());

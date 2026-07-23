@@ -100,8 +100,9 @@ void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer)
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Serialize(
-    const PointKdTreeSearcher<2>& searcher, std::vector<uint8_t>* buffer)
+    requires(M == 2)
+void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<2>& searcher,
+                                       std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -143,8 +144,9 @@ std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointKdTreeSearcher<N>::Serialize(
-    const PointKdTreeSearcher<3>& searcher, std::vector<uint8_t>* buffer)
+    requires(M == 3)
+void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<3>& searcher,
+                                       std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -186,8 +188,9 @@ std::enable_if_t<M == 3, void> PointKdTreeSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Deserialize(
-    const std::vector<uint8_t>& buffer, PointKdTreeSearcher<2>& searcher)
+    requires(M == 2)
+void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
+                                         PointKdTreeSearcher<2>& searcher)
 {
     const fbs::PointKdTreeSearcher2* fbsSearcher =
         fbs::GetPointKdTreeSearcher2(buffer.data());
@@ -220,8 +223,9 @@ std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointKdTreeSearcher<N>::Deserialize(
-    const std::vector<uint8_t>& buffer, PointKdTreeSearcher<3>& searcher)
+    requires(M == 3)
+void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
+                                         PointKdTreeSearcher<3>& searcher)
 {
     const fbs::PointKdTreeSearcher3* fbsSearcher =
         fbs::GetPointKdTreeSearcher3(buffer.data());

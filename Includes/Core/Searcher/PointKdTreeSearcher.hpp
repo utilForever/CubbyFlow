@@ -103,20 +103,24 @@ class PointKdTreeSearcher final : public PointNeighborSearcher<N>
 
  private:
     template <size_t M = N>
-    static std::enable_if_t<M == 2, void> Serialize(
-        const PointKdTreeSearcher<2>& searcher, std::vector<uint8_t>* buffer);
+        requires(M == 2)
+    static void Serialize(const PointKdTreeSearcher<2>& searcher,
+                          std::vector<uint8_t>* buffer);
 
     template <size_t M = N>
-    static std::enable_if_t<M == 3, void> Serialize(
-        const PointKdTreeSearcher<3>& searcher, std::vector<uint8_t>* buffer);
+        requires(M == 3)
+    static void Serialize(const PointKdTreeSearcher<3>& searcher,
+                          std::vector<uint8_t>* buffer);
 
     template <size_t M = N>
-    static std::enable_if_t<M == 2, void> Deserialize(
-        const std::vector<uint8_t>& buffer, PointKdTreeSearcher<2>& searcher);
+        requires(M == 2)
+    static void Deserialize(const std::vector<uint8_t>& buffer,
+                            PointKdTreeSearcher<2>& searcher);
 
     template <size_t M = N>
-    static std::enable_if_t<M == 3, void> Deserialize(
-        const std::vector<uint8_t>& buffer, PointKdTreeSearcher<3>& searcher);
+        requires(M == 3)
+    static void Deserialize(const std::vector<uint8_t>& buffer,
+                            PointKdTreeSearcher<3>& searcher);
 
     KdTree<double, N> m_tree;
 };
