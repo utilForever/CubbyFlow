@@ -81,9 +81,9 @@ inline auto Async(TASK&& fn) -> future<operator_return_t<TASK>>
 
     return result;
 #elif defined(CUBBYFLOW_TASKING_CPP11THREAD)
-    return std::async(std::launch::async, fn);
+    return std::async(std::launch::async, std::forward<TASK>(fn));
 #else
-    return std::async(std::launch::deferred, fn);
+    return std::async(std::launch::deferred, std::forward<TASK>(fn));
 #endif
 }
 
