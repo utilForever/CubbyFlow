@@ -68,7 +68,7 @@ jobs:
           echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
           if [ -n "${{ matrix.libstdcxx }}" ]; then
             GCC_DIR=$(dirname "$(g++-${{ matrix.libstdcxx }} -print-libgcc-file-name)")
-            echo "CXXFLAGS=--gcc-install-dir=$GCC_DIR" >> $GITHUB_ENV
+            printf 'CXXFLAGS=%s\n' "${CXXFLAGS:+$CXXFLAGS }--gcc-install-dir=$GCC_DIR" >> "$GITHUB_ENV"
           fi
         fi
     - name: Configure Build
