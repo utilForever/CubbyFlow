@@ -11,6 +11,8 @@
 #ifndef CUBBYFLOW_PARALLEL_HPP
 #define CUBBYFLOW_PARALLEL_HPP
 
+#include <iterator>
+
 namespace CubbyFlow
 {
 //! Execution policy tag.
@@ -221,7 +223,7 @@ Value ParallelReduce(IndexType beginIndex, IndexType endIndex,
 //!
 //! \tparam     RandomIterator Iterator type.
 //!
-template <typename RandomIterator>
+template <std::random_access_iterator RandomIterator>
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   ExecutionPolicy policy = ExecutionPolicy::Parallel);
 
@@ -240,7 +242,7 @@ void ParallelSort(RandomIterator begin, RandomIterator end,
 //! \tparam     RandomIterator  Iterator type.
 //! \tparam     CompareFunction Compare function type.
 //!
-template <typename RandomIterator, typename CompareFunction>
+template <std::random_access_iterator RandomIterator, typename CompareFunction>
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   CompareFunction compare,
                   ExecutionPolicy policy = ExecutionPolicy::Parallel);

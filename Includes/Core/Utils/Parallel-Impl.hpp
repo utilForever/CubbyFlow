@@ -510,7 +510,7 @@ Value ParallelReduce(IndexType beginIndex, IndexType endIndex,
     return function(beginIndex, endIndex, identity);
 }
 
-template <typename RandomIterator>
+template <std::random_access_iterator RandomIterator>
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   ExecutionPolicy policy)
 {
@@ -520,7 +520,7 @@ void ParallelSort(RandomIterator begin, RandomIterator end,
         policy);
 }
 
-template <typename RandomIterator, typename CompareFunction>
+template <std::random_access_iterator RandomIterator, typename CompareFunction>
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   CompareFunction compareFunction, ExecutionPolicy policy)
 {
