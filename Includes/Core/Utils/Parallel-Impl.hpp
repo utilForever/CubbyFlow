@@ -510,8 +510,11 @@ Value ParallelReduce(IndexType beginIndex, IndexType endIndex,
     return function(beginIndex, endIndex, identity);
 }
 
+#ifdef __CUDACC__
 template <typename RandomIterator>
-CUBBYFLOW_REQUIRES(std::random_access_iterator<RandomIterator>)
+#else
+template <std::random_access_iterator RandomIterator>
+#endif
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   ExecutionPolicy policy)
 {
@@ -521,8 +524,11 @@ void ParallelSort(RandomIterator begin, RandomIterator end,
         policy);
 }
 
+#ifdef __CUDACC__
 template <typename RandomIterator, typename CompareFunction>
-CUBBYFLOW_REQUIRES(std::random_access_iterator<RandomIterator>)
+#else
+template <std::random_access_iterator RandomIterator, typename CompareFunction>
+#endif
 void ParallelSort(RandomIterator begin, RandomIterator end,
                   CompareFunction compareFunction, ExecutionPolicy policy)
 {
