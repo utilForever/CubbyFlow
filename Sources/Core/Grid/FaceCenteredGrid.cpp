@@ -10,6 +10,8 @@
 
 #include <Core/Grid/FaceCenteredGrid.hpp>
 
+#include <algorithm>
+
 namespace CubbyFlow
 {
 namespace Internal
@@ -669,8 +671,8 @@ void FaceCenteredGrid<N>::GetData(Array1<double>& data) const
     size_t cnt = 0;
     for (size_t i = 0; i < N; ++i)
     {
-        std::for_each(m_data[i].begin(), m_data[i].end(),
-                      [&](double value) { data[cnt++] = value; });
+        std::ranges::for_each(m_data[i],
+                              [&](double value) { data[cnt++] = value; });
     }
 }
 

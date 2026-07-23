@@ -15,6 +15,9 @@
 #include <Flatbuffers/generated/PointHashGridSearcher2_generated.h>
 #include <Flatbuffers/generated/PointHashGridSearcher3_generated.h>
 
+#include <algorithm>
+#include <span>
+
 namespace CubbyFlow
 {
 template <size_t N>
@@ -375,9 +378,10 @@ std::enable_if_t<M == 2, void> PointHashGridSearcher<N>::Deserialize(
             flatbuffers::Offset<fbs::PointHashGridSearcherBucket2>>::return_type
             fbsBucket = fbsBuckets->Get(i);
         searcher.m_buckets[i].Resize(fbsBucket->data()->size());
-        std::transform(fbsBucket->data()->begin(), fbsBucket->data()->end(),
-                       searcher.m_buckets[i].begin(),
-                       [](uint64_t val) { return static_cast<size_t>(val); });
+        std::ranges::transform(
+            std::span{ fbsBucket->data()->data(), fbsBucket->data()->size() },
+            searcher.m_buckets[i].begin(),
+            [](uint64_t val) { return static_cast<size_t>(val); });
     }
 }
 
@@ -416,9 +420,10 @@ std::enable_if_t<M == 3, void> PointHashGridSearcher<N>::Deserialize(
             flatbuffers::Offset<fbs::PointHashGridSearcherBucket3>>::return_type
             fbsBucket = fbsBuckets->Get(i);
         searcher.m_buckets[i].Resize(fbsBucket->data()->size());
-        std::transform(fbsBucket->data()->begin(), fbsBucket->data()->end(),
-                       searcher.m_buckets[i].begin(),
-                       [](uint64_t val) { return static_cast<size_t>(val); });
+        std::ranges::transform(
+            std::span{ fbsBucket->data()->data(), fbsBucket->data()->size() },
+            searcher.m_buckets[i].begin(),
+            [](uint64_t val) { return static_cast<size_t>(val); });
     }
 }
 

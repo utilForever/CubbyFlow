@@ -10,6 +10,7 @@
 
 #include <Core/Geometry/SurfaceSet.hpp>
 
+#include <algorithm>
 #include <limits>
 
 namespace CubbyFlow
@@ -302,10 +303,9 @@ double SurfaceSet<N>::ClosestDistanceLocal(
 template <size_t N>
 bool SurfaceSet<N>::IsInsideLocal(const Vector<double, N>& otherPoint) const
 {
-    return std::any_of(m_surfaces.begin(), m_surfaces.end(),
-                       [&](const std::shared_ptr<Surface<N>> surface) {
-                           return surface->IsInside(otherPoint);
-                       });
+    return std::ranges::any_of(m_surfaces, [&](const auto& surface) {
+        return surface->IsInside(otherPoint);
+    });
 }
 
 template <size_t N>
