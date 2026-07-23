@@ -12,7 +12,7 @@ void PrintMemReport(double memUsage, const std::string& memMessage)
 std::pair<double, std::string> MakeReadableByteSize(size_t bytes)
 {
     double s = static_cast<double>(bytes);
-    std::string unit = "B";
+    const char* unit = "B";
 
     if (s > 1024)
     {
