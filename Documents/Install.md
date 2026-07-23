@@ -74,7 +74,7 @@ To build the code on Windows, install CMake, Python, and a current Visual Studio
 
 Once everything is installed, run the following commands:
 
-```
+```bat
 cmake -S . -B build -A x64
 cmake --build build --config Release
 ```
@@ -83,14 +83,14 @@ This generates and builds the 64-bit Visual Studio solution in release mode.
 
 Alternatively, you can use MSBuild to build the solution from the command prompt. In such case, simply run:
 
-```
-MSBuild CubbyFlow.sln /p:Configuration=Release
+```bat
+MSBuild build\CubbyFlow.sln /p:Configuration=Release
 ```
 
 This will build the whole solution in release mode. Once built, run the following command to execute unit tests:
 
-```
-bin\Release\UnitTests.exe
+```bat
+build\bin\Release\UnitTests.exe
 ```
 
 ### Building from Windows Subsystem for Linux (WSL)
