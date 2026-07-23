@@ -14,7 +14,7 @@ To build the host code, a compiler that supports C++23 is required. Optional CUD
 
 ### Building from macOS
 
-CubbyFlow supports OS X 10.12.6 Sierra or higher. Also, Xcode 9 or higher and the command line tools are required for building CubbyFlow. Once ready, install [Homebrew](http://brew.sh) and run the following command line to setup [CMake](https://cmake.org/):
+CubbyFlow supports macOS 15 or higher. Xcode 16.4 or higher and the command line tools are required for building CubbyFlow. Once ready, install [Homebrew](http://brew.sh) and run the following command line to setup [CMake](https://cmake.org/):
 
 ```
 brew install autoconf autoconf-archive automake cmake libtool python
@@ -43,7 +43,7 @@ It should show all the tests are passing.
 
 ### Building from Ubuntu
 
-CubbyFlow supports Ubuntu 17.04 or higher. Using `apt-get`, install required tools and libraries by running,
+CubbyFlow supports Ubuntu 24.04 or higher with GCC 12 or Clang 16 and newer. Using `apt-get`, install required tools and libraries by running,
 
 ```
 sudo apt-get install autoconf autoconf-archive automake build-essential cmake libtool python-dev python-pip
