@@ -27,7 +27,7 @@
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_reduce.h>
 #include <tbb/parallel_sort.h>
-#include <tbb/task.h>
+#include <tbb/task_arena.h>
 #elif defined(CUBBYFLOW_TASKING_CPP11THREAD)
 #include <thread>
 #endif
@@ -60,35 +60,26 @@ inline auto Async(TASK&& fn) -> future<operator_return_t<TASK>>
 {
 #if defined(CUBBYFLOW_TASKING_HPX)
     return hpx::async(std::forward<TASK>(fn));
-
 #elif defined(CUBBYFLOW_TASKING_TBB)
-    struct LocalTBBTask : public tbb::task
+    using package_t = std::packaged_task<operator_return_t<TASK>()>;
+    package_t task(std::forward<TASK>(fn));
+    auto result = task.get_future();
+
+    struct LocalTBBTask
     {
-        TASK func;
+        // TBB invokes queued functors through a const call operator.
+        mutable package_t task;
 
-        LocalTBBTask(TASK&& f) : func(std::forward<TASK>(f))
+        void operator()() const
         {
-            // Do nothing
-        }
-
-        tbb::task* execute() override
-        {
-            func();
-            return nullptr;
+            task();
         }
     };
 
-    using package_t = std::packaged_task<operator_return_t<TASK>()>;
+    tbb::task_arena arena{ tbb::task_arena::attach{} };
+    arena.enqueue(LocalTBBTask{ std::move(task) });
 
-    auto task = new package_t(std::forward<TASK>(fn));
-    auto* tbbNode = new (tbb::task::allocate_root()) LocalTBBTask([=]() {
-        (*task)();
-        delete task;
-    });
-
-    tbb::task::enqueue(*tbbNode);
-    return task.get_future();
-
+    return result;
 #elif defined(CUBBYFLOW_TASKING_CPP11THREAD)
     return std::async(std::launch::async, fn);
 #else
