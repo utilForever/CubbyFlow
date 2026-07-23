@@ -2,7 +2,7 @@
 
 CubbyFlow is distributed and consumed in the following ways:
 
-- A C++17 static library named `CubbyFlow`.
+- A static library named `CubbyFlow` with C++23 host code.
 - A `pyCubbyFlow` Python extension built on the same C++ library.
 - Standalone simulation and conversion examples.
 - An optional CUDA implementation for particle and SPH workloads.
@@ -584,7 +584,8 @@ configurations.
 
 When `USE_CUDA=ON` and a CUDA toolkit is available, CMake adds `.cu` sources
 under `Sources/Core/CUDA/` to the `CubbyFlow` library and defines
-`CUBBYFLOW_USE_CUDA`. CPU-only builds omit those files.
+`CUBBYFLOW_USE_CUDA`. CUDA device sources use C++17 for the supported CUDA
+toolchains; CPU-only builds omit those files.
 
 CUDA types and solvers live under `Includes/Core/CUDA/` and
 `Sources/Core/CUDA/`; CUDA tests live under `Tests/CUDATests/`. Matching CPU and

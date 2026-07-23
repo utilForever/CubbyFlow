@@ -4,7 +4,7 @@ Guidance for AI coding agents working in this repository. Humans should start wi
 
 ## What this repository is
 
-CubbyFlow is a C++17 voxel-based fluid simulation engine based on the Jet framework. It contains:
+CubbyFlow is a voxel-based fluid simulation engine with C++23 host code and optional C++17 CUDA device code. It is based on the Jet framework and contains:
 
 - CPU implementations of math, geometry, grids, particles, spatial search, level sets, pressure solvers, and fluid solvers.
 - Matching 2-D and 3-D APIs for most simulation domains.
@@ -22,9 +22,9 @@ The public C++ API lives under `Includes/Core/`; implementations live under `Sou
 3. **Fix shared behavior at the shared layer.** Use `rg` to find every caller, override, binding, test, and dimensional specialization before editing. Avoid one-off guards in callers when the invariant belongs in a common base class or utility.
 4. **Use existing patterns before adding code.** Search the neighboring domain for templates, builders, aliases, numerical helpers, parallel loops, serialization code, and tests. Do not add a new abstraction or dependency when the repository already has the required shape.
 5. **Use CMake targets as the source of truth.** Read the root and nearest `CMakeLists.txt` before adding files, dependencies, compile definitions, or platform-specific behavior. Reconfigure CMake after adding source files; several targets use `GLOB` or `GLOB_RECURSE` without automatic reconfigure.
-6. **Preserve C++17 portability.** CI builds with GCC, Clang, and MSVC across Linux, macOS, and Windows. Avoid compiler extensions unless they are isolated behind existing CMake checks.
+6. **Preserve C++23 portability.** CI builds with GCC, Clang, and MSVC across Linux, macOS, and Windows. Avoid compiler extensions unless they are isolated behind existing CMake checks.
 7. **Treat warnings as failures.** `CUBBYFLOW_WARNINGS_AS_ERRORS` defaults to `ON`. Fix warnings in project code instead of suppressing them globally.
-8. **Keep CUDA optional.** CPU-only configurations must continue to work. CUDA-only code belongs in the existing CUDA directories and should not leak into ordinary builds without guards.
+8. **Keep CUDA optional.** CPU-only configurations must continue to work. CUDA-only code belongs in the existing CUDA directories and should not leak into ordinary builds without guards. Host code uses C++23; CUDA device code remains C++17 for the supported toolchains.
 9. **Do not hand-edit generated files alone.** FlatBuffers schemas live in `Sources/Core/Flatbuffers/schema/` and checked-in generated headers live in `Sources/Core/Flatbuffers/generated/`. A schema change must update both; use the FlatBuffers version constrained by `vcpkg.json`.
 10. **Run the smallest relevant check.** Documentation-only changes need only document validation. Behavior changes need focused C++, Python, or CUDA coverage before broader validation.
 
@@ -157,7 +157,7 @@ The default preference is TBB, then OpenMP, HPX, and the C++11 thread backend. U
 
 ## Configure and build
 
-Prerequisites are CMake 3.31.6 or newer, a C++17 compiler, Python for the Python module, and a bootstrapped vcpkg checkout. Set `VCPKG_ROOT` or `VCPKG_INSTALLATION_ROOT`, or pass `CMAKE_TOOLCHAIN_FILE` explicitly.
+Prerequisites are CMake 3.31.6 or newer, a C++23 compiler, Python for the Python module, and a bootstrapped vcpkg checkout. Set `VCPKG_ROOT` or `VCPKG_INSTALLATION_ROOT`, or pass `CMAKE_TOOLCHAIN_FILE` explicitly.
 
 ### Focused CPU unit-test build
 

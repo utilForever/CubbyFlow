@@ -10,7 +10,7 @@ cd CubbyFlow
 export VCPKG_ROOT=/path/to/vcpkg
 ```
 
-To build the code, a compiler that supports C++17 is required. Platform-specific build instructions are described below.
+To build the host code, a compiler that supports C++23 is required. Optional CUDA device sources use C++17. Platform-specific build instructions are described below.
 
 ### Building from macOS
 

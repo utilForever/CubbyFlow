@@ -12,7 +12,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=CubbyFlow&metric=alert_status)](https://sonarcloud.io/dashboard?id=CubbyFlow) [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=CubbyFlow&metric=ncloc)](https://sonarcloud.io/dashboard?id=CubbyFlow) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=CubbyFlow&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=CubbyFlow) [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=CubbyFlow&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=CubbyFlow) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=CubbyFlow&metric=security_rating)](https://sonarcloud.io/dashboard?id=CubbyFlow)
 
 CubbyFlow is voxel-based fluid simulation engine for computer games based on [Jet framework](https://github.com/doyubkim/fluid-engine-dev) that was created by [Doyub Kim](https://twitter.com/doyub).
-The code is built on C++17 and can be compiled with commonly available compilers such as g++, clang++, or Microsoft Visual Studio. CubbyFlow currently supports macOS (10.12.6 or later), Ubuntu (17.04 or later), Windows (Visual Studio 2017 or later), and Windows Subsystem for Linux (WSL). Other untested platforms that support C++17 also should be able to build CubbyFlow.
+The host code is built on C++23 and can be compiled with commonly available compilers such as g++, clang++, or Microsoft Visual Studio. Optional CUDA device sources remain on C++17 for the supported CUDA toolchains. CI covers current macOS, Ubuntu, and Windows environments.
 
 ## Key Features
 
