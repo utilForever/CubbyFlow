@@ -180,10 +180,8 @@ PointParticleEmitter3 PointParticleEmitter3::Builder::Build() const
 
 PointParticleEmitter3Ptr PointParticleEmitter3::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointParticleEmitter3>(
-        new PointParticleEmitter3(
-            m_origin, m_direction, m_speed, m_spreadAngleInDegrees,
-            m_maxNumberOfNewParticlesPerSecond, m_maxNumberOfParticles, m_seed),
-        [](PointParticleEmitter3* obj) { delete obj; });
+    return std::make_shared<PointParticleEmitter3>(
+        m_origin, m_direction, m_speed, m_spreadAngleInDegrees,
+        m_maxNumberOfNewParticlesPerSecond, m_maxNumberOfParticles, m_seed);
 }
 }  // namespace CubbyFlow

@@ -195,9 +195,8 @@ Sphere<N> Sphere<N>::Builder::Build() const
 template <size_t N>
 std::shared_ptr<Sphere<N>> Sphere<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<Sphere>(
-        new Sphere{ m_center, m_radius, m_transform, m_isNormalFlipped },
-        [](Sphere* obj) { delete obj; });
+    return std::make_shared<Sphere>(m_center, m_radius, m_transform,
+                                    m_isNormalFlipped);
 }
 
 template class Sphere<2>;

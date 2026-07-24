@@ -306,9 +306,7 @@ template <size_t N>
 std::shared_ptr<PointNeighborSearcher<N>>
 PointParallelHashGridSearcher<N>::Clone() const
 {
-    return std::shared_ptr<PointParallelHashGridSearcher>(
-        new PointParallelHashGridSearcher{ *this },
-        [](PointParallelHashGridSearcher* obj) { delete obj; });
+    return std::make_shared<PointParallelHashGridSearcher>(*this);
 }
 
 template <size_t N>
@@ -347,7 +345,8 @@ PointParallelHashGridSearcher<N>::GetBuilder()
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Serialize(
+CUBBYFLOW_REQUIRES(M == 2)
+void PointParallelHashGridSearcher<N>::Serialize(
     const PointParallelHashGridSearcher<2>& searcher,
     std::vector<uint8_t>* buffer)
 {
@@ -404,7 +403,8 @@ std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointParallelHashGridSearcher<N>::Serialize(
+CUBBYFLOW_REQUIRES(M == 3)
+void PointParallelHashGridSearcher<N>::Serialize(
     const PointParallelHashGridSearcher<3>& searcher,
     std::vector<uint8_t>* buffer)
 {
@@ -462,7 +462,8 @@ std::enable_if_t<M == 3, void> PointParallelHashGridSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Deserialize(
+CUBBYFLOW_REQUIRES(M == 2)
+void PointParallelHashGridSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer,
     PointParallelHashGridSearcher<2>& searcher)
 {
@@ -522,7 +523,8 @@ std::enable_if_t<M == 2, void> PointParallelHashGridSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointParallelHashGridSearcher<N>::Deserialize(
+CUBBYFLOW_REQUIRES(M == 3)
+void PointParallelHashGridSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer,
     PointParallelHashGridSearcher<3>& searcher)
 {
@@ -609,9 +611,8 @@ template <size_t N>
 std::shared_ptr<PointParallelHashGridSearcher<N>>
 PointParallelHashGridSearcher<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointParallelHashGridSearcher>(
-        new PointParallelHashGridSearcher{ m_resolution, m_gridSpacing },
-        [](PointParallelHashGridSearcher* obj) { delete obj; });
+    return std::make_shared<PointParallelHashGridSearcher>(m_resolution,
+                                                           m_gridSpacing);
 }
 
 template <size_t N>

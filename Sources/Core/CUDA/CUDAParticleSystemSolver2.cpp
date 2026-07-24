@@ -73,9 +73,7 @@ CUDAParticleSystemSolver2 CUDAParticleSystemSolver2::Builder::Build() const
 CUDAParticleSystemSolver2Ptr CUDAParticleSystemSolver2::Builder::MakeShared()
     const
 {
-    return std::shared_ptr<CUDAParticleSystemSolver2>(
-        new CUDAParticleSystemSolver2{ m_radius, m_mass },
-        [](CUDAParticleSystemSolver2* obj) { delete obj; });
+    return std::make_shared<CUDAParticleSystemSolver2>(m_radius, m_mass);
 }
 
 #endif

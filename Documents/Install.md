@@ -10,11 +10,11 @@ cd CubbyFlow
 export VCPKG_ROOT=/path/to/vcpkg
 ```
 
-To build the code, a compiler that supports C++17 is required. Platform-specific build instructions are described below.
+To build the host code, a compiler that supports C++23 is required. Optional CUDA device sources use C++17. Platform-specific build instructions are described below.
 
 ### Building from macOS
 
-CubbyFlow supports OS X 10.12.6 Sierra or higher. Also, Xcode 9 or higher and the command line tools are required for building CubbyFlow. Once ready, install [Homebrew](http://brew.sh) and run the following command line to setup [CMake](https://cmake.org/):
+CubbyFlow supports macOS 15 or higher. Xcode 16.4 or higher and the command line tools are required for building CubbyFlow. Once ready, install [Homebrew](http://brew.sh) and run the following command line to setup [CMake](https://cmake.org/):
 
 ```
 brew install autoconf autoconf-archive automake cmake libtool python
@@ -43,7 +43,7 @@ It should show all the tests are passing.
 
 ### Building from Ubuntu
 
-CubbyFlow supports Ubuntu 17.04 or higher. Using `apt-get`, install required tools and libraries by running,
+CubbyFlow supports Ubuntu 24.04 or higher with GCC 12 or Clang 16 and newer. Using `apt-get`, install required tools and libraries by running,
 
 ```
 sudo apt-get install autoconf autoconf-archive automake build-essential cmake libtool python-dev python-pip
@@ -70,162 +70,32 @@ It should show all the tests are passing.
 
 ### Building from Windows
 
-To build the code on Windows, CMake, Python, and Visual Studio 2017 (or higher) is required. Windows' version of CMake is available from [this website](https://cmake.org/), Python installer can be downloaded from [here](https://python.org/). For Python, version 2.7.9 or later is recommended. To install Visual Studio, the community edition of the tool can be downloaded from [Visual Studio Community 2017](https://www.Visualstudio.com/en-us/products/Visual-studio-community-vs.aspx).
+To build the code on Windows, install CMake, Python, and a current Visual Studio release with C++23 support.
 
 Once everything is installed, run the following commands:
 
-```
-md build
-cd build
-cmake .. -G"Visual Studio 15 2017 Win64"
+```bat
+cmake -S . -B build -A x64
+cmake --build build --config Release
 ```
 
-This will generate 64-bit version of VS 2017 solution and projects. Once executed, you can find `CubbyFlow.sln` solution file in the `build` directory. Open the solution file and hit `Ctrl + Shift + B` to build the entire solution. Set `UnitTests` as a start-up project and hit `Ctrl + F5` to run the test.
+This generates and builds the 64-bit Visual Studio solution in release mode.
 
 Alternatively, you can use MSBuild to build the solution from the command prompt. In such case, simply run:
 
-```
-MSBuild CubbyFlow.sln /p:Configuration=Release
+```bat
+MSBuild build\CubbyFlow.sln /p:Configuration=Release
 ```
 
 This will build the whole solution in release mode. Once built, run the following command to execute unit tests:
 
-```
-bin\Release\UnitTests.exe
+```bat
+build\bin\Release\UnitTests.exe
 ```
 
 ### Building from Windows Subsystem for Linux (WSL)
 
-To build the code on Windows Subsystem for Linux, CMake, Python, and GCC 7.1 is required. Linux' version of CMake is available from [this website](https://cmake.org/), Python installer can be downloaded from [here](https://python.org/). For Python, version 2.7.9 or later is recommended. GCC 7.1 can be downloaded from [here](http://gcc.parentingamerica.com/releases/gcc-7.1.0/gcc-7.1.0.tar.bz2).
-
-Currently, GCC 5.4 is installed on WSL. GCC 7 or later must be installed to use C++17 features. To install GCC 7.1, use these instructions manually.
-
-1. Start WSL (use the Bash on Ubuntu on Windows console or write bash in a Command Prompt window) and write
-
-    ```
-    sudo apt update
-    sudo apt upgrade
-    ```
-
-2. Install the default GCC toolchain with:
-
-    ```
-    sudo apt install build-essential
-    ```
-
-3. Download the GCC 7.1 source and prerequisites from http://gcc.gnu.org/mirrors.html:
-
-    ```
-    cd ~
-    wget http://gcc.parentingamerica.com/releases/gcc-7.1.0/gcc-7.1.0.tar.bz2
-    tar xf gcc-7.1.0.tar.bz2
-    cd gcc-7.1.0
-    contrib/download_prerequisites
-    ```
-
-4. At this point, we can configure the build. In order to keep the system clean, we will use /usr/local/gcc-7.1 for the installation folder and append the suffix -7.1 to the GCC compilers. You typically don’t want to mess the system’s default GCC because other packages may depend on this.
-
-    ```
-    cd ~
-    mkdir build && cd build
-    ../gcc-7.1.0/configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=/usr/local/gcc-7.1 --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --program-suffix=-7.1
-    ```
-
-5. We are ready to build GCC, you typically want to pass twice the number of your computer cores to the make command in order to speed up the build. I have a quad-core system, so I will use 8 parallel jobs to build GCC:
-
-    ```
-    make -j 8
-    ```
-
-    NOTE: Depending on the speed of your computer the build phase could take from about 30 minutes to a few hours.
-
-6. Once the above phase is finished, you can install the built GCC with:
-
-    ```
-    sudo make install
-    ```
-
-7. If you want to permanently add the compilers to your system’s path, use the next commands:
-
-    ```
-    cd ~
-    echo 'export PATH=/usr/local/gcc-7.1/bin:$PATH' >> .bashrc
-    echo 'export LD_LIBRARY_PATH=/usr/local/gcc-7.1/lib64:$LD_LIBRARY_PATH' >> .bashrc
-    source .bashrc
-    ```
-
-    NOTE: The above will append the path to GCC 7.1 at the end of your .bashrc file.
-
-Also, CMake is not installed on WSL. CMake 3.8.2 or later must be installed to use C++17 features. To install CMake 3.10.1, use these instructions manually.
-
-1. Download the CMake 3.10.1 source from https://cmake.org/download/:
-
-    ```
-    cd ~
-    wget https://cmake.org/files/v3.10/cmake-3.10.1.tar.gz
-    tar xf cmake-3.10.1.tar.gz
-    cd cmake-3.10.1
-    ```
-
-2. Prepare to build using the bootstrap script with:
-
-    ```
-    ./bootstrap --prefix=/usr
-    ```
-
-    NOTE: ```--prefix=/usr``` is used to specify the CMake path on the WSL.
-
-3. We are ready to build CMake, you typically want to pass twice the number of your computer cores to the make command in order to speed up the build. I have a quad-core system, so I will use 8 parallel jobs to build CMake:
-
-    ```
-    make -j 8
-    ```
-
-4. Once the above phase is finished, you can install the built CMake with:
-
-    ```
-    sudo make install
-    ```
-
-Once everything is installed, add the following line to CMakeLists.txt using ```vi```:
-
-```
-vi CMakeLists.txt
-```
-
-NOTE: Please move to CubbyFlow folder.
-
-```
-# CMake version
-cmake_minimum_required(VERSION 3.8.2 FATAL_ERROR)
-
-# ADD THE FOLLOWING LINE
-set(CMAKE_C_COMPILER "gcc-7.1")
-set(CMAKE_CXX_COMPILER "g++-7.1")
-# ADD THE FOLLOWING LINE
-
-# Include cmake modules
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Builds/CMake")
-```
-
-Finally, ready to build CubbyFlow. Run the following commands:
-
-```
-mkdir build
-cd build
-cmake ..
-make
-```
-
-> Again, use `make -j <num_threads>` flag to boost up the build performance by using multithreads.
-
-This will build entire codebase. To run the unit test, execute
-
-```
-bin/UnitTests
-```
-
-It should show all the tests are passing.
+Follow the Ubuntu instructions from a current WSL distribution with a C++23 compiler.
 
 ### Running Tests
 
@@ -267,10 +137,11 @@ This will install the header files and the static library `libCubbyFlow.a` under
 For Windows, run:
 
 ```
-cmake .. -G"Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=_INSTALL_PATH_
+cmake -S . -B build -A x64 -DCMAKE_INSTALL_PREFIX=_INSTALL_PATH_
+cmake --build build --config Release --target INSTALL
 ```
 
-Then, build `INSTALL` project under `CubbyFlow.sln`. This will install the header files and the static library `CubbyFlow.lib` under `_INSTALL_PATH_`.
+This installs the header files and the static library `CubbyFlow.lib` under `_INSTALL_PATH_`.
 
 ### Installing Python SDK
 

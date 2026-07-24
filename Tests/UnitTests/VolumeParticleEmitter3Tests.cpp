@@ -82,7 +82,7 @@ TEST(VolumeParticleEmitter3, Builder)
 {
     auto sphere = std::make_shared<Sphere3>(Vector3D(1.0, 2.0, 4.0), 3.0);
 
-    VolumeParticleEmitter3 emitter =
+    auto builder =
         VolumeParticleEmitter3::GetBuilder()
             .WithSurface(sphere)
             .WithMaxRegion(BoundingBox3D({ 0.0, 0.0, 0.0 }, { 3.0, 3.0, 3.0 }))
@@ -92,7 +92,9 @@ TEST(VolumeParticleEmitter3, Builder)
             .WithJitter(0.01)
             .WithIsOneShot(false)
             .WithAllowOverlapping(true)
-            .Build();
+            .WithRandomSeed(42);
+    VolumeParticleEmitter3 emitter = builder.Build();
+    auto sharedEmitter = builder.MakeShared();
 
     EXPECT_EQ(0.01, emitter.GetJitter());
     EXPECT_FALSE(emitter.GetIsOneShot());
@@ -102,4 +104,19 @@ TEST(VolumeParticleEmitter3, Builder)
     EXPECT_EQ(-1.0, emitter.GetInitialVelocity().x);
     EXPECT_EQ(0.5, emitter.GetInitialVelocity().y);
     EXPECT_EQ(2.5, emitter.GetInitialVelocity().z);
+
+    auto particles = std::make_shared<ParticleSystemData3>();
+    auto sharedParticles = std::make_shared<ParticleSystemData3>();
+    emitter.SetTarget(particles);
+    sharedEmitter->SetTarget(sharedParticles);
+    emitter.Update(0.0, 1.0);
+    sharedEmitter->Update(0.0, 1.0);
+
+    ASSERT_EQ(particles->NumberOfParticles(),
+              sharedParticles->NumberOfParticles());
+    for (size_t i = 0; i < particles->NumberOfParticles(); ++i)
+    {
+        EXPECT_VECTOR3_EQ(particles->Positions()[i],
+                          sharedParticles->Positions()[i])
+    }
 }

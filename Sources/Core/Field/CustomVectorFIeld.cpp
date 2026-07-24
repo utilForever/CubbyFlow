@@ -209,16 +209,12 @@ CustomVectorField<N>::Builder::MakeShared() const
 {
     if (m_customCurlFunction)
     {
-        return std::shared_ptr<CustomVectorField>(
-            new CustomVectorField{ m_customFunction, m_customDivergenceFunction,
-                                   m_customCurlFunction },
-            [](CustomVectorField* obj) { delete obj; });
+        return std::make_shared<CustomVectorField>(
+            m_customFunction, m_customDivergenceFunction, m_customCurlFunction);
     }
 
-    return std::shared_ptr<CustomVectorField>(
-        new CustomVectorField{ m_customFunction, m_customDivergenceFunction,
-                               m_resolution },
-        [](CustomVectorField* obj) { delete obj; });
+    return std::make_shared<CustomVectorField>(
+        m_customFunction, m_customDivergenceFunction, m_resolution);
 }
 
 template class CustomVectorField<2>;

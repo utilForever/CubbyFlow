@@ -177,8 +177,7 @@ APICSolver2 APICSolver2::Builder::Build() const
 
 APICSolver2Ptr APICSolver2::Builder::MakeShared() const
 {
-    return std::shared_ptr<APICSolver2>(
-        new APICSolver2{ m_resolution, GetGridSpacing(), m_gridOrigin },
-        [](APICSolver2* obj) { delete obj; });
+    return std::make_shared<APICSolver2>(m_resolution, GetGridSpacing(),
+                                         m_gridOrigin);
 }
 }  // namespace CubbyFlow

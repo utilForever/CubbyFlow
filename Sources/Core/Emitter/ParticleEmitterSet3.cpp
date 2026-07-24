@@ -67,8 +67,6 @@ ParticleEmitterSet3 ParticleEmitterSet3::Builder::Build() const
 
 ParticleEmitterSet3Ptr ParticleEmitterSet3::Builder::MakeShared() const
 {
-    return std::shared_ptr<ParticleEmitterSet3>(
-        new ParticleEmitterSet3(m_emitters),
-        [](ParticleEmitterSet3* obj) { delete obj; });
+    return std::make_shared<ParticleEmitterSet3>(m_emitters);
 }
 }  // namespace CubbyFlow

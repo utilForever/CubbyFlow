@@ -117,9 +117,7 @@ void VertexCenteredVectorGrid<N>::Fill(
 template <size_t N>
 std::shared_ptr<VectorGrid<N>> VertexCenteredVectorGrid<N>::Clone() const
 {
-    return std::shared_ptr<VertexCenteredVectorGrid<N>>(
-        new VertexCenteredVectorGrid<N>{ *this },
-        [](VertexCenteredVectorGrid<N>* obj) { delete obj; });
+    return std::make_shared<VertexCenteredVectorGrid<N>>(*this);
 }
 
 template <size_t N>
@@ -176,10 +174,8 @@ template <size_t N>
 std::shared_ptr<VertexCenteredVectorGrid<N>>
 VertexCenteredVectorGrid<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<VertexCenteredVectorGrid>(
-        new VertexCenteredVectorGrid{ m_resolution, m_gridSpacing, m_gridOrigin,
-                                      m_initialVal },
-        [](VertexCenteredVectorGrid* obj) { delete obj; });
+    return std::make_shared<VertexCenteredVectorGrid>(
+        m_resolution, m_gridSpacing, m_gridOrigin, m_initialVal);
 }
 
 template <size_t N>
@@ -188,10 +184,8 @@ std::shared_ptr<VectorGrid<N>> VertexCenteredVectorGrid<N>::Builder::Build(
     const Vector<double, N>& gridOrigin,
     const Vector<double, N>& initialVal) const
 {
-    return std::shared_ptr<VertexCenteredVectorGrid>(
-        new VertexCenteredVectorGrid{ resolution, gridSpacing, gridOrigin,
-                                      initialVal },
-        [](VertexCenteredVectorGrid* obj) { delete obj; });
+    return std::make_shared<VertexCenteredVectorGrid>(resolution, gridSpacing,
+                                                      gridOrigin, initialVal);
 }
 
 template class VertexCenteredVectorGrid<2>;

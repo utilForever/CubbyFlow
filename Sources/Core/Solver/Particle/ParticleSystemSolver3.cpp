@@ -291,8 +291,6 @@ ParticleSystemSolver3 ParticleSystemSolver3::Builder::Build() const
 
 ParticleSystemSolver3Ptr ParticleSystemSolver3::Builder::MakeShared() const
 {
-    return std::shared_ptr<ParticleSystemSolver3>(
-        new ParticleSystemSolver3{ m_radius, m_mass },
-        [](ParticleSystemSolver3* obj) { delete obj; });
+    return std::make_shared<ParticleSystemSolver3>(m_radius, m_mass);
 }
 }  // namespace CubbyFlow

@@ -326,9 +326,7 @@ SPHSolver3 SPHSolver3::Builder::Build() const
 
 SPHSolver3Ptr SPHSolver3::Builder::MakeShared() const
 {
-    return std::shared_ptr<SPHSolver3>(
-        new SPHSolver3{ m_targetDensity, m_targetSpacing,
-                        m_relativeKernelRadius },
-        [](SPHSolver3* obj) { delete obj; });
+    return std::make_shared<SPHSolver3>(m_targetDensity, m_targetSpacing,
+                                        m_relativeKernelRadius);
 }
 }  // namespace CubbyFlow

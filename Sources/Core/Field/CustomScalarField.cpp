@@ -170,16 +170,13 @@ CustomScalarField<N>::Builder::MakeShared() const
 {
     if (m_customLaplacianFunction)
     {
-        return std::shared_ptr<CustomScalarField>(
-            new CustomScalarField{ m_customFunction, m_customGradientFunction,
-                                   m_customLaplacianFunction },
-            [](CustomScalarField* obj) { delete obj; });
+        return std::make_shared<CustomScalarField>(m_customFunction,
+                                                   m_customGradientFunction,
+                                                   m_customLaplacianFunction);
     }
 
-    return std::shared_ptr<CustomScalarField>(
-        new CustomScalarField{ m_customFunction, m_customGradientFunction,
-                               m_resolution },
-        [](CustomScalarField* obj) { delete obj; });
+    return std::make_shared<CustomScalarField>(
+        m_customFunction, m_customGradientFunction, m_resolution);
 }
 
 template class CustomScalarField<2>;

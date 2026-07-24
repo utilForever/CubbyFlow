@@ -101,9 +101,7 @@ template <size_t N>
 std::shared_ptr<PointNeighborSearcher<N>> PointSimpleListSearcher<N>::Clone()
     const
 {
-    return std::shared_ptr<PointSimpleListSearcher>(
-        new PointSimpleListSearcher{ *this },
-        [](PointSimpleListSearcher* obj) { delete obj; });
+    return std::make_shared<PointSimpleListSearcher>(*this);
 }
 
 template <size_t N>
@@ -133,7 +131,8 @@ PointSimpleListSearcher<N>::GetBuilder()
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointSimpleListSearcher<N>::Serialize(
+CUBBYFLOW_REQUIRES(M == 2)
+void PointSimpleListSearcher<N>::Serialize(
     const PointSimpleListSearcher<2>& searcher, std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -164,7 +163,8 @@ std::enable_if_t<M == 2, void> PointSimpleListSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointSimpleListSearcher<N>::Serialize(
+CUBBYFLOW_REQUIRES(M == 3)
+void PointSimpleListSearcher<N>::Serialize(
     const PointSimpleListSearcher<3>& searcher, std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -194,7 +194,8 @@ std::enable_if_t<M == 3, void> PointSimpleListSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointSimpleListSearcher<N>::Deserialize(
+CUBBYFLOW_REQUIRES(M == 2)
+void PointSimpleListSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer, PointSimpleListSearcher<2>& searcher)
 {
     const fbs::PointSimpleListSearcher2* fbsSearcher =
@@ -212,7 +213,8 @@ std::enable_if_t<M == 2, void> PointSimpleListSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointSimpleListSearcher<N>::Deserialize(
+CUBBYFLOW_REQUIRES(M == 3)
+void PointSimpleListSearcher<N>::Deserialize(
     const std::vector<uint8_t>& buffer, PointSimpleListSearcher<3>& searcher)
 {
     const fbs::PointSimpleListSearcher3* fbsSearcher =
@@ -238,9 +240,7 @@ template <size_t N>
 std::shared_ptr<PointSimpleListSearcher<N>>
 PointSimpleListSearcher<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointSimpleListSearcher>(
-        new PointSimpleListSearcher{},
-        [](PointSimpleListSearcher* obj) { delete obj; });
+    return std::make_shared<PointSimpleListSearcher>();
 }
 
 template <size_t N>

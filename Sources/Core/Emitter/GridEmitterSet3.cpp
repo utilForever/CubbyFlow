@@ -58,8 +58,6 @@ GridEmitterSet3 GridEmitterSet3::Builder::Build() const
 
 GridEmitterSet3Ptr GridEmitterSet3::Builder::MakeShared() const
 {
-    return std::shared_ptr<GridEmitterSet3>(
-        new GridEmitterSet3(m_emitters),
-        [](GridEmitterSet3* obj) { delete obj; });
+    return std::make_shared<GridEmitterSet3>(m_emitters);
 }
 }  // namespace CubbyFlow

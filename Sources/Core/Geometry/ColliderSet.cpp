@@ -104,8 +104,7 @@ ColliderSet<N> ColliderSet<N>::Builder::Build() const
 template <size_t N>
 std::shared_ptr<ColliderSet<N>> ColliderSet<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<ColliderSet>(new ColliderSet{ m_colliders },
-                                        [](ColliderSet* obj) { delete obj; });
+    return std::make_shared<ColliderSet>(m_colliders);
 }
 
 template class ColliderSet<2>;

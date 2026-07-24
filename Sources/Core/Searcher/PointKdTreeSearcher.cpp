@@ -77,9 +77,7 @@ bool PointKdTreeSearcher<N>::HasNearbyPoint(const Vector<double, N>& origin,
 template <size_t N>
 std::shared_ptr<PointNeighborSearcher<N>> PointKdTreeSearcher<N>::Clone() const
 {
-    return std::shared_ptr<PointKdTreeSearcher>(
-        new PointKdTreeSearcher{ *this },
-        [](PointKdTreeSearcher* obj) { delete obj; });
+    return std::make_shared<PointKdTreeSearcher>(*this);
 }
 
 template <size_t N>
@@ -102,8 +100,9 @@ void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer)
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Serialize(
-    const PointKdTreeSearcher<2>& searcher, std::vector<uint8_t>* buffer)
+CUBBYFLOW_REQUIRES(M == 2)
+void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<2>& searcher,
+                                       std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -145,8 +144,9 @@ std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointKdTreeSearcher<N>::Serialize(
-    const PointKdTreeSearcher<3>& searcher, std::vector<uint8_t>* buffer)
+CUBBYFLOW_REQUIRES(M == 3)
+void PointKdTreeSearcher<N>::Serialize(const PointKdTreeSearcher<3>& searcher,
+                                       std::vector<uint8_t>* buffer)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -188,8 +188,9 @@ std::enable_if_t<M == 3, void> PointKdTreeSearcher<N>::Serialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Deserialize(
-    const std::vector<uint8_t>& buffer, PointKdTreeSearcher<2>& searcher)
+CUBBYFLOW_REQUIRES(M == 2)
+void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
+                                         PointKdTreeSearcher<2>& searcher)
 {
     const fbs::PointKdTreeSearcher2* fbsSearcher =
         fbs::GetPointKdTreeSearcher2(buffer.data());
@@ -222,8 +223,9 @@ std::enable_if_t<M == 2, void> PointKdTreeSearcher<N>::Deserialize(
 
 template <size_t N>
 template <size_t M>
-std::enable_if_t<M == 3, void> PointKdTreeSearcher<N>::Deserialize(
-    const std::vector<uint8_t>& buffer, PointKdTreeSearcher<3>& searcher)
+CUBBYFLOW_REQUIRES(M == 3)
+void PointKdTreeSearcher<N>::Deserialize(const std::vector<uint8_t>& buffer,
+                                         PointKdTreeSearcher<3>& searcher)
 {
     const fbs::PointKdTreeSearcher3* fbsSearcher =
         fbs::GetPointKdTreeSearcher3(buffer.data());
@@ -270,8 +272,7 @@ template <size_t N>
 std::shared_ptr<PointKdTreeSearcher<N>>
 PointKdTreeSearcher<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<PointKdTreeSearcher>(
-        new PointKdTreeSearcher, [](PointKdTreeSearcher* obj) { delete obj; });
+    return std::make_shared<PointKdTreeSearcher>();
 }
 
 template <size_t N>

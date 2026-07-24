@@ -73,7 +73,11 @@ set(CUDA_CRT_LINKAGE "dynamic" CACHE STRING
 if (USE_CUDA)
     set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
     set(CUDA_SEPARABLE_COMPILATION OFF)
-    set(CUDA_STANDARD 17)
+    # Host targets use C++23; CUDA device sources stay on C++17 for the
+    # supported CUDA toolchains.
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_EXTENSIONS OFF)
     find_package(CUDA)
     if (CUDA_FOUND) # Modify project options for CUDA build
         enable_language(CUDA)

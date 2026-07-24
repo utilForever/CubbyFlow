@@ -239,9 +239,7 @@ LevelSetLiquidSolver2 LevelSetLiquidSolver2::Builder::Build() const
 
 LevelSetLiquidSolver2Ptr LevelSetLiquidSolver2::Builder::MakeShared() const
 {
-    return std::shared_ptr<LevelSetLiquidSolver2>(
-        new LevelSetLiquidSolver2{ m_resolution, GetGridSpacing(),
-                                   m_gridOrigin },
-        [](LevelSetLiquidSolver2* obj) { delete obj; });
+    return std::make_shared<LevelSetLiquidSolver2>(
+        m_resolution, GetGridSpacing(), m_gridOrigin);
 }
 }  // namespace CubbyFlow

@@ -75,4 +75,10 @@ typedef SSIZE_T ssize_t;
 #define UNUSED_VARIABLE(x) ((void)x)
 #endif
 
+#if !defined(__CUDACC__) && defined(__cpp_concepts) && __cpp_concepts >= 201907L
+#define CUBBYFLOW_REQUIRES(...) requires(__VA_ARGS__)
+#else
+#define CUBBYFLOW_REQUIRES(...)
+#endif
+
 #endif

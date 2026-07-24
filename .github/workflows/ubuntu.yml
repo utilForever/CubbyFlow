@@ -39,11 +39,13 @@ jobs:
             os: ubuntu-24.04
             compiler: clang
             version: "17"
+            libstdcxx: "13"
           # Ubuntu 24.04 + clang-16
           - name: "Ubuntu 24.04 + clang-16"
             os: ubuntu-24.04
             compiler: clang
             version: "16"
+            libstdcxx: "13"
 
     runs-on: ${{ matrix.os }}
     name: 🐧 Build - ${{ matrix.name }}
@@ -64,6 +66,10 @@ jobs:
         else
           echo "CC=clang-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
+          if [ -n "${{ matrix.libstdcxx }}" ]; then
+            GCC_DIR=$(dirname "$(g++-${{ matrix.libstdcxx }} -print-libgcc-file-name)")
+            printf 'CXXFLAGS=%s\n' "${CXXFLAGS:+$CXXFLAGS }--gcc-install-dir=$GCC_DIR" >> "$GITHUB_ENV"
+          fi
         fi
     - name: Configure Build
       run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..

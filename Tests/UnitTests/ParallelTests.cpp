@@ -10,6 +10,12 @@ using namespace CubbyFlow;
 
 static unsigned int NUM_CORES = std::thread::hardware_concurrency();
 
+TEST(Parallel, Async)
+{
+    auto future = Internal::Async([]() { return 42; });
+    EXPECT_EQ(42, future.get());
+}
+
 TEST(Parallel, Fill)
 {
     size_t N = std::max(20u, (3 * NUM_CORES) / 2);

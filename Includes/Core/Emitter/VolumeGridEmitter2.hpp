@@ -18,6 +18,7 @@
 #include <Core/Matrix/Matrix.hpp>
 
 #include <memory>
+#include <utility>
 
 namespace CubbyFlow
 {
@@ -118,8 +119,8 @@ class VolumeGridEmitter2 final : public GridEmitter2
     [[nodiscard]] static Builder GetBuilder();
 
  private:
-    using ScalarTarget = std::tuple<ScalarGrid2Ptr, ScalarMapper>;
-    using VectorTarget = std::tuple<VectorGrid2Ptr, VectorMapper>;
+    using ScalarTarget = std::pair<ScalarGrid2Ptr, ScalarMapper>;
+    using VectorTarget = std::pair<VectorGrid2Ptr, VectorMapper>;
 
     void OnUpdate(double currentTimeInSeconds,
                   double timeIntervalInSeconds) override;

@@ -235,9 +235,7 @@ PCISPHSolver3 PCISPHSolver3::Builder::Build() const
 
 PCISPHSolver3Ptr PCISPHSolver3::Builder::MakeShared() const
 {
-    return std::shared_ptr<PCISPHSolver3>(
-        new PCISPHSolver3{ m_targetDensity, m_targetSpacing,
-                           m_relativeKernelRadius },
-        [](PCISPHSolver3* obj) { delete obj; });
+    return std::make_shared<PCISPHSolver3>(m_targetDensity, m_targetSpacing,
+                                           m_relativeKernelRadius);
 }
 }  // namespace CubbyFlow

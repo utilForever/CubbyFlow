@@ -79,17 +79,18 @@ TEST(VolumeParticleEmitter2, Builder)
 {
     auto sphere = std::make_shared<Sphere2>(Vector2D(1.0, 2.0), 3.0);
 
-    VolumeParticleEmitter2 emitter =
-        VolumeParticleEmitter2::GetBuilder()
-            .WithSurface(sphere)
-            .WithMaxRegion(BoundingBox2D({ 0.0, 0.0 }, { 3.0, 3.0 }))
-            .WithSpacing(0.1)
-            .WithInitialVelocity({ -1.0, 0.5 })
-            .WithMaxNumberOfParticles(30)
-            .WithJitter(0.01)
-            .WithIsOneShot(false)
-            .WithAllowOverlapping(true)
-            .Build();
+    auto builder = VolumeParticleEmitter2::GetBuilder()
+                       .WithSurface(sphere)
+                       .WithMaxRegion(BoundingBox2D({ 0.0, 0.0 }, { 3.0, 3.0 }))
+                       .WithSpacing(0.1)
+                       .WithInitialVelocity({ -1.0, 0.5 })
+                       .WithMaxNumberOfParticles(30)
+                       .WithJitter(0.01)
+                       .WithIsOneShot(false)
+                       .WithAllowOverlapping(true)
+                       .WithRandomSeed(42);
+    VolumeParticleEmitter2 emitter = builder.Build();
+    auto sharedEmitter = builder.MakeShared();
 
     EXPECT_EQ(0.01, emitter.GetJitter());
     EXPECT_FALSE(emitter.GetIsOneShot());
@@ -98,4 +99,19 @@ TEST(VolumeParticleEmitter2, Builder)
     EXPECT_EQ(0.1, emitter.GetSpacing());
     EXPECT_EQ(-1.0, emitter.GetInitialVelocity().x);
     EXPECT_EQ(0.5, emitter.GetInitialVelocity().y);
+
+    auto particles = std::make_shared<ParticleSystemData2>();
+    auto sharedParticles = std::make_shared<ParticleSystemData2>();
+    emitter.SetTarget(particles);
+    sharedEmitter->SetTarget(sharedParticles);
+    emitter.Update(0.0, 1.0);
+    sharedEmitter->Update(0.0, 1.0);
+
+    ASSERT_EQ(particles->NumberOfParticles(),
+              sharedParticles->NumberOfParticles());
+    for (size_t i = 0; i < particles->NumberOfParticles(); ++i)
+    {
+        EXPECT_VECTOR2_EQ(particles->Positions()[i],
+                          sharedParticles->Positions()[i])
+    }
 }

@@ -61,9 +61,7 @@ template <size_t N>
 std::shared_ptr<ConstantVectorField<N>>
 ConstantVectorField<N>::Builder::MakeShared() const
 {
-    return std::shared_ptr<ConstantVectorField>(
-        new ConstantVectorField{ m_value },
-        [](ConstantVectorField* obj) { delete obj; });
+    return std::make_shared<ConstantVectorField>(m_value);
 }
 
 template class ConstantVectorField<2>;

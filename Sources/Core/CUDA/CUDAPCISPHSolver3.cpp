@@ -152,10 +152,8 @@ CUDAPCISPHSolver3 CUDAPCISPHSolver3::Builder::Build() const
 
 CUDAPCISPHSolver3Ptr CUDAPCISPHSolver3::Builder::MakeShared() const
 {
-    return std::shared_ptr<CUDAPCISPHSolver3>(
-        new CUDAPCISPHSolver3{ m_targetDensity, m_targetSpacing,
-                               m_relativeKernelRadius },
-        [](const CUDAPCISPHSolver3* obj) { delete obj; });
+    return std::make_shared<CUDAPCISPHSolver3>(m_targetDensity, m_targetSpacing,
+                                               m_relativeKernelRadius);
 }
 
 #endif

@@ -68,6 +68,6 @@ void Deserialize(const std::vector<uint8_t>& buffer, std::vector<uint8_t>* data)
         return;
     }
 
-    data->assign(fbsBytes->begin(), fbsBytes->end());
+    data->assign(fbsBytes->data(), fbsBytes->data() + fbsBytes->size());
 }
 }  // namespace CubbyFlow

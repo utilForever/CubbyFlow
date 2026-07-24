@@ -321,9 +321,7 @@ Triangle3 Triangle3::Builder::Build() const
 
 Triangle3Ptr Triangle3::Builder::MakeShared() const
 {
-    return std::shared_ptr<Triangle3>(
-        new Triangle3{ m_points, m_normals, m_uvs, m_transform,
-                       m_isNormalFlipped },
-        [](Triangle3* obj) { delete obj; });
+    return std::make_shared<Triangle3>(m_points, m_normals, m_uvs, m_transform,
+                                       m_isNormalFlipped);
 }
 }  // namespace CubbyFlow

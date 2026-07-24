@@ -15,6 +15,7 @@
 #include <Core/Utils/LevelSetUtils.hpp>
 #include <Core/Utils/Macros.hpp>
 
+#include <cmath>
 #include <utility>
 
 namespace CubbyFlow
@@ -43,7 +44,7 @@ void VolumeGridEmitter3::AddStepFunctionTarget(
     auto mapper = [minValue, maxValue, smoothingWidth](
                       double sdf, const Vector3D&, double oldVal) {
         const double step = 1.0 - SmearedHeavisideSDF(sdf / smoothingWidth);
-        return std::max(oldVal, (maxValue - minValue) * step + minValue);
+        return std::max(oldVal, std::lerp(minValue, maxValue, step));
     };
 
     AddTarget(scalarGridTarget, mapper);
@@ -210,8 +211,6 @@ VolumeGridEmitter3 VolumeGridEmitter3::Builder::Build() const
 
 VolumeGridEmitter3Ptr VolumeGridEmitter3::Builder::MakeShared() const
 {
-    return std::shared_ptr<VolumeGridEmitter3>(
-        new VolumeGridEmitter3(m_sourceRegion, m_isOneShot),
-        [](VolumeGridEmitter3* obj) { delete obj; });
+    return std::make_shared<VolumeGridEmitter3>(m_sourceRegion, m_isOneShot);
 }
 }  // namespace CubbyFlow
