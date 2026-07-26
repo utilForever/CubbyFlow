@@ -23,6 +23,7 @@ class CMakeBuild(build_ext):
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
             "-DPYTHON_EXECUTABLE=" + sys.executable,
             "-DBUILD_FROM_PIP=ON",
+            "-DUSE_CUDA=OFF",
         ]
 
         tasking_sys = os.environ.get("TASKING_SYSTEM", "")
