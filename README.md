@@ -1,18 +1,34 @@
-# CubbyFlow
+<h1 align="center">CubbyFlow</h1>
 
-<img src="./Medias/Logos/Logo.png" width=256 height=256 alt="CubbyFlow logo" />
+<p align="center">
+  <img src="./Medias/Logos/Logo.png" width="400" alt="CubbyFlow logo" />
+</p>
+<p align="center">
+  <b>A voxel-based fluid simulation engine for computer games</b>
+</p>
+<p align="center">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://github.com/utilForever/CubbyFlow/actions/workflows/windows.yml"><img src="https://github.com/utilForever/CubbyFlow/actions/workflows/windows.yml/badge.svg?branch=main" alt="Windows" /></a>
+  <a href="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu.yml"><img src="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu.yml/badge.svg?branch=main" alt="Ubuntu" /></a>
+  <a href="https://github.com/utilForever/CubbyFlow/actions/workflows/macos.yml"><img src="https://github.com/utilForever/CubbyFlow/actions/workflows/macos.yml/badge.svg?branch=main" alt="macOS" /></a>
+  <a href="https://github.com/utilForever/CubbyFlow/actions/workflows/windows-cuda.yml"><img src="https://github.com/utilForever/CubbyFlow/actions/workflows/windows-cuda.yml/badge.svg?branch=main" alt="Windows CUDA" /></a>
+  <a href="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu-cuda.yml"><img src="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu-cuda.yml/badge.svg?branch=main" alt="Ubuntu CUDA" /></a>
+  <br />
+  <a href="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu-codecov.yml"><img src="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu-codecov.yml/badge.svg?branch=main" alt="Code Coverage" /></a>
+  <a href="https://codecov.io/gh/utilForever/CubbyFlow"><img src="https://codecov.io/gh/utilForever/CubbyFlow/branch/main/graph/badge.svg" alt="Codecov" /></a>
+  <a href="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu-sonarcloud.yml"><img src="https://github.com/utilForever/CubbyFlow/actions/workflows/ubuntu-sonarcloud.yml/badge.svg?branch=main" alt="Static Analysis" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=alert_status" alt="Quality Gate Status" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=ncloc" alt="Lines of Code" /></a>
+  <br />
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=sqale_rating" alt="Maintainability Rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=reliability_rating" alt="Reliability Rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=security_rating" alt="Security Rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=bugs" alt="Bugs" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=vulnerabilities" alt="Vulnerabilities" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_CubbyFlow"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=sqale_index" alt="Technical Debt" /></a>
+</p>
 
-[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](./LICENSE) ![Windows](https://github.com/CubbyFlow/CubbyFlow/workflows/Windows/badge.svg) ![Ubuntu](https://github.com/CubbyFlow/CubbyFlow/workflows/Ubuntu/badge.svg) ![macOS](https://github.com/CubbyFlow/CubbyFlow/workflows/macOS/badge.svg) ![Ubuntu - Codecov](https://github.com/CubbyFlow/CubbyFlow/workflows/Ubuntu%20-%20Codecov/badge.svg) [![Build Status](https://travis-ci.com/CubbyFlow/CubbyFlow.svg?branch=main)](https://travis-ci.com/CubbyFlow/CubbyFlow)
-
-[![codecov](https://codecov.io/gh/CubbyFlow/CubbyFlow/branch/master/graph/badge.svg)](https://codecov.io/gh/CubbyFlow/CubbyFlow)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/54d8ed92a3ce4ad988be48dd2dbdeada)](https://www.codacy.com/gh/CubbyFlow/CubbyFlow/dashboard?utm_source=github.com&utm_medium=referral&utm_content=CubbyFlow/CubbyFlow&utm_campaign=Badge_Grade)
-[![CodeFactor](https://www.codefactor.io/repository/github/CubbyFlow/CubbyFlow/badge)](https://www.codefactor.io/repository/github/CubbyFlow/CubbyFlow)
-[![Discord](https://img.shields.io/discord/667686826093445129.svg)](https://discord.gg/3gsWZM8)
-
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=alert_status)](https://sonarcloud.io/dashboard?id=utilForever_CubbyFlow) [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=ncloc)](https://sonarcloud.io/dashboard?id=utilForever_CubbyFlow) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=utilForever_CubbyFlow) [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=utilForever_CubbyFlow) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=utilForever_CubbyFlow&metric=security_rating)](https://sonarcloud.io/dashboard?id=utilForever_CubbyFlow)
-
-CubbyFlow is voxel-based fluid simulation engine for computer games based on [Jet framework](https://github.com/doyubkim/fluid-engine-dev) that was created by [Doyub Kim](https://twitter.com/doyub).
-The host code is built on C++23 and can be compiled with commonly available compilers such as g++, clang++, or Microsoft Visual Studio. Optional CUDA device sources remain on C++17 for the supported CUDA toolchains. CI covers current macOS, Ubuntu, and Windows environments.
+CubbyFlow is based on the [Jet framework](https://github.com/doyubkim/fluid-engine-dev) created by [Doyub Kim](https://twitter.com/doyub). It provides matching 2-D and 3-D C++ and Python APIs for fluid simulation. Host code uses C++23; optional CUDA device code uses C++17.
 
 ## Key Features
 
@@ -33,101 +49,150 @@ Every simulator has both 2-D and 3-D implementations.
 
 ## Quick Start
 
-You will need CMake and [vcpkg](https://github.com/microsoft/vcpkg) to build the code. Set `VCPKG_ROOT` to your vcpkg checkout; CubbyFlow's manifest installs the required libraries during CMake configuration. If you're using Windows, you also need Visual Studio.
+### Prerequisites
 
-First, clone the code:
+- CMake 3.31.6 or newer
+- A C++23 compiler
+- A bootstrapped [vcpkg](https://github.com/microsoft/vcpkg) checkout
+- Python when building `pyCubbyFlow`
+- A CUDA toolkit only when building the optional CUDA backend
+
+Set `VCPKG_ROOT` to your vcpkg checkout. CubbyFlow's manifest installs the required libraries during CMake configuration.
+
+### 1. Clone
 
 ```sh
-git clone https://github.com/CubbyFlow/CubbyFlow.git
+git clone https://github.com/utilForever/CubbyFlow.git
 cd CubbyFlow
 ```
 
-### C++ API
+### 2. Build the C++ API
 
-For macOS or Linux or Windows Subsystem for Linux (WSL):
+For macOS, Linux, or Windows Subsystem for Linux:
 
 ```sh
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-cmake --build build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=OFF
+cmake --build build --config Release
 ```
 
 For Windows:
 
 ```bat
-cmake -S . -B build -A x64 -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake"
+cmake -S . -B build -A x64 -DUSE_CUDA=OFF
 cmake --build build --config Release
 ```
 
-Now run some examples, such as:
+Run an example:
 
-```
-bin/HybridLiquidSim
-```
-
-### Python API
-
-Build and install the package by running
-
-```
-pip install -U .
+```sh
+./build/bin/HybridLiquidSim
 ```
 
-### Docker
+On Windows, the executable is `build\bin\Release\HybridLiquidSim.exe`.
 
+### 3. Install the Python API
+
+```sh
+python -m pip install .
 ```
+
+### Docker Image
+
+```sh
 docker pull cubbyflow/cubbyflow:latest
-```
-
-Now run hybrid simulation example:
-
-```
 docker run -it cubbyflow/cubbyflow
-[inside docker container]
+# Inside the container:
 /app/build/bin/HybridLiquidSim
 ```
 
-### More Instructions of Building the Code
+See [Documents/Install.md](./Documents/Install.md) for platform-specific build, test, and installation instructions.
 
-To learn how to build, test, and install the SDK, please check out [INSTALL.md](./Documents/Install.md).
+## Architecture at a Glance
+
+| Area                | Paths                                         |
+| ------------------- | --------------------------------------------- |
+| Public C++ API      | `Includes/Core/`                              |
+| Core implementation | `Sources/Core/`                               |
+| Optional CUDA       | `Includes/Core/CUDA/`, `Sources/Core/CUDA/`   |
+| Python bindings     | `Includes/API/Python/`, `Sources/API/Python/` |
+| Tests               | `Tests/`                                      |
+| Examples            | `Examples/`                                   |
+
+Most behavior starts in the core library and is shared by matching 2-D and 3-D APIs. Python bindings expose the same core types, while CUDA remains optional. See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full design and code-reading guide.
+
+## Development
+
+Build and run the focused CPU unit-test target:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=ON
+cmake --build build --target UnitTests --config Release
+./build/bin/UnitTests
+```
+
+On Windows, run `build\bin\Release\UnitTests.exe`. Contributor workflow, dimensional parity, Python/CUDA synchronization, and validation rules are
+documented in [AGENTS.md](./AGENTS.md).
 
 ## Documentation
 
-Project design is described in [ARCHITECTURE.md](./ARCHITECTURE.md). Generated
-API reference and other documentation are available on [the project website](https://utilforever.github.io/CubbyFlow/).
+Generated API reference and additional documentation are available on [the project website](https://utilforever.github.io/CubbyFlow/).
 
 ## Examples
 
-Here are some of the example simulations generated using CubbyFlow framework. Corresponding example codes can be found under [Examples](./Examples). All images are rendered using [Mitsuba renderer](https://www.mitsuba-renderer.org/) and the Mitsuba scene files can be found from [the demo directory](./Demos). Find out more demos from [the project website](https://utilforever.github.io/CubbyFlow/Examples).
+Source code is available under [Examples](./Examples). These images were rendered with [Mitsuba](https://www.mitsuba-renderer.org/); more demos are on
+[the project website](https://utilforever.github.io/CubbyFlow/Examples).
 
-#### PCISPH Simulation Example
+### Dam-Break Solvers
 
-![PCISPH_dam_breaking](./Medias/Screenshots/PCISPH_dam_breaking.png "PCISPH Example")
+<table width="100%">
+  <tr>
+    <th width="33%">PCISPH</th>
+    <th width="33%">Level set</th>
+    <th width="33%">FLIP</th>
+  </tr>
+  <tr>
+    <td><img src="./Medias/Screenshots/PCISPH_dam_breaking.png" width="100%" alt="PCISPH dam break" /></td>
+    <td><img src="./Medias/Screenshots/LevelSet_dam_breaking.png" width="100%" alt="Level-set dam break" /></td>
+    <td><img src="./Medias/Screenshots/FLIP_dam_breaking.png" width="100%" alt="FLIP dam break" /></td>
+  </tr>
+</table>
 
-#### Level Set Simulation Example
+<table width="100%">
+  <tr>
+    <th width="50%">PIC</th>
+    <th width="50%">APIC</th>
+  </tr>
+  <tr>
+    <td><img src="./Medias/Screenshots/PIC_dam_breaking.png" width="100%" alt="PIC dam break" /></td>
+    <td><img src="./Medias/Screenshots/APIC_dam_breaking.png" width="100%" alt="APIC dam break" /></td>
+  </tr>
+</table>
 
-![Level-set_dam_breaking](./Medias/Screenshots/LevelSet_dam_breaking.png "Level Set Example")
+### Level-Set Viscosity
 
-#### FLIP Simulation Example
+<table width="100%">
+  <tr>
+    <th width="50%">High viscosity</th>
+    <th width="50%">Low viscosity</th>
+  </tr>
+  <tr>
+    <td><img src="./Medias/Screenshots/level_set_bunny_drop_high_viscosity.png" width="100%" alt="High-viscosity level-set bunny drop" /></td>
+    <td><img src="./Medias/Screenshots/level_set_bunny_drop_low_viscosity.png" width="100%" alt="Low-viscosity level-set bunny drop" /></td>
+  </tr>
+</table>
 
-![FLIP_dam_breaking](./Medias/Screenshots/FLIP_dam_breaking.png "FLIP Example")
+### Smoke Advection
 
-#### PIC Simulation Example
-
-![PIC_dam_breaking](./Medias/Screenshots/PIC_dam_breaking.png "PIC Example")
-
-#### APIC Simulation Example
-
-![APIC_dam_breaking](./Medias/Screenshots/APIC_dam_breaking.png "APIC Example")
-
-#### Level Set Example with Different Viscosity (high / low)
-
-![level_set_bunny_drop_high_viscosity](./Medias/Screenshots/level_set_bunny_drop_high_viscosity.png "Level Set Bunny Drop - High Viscosity")
-![level_set_bunny_drop_low_viscosity](./Medias/Screenshots/level_set_bunny_drop_low_viscosity.png "Level Set Bunny Drop - Low Viscosity")
-
-#### Smoke Simulation with Different Advection Methods (Linear / Cubic-Spline)
-
-![rising_smoke_linear](./Medias/Screenshots/rising_smoke_linear.png "Rising Smoke - Linear")
-![rising_smoke_cubic](./Medias/Screenshots/rising_smoke_cubic.png "Rising Smoke - Cubic")
+<table width="100%">
+  <tr>
+    <th width="50%">Linear</th>
+    <th width="50%">Cubic spline</th>
+  </tr>
+  <tr>
+    <td><img src="./Medias/Screenshots/rising_smoke_linear.png" width="100%" alt="Rising smoke with linear advection" /></td>
+    <td><img src="./Medias/Screenshots/rising_smoke_cubic.png" width="100%" alt="Rising smoke with cubic-spline advection" /></td>
+  </tr>
+</table>
 
 ## Presentations
 
@@ -141,7 +206,8 @@ Here are some of the example simulations generated using CubbyFlow framework. Co
 
 ## How To Contribute
 
-Contributions are always welcome, either reporting issues/bugs or forking the repository and then issuing pull requests when you have completed some additional coding that you feel will be beneficial to the main project. If you are interested in contributing in a more dedicated capacity, then please contact me.
+Contributions are welcome through issues and pull requests. Read [AGENTS.md](./AGENTS.md) for the repository's coding, testing, and review
+expectations before making a change.
 
 ## Contact
 
