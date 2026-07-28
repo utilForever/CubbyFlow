@@ -820,8 +820,7 @@ void TriangleMesh3::BuildWindingNumbers() const
                 data.areaWeightedPositionSums / data.areaSums;
         };
 
-        const auto leafFunc =
-            [this](size_t nodeIndex) -> WindingNumberGatherData {
+        const auto leafFunc = [this](size_t nodeIndex) {
             WindingNumberGatherData result;
 
             const auto iter = m_bvh.ItemOfNode(nodeIndex);

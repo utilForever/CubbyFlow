@@ -62,7 +62,7 @@ void ZhuBridsonPointsToImplicit2::Convert(
 
     auto temp = output->Clone();
     temp->Fill([&neighborSearcher, this, &isoContValue,
-                &output](const Vector2D& x) -> double {
+                &output](const Vector2D& x) {
         Vector2D xAvg;
         double wSum = 0.0;
         const auto func = [&x, this, &wSum, &xAvg](size_t, const Vector2D& xi) {

@@ -63,7 +63,7 @@ void ZhuBridsonPointsToImplicit3::Convert(
 
     auto temp = output->Clone();
     temp->Fill([&neighborSearcher, this, &isoContValue,
-                &output](const Vector3D& x) -> double {
+                &output](const Vector3D& x) {
         Vector3D xAvg;
         double wSum = 0.0;
         const auto func = [&x, this, &wSum, &xAvg](size_t, const Vector3D& xi) {
