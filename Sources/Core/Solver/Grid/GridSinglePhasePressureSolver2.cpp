@@ -31,7 +31,8 @@ void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
     const Vector2D invH = 1.0 / input.GridSpacing();
     Vector2D invHSqr = ElemMul(invH, invH);
 
-    ParallelForEachIndex(A->Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(A->Size(), [&A, &b, &markers, &input, &size, &invHSqr](
+                                        size_t i, size_t j) {
         FDMMatrixRow2& row = (*A)(i, j);
 
         // initialize
@@ -92,16 +93,18 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
 
     size_t numRows = 0;
     Array2<size_t> coordToIndex{ size };
-    ForEachIndex(markers.Size(), [&](size_t i, size_t j) {
-        const size_t cIdx = markerAcc.Index(i, j);
+    ForEachIndex(markers.Size(),
+                 [&markerAcc, &coordToIndex, &numRows](size_t i, size_t j) {
+                     const size_t cIdx = markerAcc.Index(i, j);
 
-        if (markerAcc[cIdx] == FLUID)
-        {
-            coordToIndex[cIdx] = numRows++;
-        }
-    });
+                     if (markerAcc[cIdx] == FLUID)
+                     {
+                         coordToIndex[cIdx] = numRows++;
+                     }
+                 });
 
-    ForEachIndex(markers.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(markers.Size(), [&markerAcc, &b, &input, &coordToIndex, &size,
+                                  &markers, &invHSqr, &A](size_t i, size_t j) {
         const size_t cIdx = markerAcc.Index(i, j);
 
         if (markerAcc[cIdx] == FLUID)
@@ -269,7 +272,8 @@ void GridSinglePhasePressureSolver2::BuildMarkers(
     FDMMGUtils2::ResizeArrayWithFinest(size, maxLevels, &m_markers);
 
     // Build top-level markers
-    ParallelForEachIndex(m_markers[0].Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(m_markers[0].Size(), [&pos, &boundarySDF, this,
+                                               &fluidSDF](size_t i, size_t j) {
         const Vector2D pt = pos(i, j);
 
         if (IsInsideSDF(boundarySDF.Sample(pt)))
@@ -295,7 +299,8 @@ void GridSinglePhasePressureSolver2::BuildMarkers(
 
         ParallelRangeFor(
             ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-            [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
+            [&n, &finer, &coarser](size_t iBegin, size_t iEnd, size_t jBegin,
+                                   size_t jEnd) {
                 std::array<size_t, 4> jIndices{};
 
                 for (size_t j = jBegin; j < jEnd; ++j)
@@ -348,7 +353,7 @@ void GridSinglePhasePressureSolver2::DecompressSolution()
     m_system.x.Resize(acc.Size());
 
     size_t row = 0;
-    ForEachIndex(m_markers[0].Size(), [&](size_t i, size_t j) {
+    ForEachIndex(m_markers[0].Size(), [&acc, this, &row](size_t i, size_t j) {
         if (acc(i, j) == FLUID)
         {
             m_system.x(i, j) = m_compSystem.x[row];
@@ -440,7 +445,8 @@ void GridSinglePhasePressureSolver2::ApplyPressureGradient(
 
     Vector2D invH = 1.0 / input.GridSpacing();
 
-    ParallelForEachIndex(x.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(x.Size(), [this, &size, &u0, &u, &invH, &x, &v0, &v](
+                                       size_t i, size_t j) {
         if (m_markers[0](i, j) == FLUID)
         {
             if (i + 1 < size.x && m_markers[0](i + 1, j) != BOUNDARY)

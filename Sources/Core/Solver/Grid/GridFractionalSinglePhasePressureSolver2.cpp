@@ -54,7 +54,8 @@ void Restrict(const Array2<double>& finer, Array2<double>* coarser)
     const Vector2UZ n = coarser->Size();
     ParallelRangeFor(
         ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
+        [&kernelSize, &n, &kernels, &finer, &coarser](
+            size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
             std::array<size_t, 4> jIndices{};
 
             for (size_t j = jBegin; j < jEnd; ++j)
@@ -121,7 +122,10 @@ void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
     const Vector2D invHSqr = ElemMul(invH, invH);
 
     // Build linear system
-    ParallelForEachIndex(A->Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(A->Size(), [&A, &b, &fluidSDF, &size, &uWeights,
+                                     &invHSqr, &input, &invH, &vWeights,
+                                     &boundaryVel, &uPos,
+                                     &vPos](size_t i, size_t j) {
         FDMMatrixRow2& row = (*A)(i, j);
 
         // initialize
@@ -274,7 +278,8 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
 
     size_t numRows = 0;
     Array2<size_t> coordToIndex{ size };
-    ForEachIndex(fluidSDF.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(fluidSDF.Size(), [&fluidSDFAcc, &fluidSDF, &coordToIndex,
+                                   &numRows](size_t i, size_t j) {
         const size_t cIdx = fluidSDFAcc.Index(i, j);
         const double centerPhi = fluidSDF[cIdx];
 
@@ -284,7 +289,10 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
         }
     });
 
-    ForEachIndex(fluidSDF.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(fluidSDF.Size(), [&fluidSDFAcc, &fluidSDF, &coordToIndex,
+                                   &size, &uWeights, &invHSqr, &input, &invH,
+                                   &vWeights, &boundaryVel, &uPos, &vPos, &A,
+                                   &b](size_t i, size_t j) {
         const size_t cIdx = fluidSDFAcc.Index(i, j);
         const double centerPhi = fluidSDF(i, j);
 
@@ -539,11 +547,13 @@ void GridFractionalSinglePhasePressureSolver2::BuildWeights(
     m_boundaryVel = boundaryVelocity.Sampler();
     Vector2D h = input.GridSpacing();
 
-    ParallelForEachIndex(m_fluidSDF[0].Size(), [&](size_t i, size_t j) {
-        m_fluidSDF[0](i, j) = fluidSDF.Sample(cellPos(i, j));
-    });
+    ParallelForEachIndex(
+        m_fluidSDF[0].Size(), [this, &fluidSDF, &cellPos](size_t i, size_t j) {
+            m_fluidSDF[0](i, j) = fluidSDF.Sample(cellPos(i, j));
+        });
 
-    ParallelForEachIndex(m_uWeights[0].Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(m_uWeights[0].Size(), [&uPos, &boundarySDF, &h, this](
+                                                   size_t i, size_t j) {
         const Vector2D pt = uPos(i, j);
         const double phi0 = boundarySDF.Sample(pt - Vector2D{ 0.5 * h.x, 0.0 });
         const double phi1 = boundarySDF.Sample(pt + Vector2D{ 0.5 * h.x, 0.0 });
@@ -560,7 +570,8 @@ void GridFractionalSinglePhasePressureSolver2::BuildWeights(
         m_uWeights[0](i, j) = weight;
     });
 
-    ParallelForEachIndex(m_vWeights[0].Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(m_vWeights[0].Size(), [&vPos, &boundarySDF, &h, this](
+                                                   size_t i, size_t j) {
         const Vector2D pt = vPos(i, j);
         const double phi0 = boundarySDF.Sample(pt - Vector2D{ 0.0, 0.5 * h.y });
         const double phi1 = boundarySDF.Sample(pt + Vector2D{ 0.0, 0.5 * h.y });
@@ -600,7 +611,7 @@ void GridFractionalSinglePhasePressureSolver2::DecompressSolution()
     m_system.x.Resize(acc.Size());
 
     size_t row = 0;
-    ForEachIndex(m_fluidSDF[0].Size(), [&](size_t i, size_t j) {
+    ForEachIndex(m_fluidSDF[0].Size(), [&acc, this, &row](size_t i, size_t j) {
         if (IsInsideSDF(acc(i, j)))
         {
             m_system.x(i, j) = m_compSystem.x[row];
@@ -697,7 +708,8 @@ void GridFractionalSinglePhasePressureSolver2::ApplyPressureGradient(
 
     Vector2D invH = 1.0 / input.GridSpacing();
 
-    ParallelForEachIndex(x.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(x.Size(), [this, &size, &u0, &u, &invH, &x, &v0, &v](
+                                       size_t i, size_t j) {
         const double centerPhi = m_fluidSDF[0](i, j);
 
         if (i + 1 < size.x && m_uWeights[0](i + 1, j) > 0.0 &&

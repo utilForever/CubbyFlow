@@ -31,7 +31,8 @@ void GridBlockedBoundaryConditionSolver3::ConstrainVelocity(
     GridDataPositionFunc<3> vPos = velocity->VPosition();
     GridDataPositionFunc<3> wPos = velocity->WPosition();
 
-    ForEachIndex(m_marker.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(m_marker.Size(), [this, &uPos, &u, &size, &vPos, &v, &wPos,
+                                   &w](size_t i, size_t j, size_t k) {
         if (m_marker(i, j, k) == COLLIDER)
         {
             if (i > 0 && m_marker(i - 1, j, k) == FLUID)
@@ -90,15 +91,16 @@ void GridBlockedBoundaryConditionSolver3::OnColliderUpdated(
         std::dynamic_pointer_cast<CellCenteredScalarGrid3>(GetColliderSDF());
 
     m_marker.Resize(gridSize);
-    ParallelForEachIndex(m_marker.Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF((*sdf)(i, j, k)))
-        {
-            m_marker(i, j, k) = COLLIDER;
-        }
-        else
-        {
-            m_marker(i, j, k) = FLUID;
-        }
-    });
+    ParallelForEachIndex(m_marker.Size(),
+                         [&sdf, this](size_t i, size_t j, size_t k) {
+                             if (IsInsideSDF((*sdf)(i, j, k)))
+                             {
+                                 m_marker(i, j, k) = COLLIDER;
+                             }
+                             else
+                             {
+                                 m_marker(i, j, k) = FLUID;
+                             }
+                         });
 }
 }  // namespace CubbyFlow

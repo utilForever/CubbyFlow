@@ -41,47 +41,49 @@ void GridFractionalBoundaryConditionSolver2::ConstrainVelocity(
     Vector2D h = velocity->GridSpacing();
 
     // Assign collider's velocity first and initialize markers
-    velocity->ParallelForEachUIndex([&](const Vector2UZ& idx) {
-        const Vector2D pt = uPos(idx);
-        const double phi0 =
-            m_colliderSDF->Sample(pt - Vector2D{ 0.5 * h.x, 0.0 });
-        const double phi1 =
-            m_colliderSDF->Sample(pt + Vector2D{ 0.5 * h.x, 0.0 });
-        double frac = FractionInsideSDF(phi0, phi1);
-        frac = 1.0 - std::clamp(frac, 0.0, 1.0);
+    velocity->ParallelForEachUIndex(
+        [&uPos, this, &h, &uMarker, &u](const Vector2UZ& idx) {
+            const Vector2D pt = uPos(idx);
+            const double phi0 =
+                m_colliderSDF->Sample(pt - Vector2D{ 0.5 * h.x, 0.0 });
+            const double phi1 =
+                m_colliderSDF->Sample(pt + Vector2D{ 0.5 * h.x, 0.0 });
+            double frac = FractionInsideSDF(phi0, phi1);
+            frac = 1.0 - std::clamp(frac, 0.0, 1.0);
 
-        if (frac > 0.0)
-        {
-            uMarker(idx) = 1;
-        }
-        else
-        {
-            const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
-            u(idx) = colliderVel.x;
-            uMarker(idx) = 0;
-        }
-    });
+            if (frac > 0.0)
+            {
+                uMarker(idx) = 1;
+            }
+            else
+            {
+                const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
+                u(idx) = colliderVel.x;
+                uMarker(idx) = 0;
+            }
+        });
 
-    velocity->ParallelForEachVIndex([&](const Vector2UZ& idx) {
-        const Vector2D pt = vPos(idx);
-        const double phi0 =
-            m_colliderSDF->Sample(pt - Vector2D{ 0.0, 0.5 * h.y });
-        const double phi1 =
-            m_colliderSDF->Sample(pt + Vector2D{ 0.0, 0.5 * h.y });
-        double frac = FractionInsideSDF(phi0, phi1);
-        frac = 1.0 - std::clamp(frac, 0.0, 1.0);
+    velocity->ParallelForEachVIndex(
+        [&vPos, this, &h, &vMarker, &v](const Vector2UZ& idx) {
+            const Vector2D pt = vPos(idx);
+            const double phi0 =
+                m_colliderSDF->Sample(pt - Vector2D{ 0.0, 0.5 * h.y });
+            const double phi1 =
+                m_colliderSDF->Sample(pt + Vector2D{ 0.0, 0.5 * h.y });
+            double frac = FractionInsideSDF(phi0, phi1);
+            frac = 1.0 - std::clamp(frac, 0.0, 1.0);
 
-        if (frac > 0.0)
-        {
-            vMarker(idx) = 1;
-        }
-        else
-        {
-            const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
-            v(idx) = colliderVel.y;
-            vMarker(idx) = 0;
-        }
-    });
+            if (frac > 0.0)
+            {
+                vMarker(idx) = 1;
+            }
+            else
+            {
+                const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
+                v(idx) = colliderVel.y;
+                vMarker(idx) = 0;
+            }
+        });
 
     // Free-slip: Extrapolate fluid velocity into the collider
     ExtrapolateToRegion(velocity->UView(), uMarker, extrapolationDepth, u);
@@ -89,71 +91,73 @@ void GridFractionalBoundaryConditionSolver2::ConstrainVelocity(
 
     // No-flux: project the extrapolated velocity to the collider's surface
     // normal
-    velocity->ParallelForEachUIndex([&](const Vector2UZ& idx) {
-        const Vector2D pt = uPos(idx);
+    velocity->ParallelForEachUIndex(
+        [&uPos, this, &velocity, &uTemp, &u](const Vector2UZ& idx) {
+            const Vector2D pt = uPos(idx);
 
-        if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-        {
-            const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
-            const Vector2D vel = velocity->Sample(pt);
-            const Vector2D g = m_colliderSDF->Gradient(pt);
-
-            if (g.LengthSquared() > 0.0)
+            if (IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
-                const Vector2D n = g.Normalized();
-                const Vector2D velr = vel - colliderVel;
-                const Vector2D velt = ProjectAndApplyFriction(
-                    velr, n, GetCollider()->GetFrictionCoefficient());
-                const Vector2D velp = velt + colliderVel;
+                const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
+                const Vector2D vel = velocity->Sample(pt);
+                const Vector2D g = m_colliderSDF->Gradient(pt);
 
-                uTemp(idx) = velp.x;
+                if (g.LengthSquared() > 0.0)
+                {
+                    const Vector2D n = g.Normalized();
+                    const Vector2D velr = vel - colliderVel;
+                    const Vector2D velt = ProjectAndApplyFriction(
+                        velr, n, GetCollider()->GetFrictionCoefficient());
+                    const Vector2D velp = velt + colliderVel;
+
+                    uTemp(idx) = velp.x;
+                }
+                else
+                {
+                    uTemp(idx) = colliderVel.x;
+                }
             }
             else
             {
-                uTemp(idx) = colliderVel.x;
+                uTemp(idx) = u(idx);
             }
-        }
-        else
-        {
-            uTemp(idx) = u(idx);
-        }
-    });
+        });
 
-    velocity->ParallelForEachVIndex([&](const Vector2UZ& idx) {
-        const Vector2D pt = vPos(idx);
+    velocity->ParallelForEachVIndex(
+        [&vPos, this, &velocity, &vTemp, &v](const Vector2UZ& idx) {
+            const Vector2D pt = vPos(idx);
 
-        if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-        {
-            const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
-            const Vector2D vel = velocity->Sample(pt);
-            const Vector2D g = m_colliderSDF->Gradient(pt);
-
-            if (g.LengthSquared() > 0.0)
+            if (IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
-                const Vector2D n = g.Normalized();
-                const Vector2D velr = vel - colliderVel;
-                const Vector2D velt = ProjectAndApplyFriction(
-                    velr, n, GetCollider()->GetFrictionCoefficient());
-                const Vector2D velp = velt + colliderVel;
+                const Vector2D colliderVel = GetCollider()->VelocityAt(pt);
+                const Vector2D vel = velocity->Sample(pt);
+                const Vector2D g = m_colliderSDF->Gradient(pt);
 
-                vTemp(idx) = velp.y;
+                if (g.LengthSquared() > 0.0)
+                {
+                    const Vector2D n = g.Normalized();
+                    const Vector2D velr = vel - colliderVel;
+                    const Vector2D velt = ProjectAndApplyFriction(
+                        velr, n, GetCollider()->GetFrictionCoefficient());
+                    const Vector2D velp = velt + colliderVel;
+
+                    vTemp(idx) = velp.y;
+                }
+                else
+                {
+                    vTemp(idx) = colliderVel.y;
+                }
             }
             else
             {
-                vTemp(idx) = colliderVel.y;
+                vTemp(idx) = v(idx);
             }
-        }
-        else
-        {
-            vTemp(idx) = v(idx);
-        }
-    });
+        });
 
     // Transfer results
-    ParallelForEachIndex(u.Size(),
-                         [&](size_t i, size_t j) { u(i, j) = uTemp(i, j); });
-    ParallelForEachIndex(v.Size(),
-                         [&](size_t i, size_t j) { v(i, j) = vTemp(i, j); });
+    ParallelForEachIndex(
+        u.Size(), [&u, &uTemp](size_t i, size_t j) { u(i, j) = uTemp(i, j); });
+    ParallelForEachIndex(
+        v.Size(), [&v, &vTemp](size_t i, size_t j) { v(i, j) = vTemp(i, j); });
 
     // No-flux: Project velocity on the domain boundary if closed
     if (GetClosedDomainBoundaryFlag() & DIRECTION_LEFT)
@@ -218,12 +222,12 @@ void GridFractionalBoundaryConditionSolver2::OnColliderUpdated(
             implicitSurface = std::make_shared<SurfaceToImplicit2>(surface);
         }
 
-        m_colliderSDF->Fill([&](const Vector2D& pt) {
+        m_colliderSDF->Fill([&implicitSurface](const Vector2D& pt) {
             return implicitSurface->SignedDistance(pt);
         });
 
         m_colliderVel = CustomVectorField2::Builder{}
-                            .WithFunction([&](const Vector2D& x) {
+                            .WithFunction([this](const Vector2D& x) {
                                 return GetCollider()->VelocityAt(x);
                             })
                             .WithDerivativeResolution(gridSpacing.x)

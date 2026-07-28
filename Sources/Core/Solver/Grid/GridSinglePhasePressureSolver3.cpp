@@ -32,7 +32,8 @@ void BuildSingleSystem(FDMMatrix3* A, FDMVector3* b,
     Vector3D invHSqr = ElemMul(invH, invH);
 
     // Build linear system
-    ParallelForEachIndex(A->Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(A->Size(), [&A, &b, &markers, &input, &size, &invHSqr](
+                                        size_t i, size_t j, size_t k) {
         FDMMatrixRow3& row = (*A)(i, j, k);
 
         // initialize
@@ -107,7 +108,8 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
 
     size_t numRows = 0;
     Array3<size_t> coordToIndex{ size };
-    ForEachIndex(markers.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(markers.Size(), [&markerAcc, &coordToIndex, &numRows](
+                                     size_t i, size_t j, size_t k) {
         const size_t cIdx = markerAcc.Index(i, j, k);
 
         if (markerAcc[cIdx] == FLUID)
@@ -116,91 +118,93 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
         }
     });
 
-    ForEachIndex(markers.Size(), [&](size_t i, size_t j, size_t k) {
-        const size_t cIdx = markerAcc.Index(i, j, k);
+    ForEachIndex(markers.Size(),
+                 [&markerAcc, &b, &input, &coordToIndex, &size, &markers,
+                  &invHSqr, &A](size_t i, size_t j, size_t k) {
+                     const size_t cIdx = markerAcc.Index(i, j, k);
 
-        if (markerAcc[cIdx] == FLUID)
-        {
-            b->AddElement(input.DivergenceAtCellCenter(i, j, k));
+                     if (markerAcc[cIdx] == FLUID)
+                     {
+                         b->AddElement(input.DivergenceAtCellCenter(i, j, k));
 
-            std::vector<double> row(1, 0.0);
-            std::vector<size_t> colIdx(1, coordToIndex[cIdx]);
+                         std::vector<double> row(1, 0.0);
+                         std::vector<size_t> colIdx(1, coordToIndex[cIdx]);
 
-            if (i + 1 < size.x && markers(i + 1, j, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.x;
-                const size_t rIdx = markerAcc.Index(i + 1, j, k);
+                         if (i + 1 < size.x && markers(i + 1, j, k) != BOUNDARY)
+                         {
+                             row[0] += invHSqr.x;
+                             const size_t rIdx = markerAcc.Index(i + 1, j, k);
 
-                if (markers[rIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.x);
-                    colIdx.push_back(coordToIndex[rIdx]);
-                }
-            }
+                             if (markers[rIdx] == FLUID)
+                             {
+                                 row.push_back(-invHSqr.x);
+                                 colIdx.push_back(coordToIndex[rIdx]);
+                             }
+                         }
 
-            if (i > 0 && markers(i - 1, j, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.x;
-                const size_t lIdx = markerAcc.Index(i - 1, j, k);
+                         if (i > 0 && markers(i - 1, j, k) != BOUNDARY)
+                         {
+                             row[0] += invHSqr.x;
+                             const size_t lIdx = markerAcc.Index(i - 1, j, k);
 
-                if (markers[lIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.x);
-                    colIdx.push_back(coordToIndex[lIdx]);
-                }
-            }
+                             if (markers[lIdx] == FLUID)
+                             {
+                                 row.push_back(-invHSqr.x);
+                                 colIdx.push_back(coordToIndex[lIdx]);
+                             }
+                         }
 
-            if (j + 1 < size.y && markers(i, j + 1, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.y;
-                const size_t uIdx = markerAcc.Index(i, j + 1, k);
+                         if (j + 1 < size.y && markers(i, j + 1, k) != BOUNDARY)
+                         {
+                             row[0] += invHSqr.y;
+                             const size_t uIdx = markerAcc.Index(i, j + 1, k);
 
-                if (markers[uIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.y);
-                    colIdx.push_back(coordToIndex[uIdx]);
-                }
-            }
+                             if (markers[uIdx] == FLUID)
+                             {
+                                 row.push_back(-invHSqr.y);
+                                 colIdx.push_back(coordToIndex[uIdx]);
+                             }
+                         }
 
-            if (j > 0 && markers(i, j - 1, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.y;
-                const size_t dIdx = markerAcc.Index(i, j - 1, k);
+                         if (j > 0 && markers(i, j - 1, k) != BOUNDARY)
+                         {
+                             row[0] += invHSqr.y;
+                             const size_t dIdx = markerAcc.Index(i, j - 1, k);
 
-                if (markers[dIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.y);
-                    colIdx.push_back(coordToIndex[dIdx]);
-                }
-            }
+                             if (markers[dIdx] == FLUID)
+                             {
+                                 row.push_back(-invHSqr.y);
+                                 colIdx.push_back(coordToIndex[dIdx]);
+                             }
+                         }
 
-            if (k + 1 < size.z && markers(i, j, k + 1) != BOUNDARY)
-            {
-                row[0] += invHSqr.z;
-                const size_t fIdx = markerAcc.Index(i, j, k + 1);
+                         if (k + 1 < size.z && markers(i, j, k + 1) != BOUNDARY)
+                         {
+                             row[0] += invHSqr.z;
+                             const size_t fIdx = markerAcc.Index(i, j, k + 1);
 
-                if (markers[fIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.z);
-                    colIdx.push_back(coordToIndex[fIdx]);
-                }
-            }
+                             if (markers[fIdx] == FLUID)
+                             {
+                                 row.push_back(-invHSqr.z);
+                                 colIdx.push_back(coordToIndex[fIdx]);
+                             }
+                         }
 
-            if (k > 0 && markers(i, j, k - 1) != BOUNDARY)
-            {
-                row[0] += invHSqr.z;
-                const size_t bIdx = markerAcc.Index(i, j, k - 1);
+                         if (k > 0 && markers(i, j, k - 1) != BOUNDARY)
+                         {
+                             row[0] += invHSqr.z;
+                             const size_t bIdx = markerAcc.Index(i, j, k - 1);
 
-                if (markers[bIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.z);
-                    colIdx.push_back(coordToIndex[bIdx]);
-                }
-            }
+                             if (markers[bIdx] == FLUID)
+                             {
+                                 row.push_back(-invHSqr.z);
+                                 colIdx.push_back(coordToIndex[bIdx]);
+                             }
+                         }
 
-            A->AddRow(row, colIdx);
-        }
-    });
+                         A->AddRow(row, colIdx);
+                     }
+                 });
 
     x->Resize(b->GetRows(), 0.0);
 }
@@ -309,23 +313,24 @@ void GridSinglePhasePressureSolver3::BuildMarkers(
     FDMMGUtils3::ResizeArrayWithFinest(size, maxLevels, &m_markers);
 
     // Build top-level markers
-    ParallelForEachIndex(m_markers[0].Size(),
-                         [&](size_t i, size_t j, size_t k) {
-                             const Vector3D pt = pos(i, j, k);
+    ParallelForEachIndex(
+        m_markers[0].Size(),
+        [&pos, &boundarySDF, this, &fluidSDF](size_t i, size_t j, size_t k) {
+            const Vector3D pt = pos(i, j, k);
 
-                             if (IsInsideSDF(boundarySDF.Sample(pt)))
-                             {
-                                 m_markers[0](i, j, k) = BOUNDARY;
-                             }
-                             else if (IsInsideSDF(fluidSDF.Sample(pt)))
-                             {
-                                 m_markers[0](i, j, k) = FLUID;
-                             }
-                             else
-                             {
-                                 m_markers[0](i, j, k) = AIR;
-                             }
-                         });
+            if (IsInsideSDF(boundarySDF.Sample(pt)))
+            {
+                m_markers[0](i, j, k) = BOUNDARY;
+            }
+            else if (IsInsideSDF(fluidSDF.Sample(pt)))
+            {
+                m_markers[0](i, j, k) = FLUID;
+            }
+            else
+            {
+                m_markers[0](i, j, k) = AIR;
+            }
+        });
 
     // Build sub-level markers
     for (size_t l = 1; l < m_markers.size(); ++l)
@@ -336,8 +341,8 @@ void GridSinglePhasePressureSolver3::BuildMarkers(
 
         ParallelRangeFor(
             ZERO_SIZE, n.x, ZERO_SIZE, n.y, ZERO_SIZE, n.z,
-            [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-                size_t kBegin, size_t kEnd) {
+            [&n, &finer, &coarser](size_t iBegin, size_t iEnd, size_t jBegin,
+                                   size_t jEnd, size_t kBegin, size_t kEnd) {
                 std::array<size_t, 4> kIndices{};
 
                 for (size_t k = kBegin; k < kEnd; ++k)
@@ -405,13 +410,14 @@ void GridSinglePhasePressureSolver3::DecompressSolution()
     m_system.x.Resize(acc.Size());
 
     size_t row = 0;
-    ForEachIndex(m_markers[0].Size(), [&](size_t i, size_t j, size_t k) {
-        if (acc(i, j, k) == FLUID)
-        {
-            m_system.x(i, j, k) = m_compSystem.x[row];
-            ++row;
-        }
-    });
+    ForEachIndex(m_markers[0].Size(),
+                 [&acc, this, &row](size_t i, size_t j, size_t k) {
+                     if (acc(i, j, k) == FLUID)
+                     {
+                         m_system.x(i, j, k) = m_compSystem.x[row];
+                         ++row;
+                     }
+                 });
 }
 
 void GridSinglePhasePressureSolver3::BuildSystem(const FaceCenteredGrid3& input,
@@ -500,7 +506,8 @@ void GridSinglePhasePressureSolver3::ApplyPressureGradient(
 
     Vector3D invH = 1.0 / input.GridSpacing();
 
-    ParallelForEachIndex(x.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(x.Size(), [this, &size, &u0, &u, &invH, &x, &v0, &v,
+                                    &w0, &w](size_t i, size_t j, size_t k) {
         if (m_markers[0](i, j, k) == FLUID)
         {
             if (i + 1 < size.x && m_markers[0](i + 1, j, k) != BOUNDARY)

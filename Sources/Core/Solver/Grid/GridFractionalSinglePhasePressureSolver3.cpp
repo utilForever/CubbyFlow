@@ -56,7 +56,8 @@ void Restrict(const Array3<double>& finer, Array3<double>* coarser)
     const Vector3UZ n = coarser->Size();
     ParallelRangeFor(
         ZERO_SIZE, n.x, ZERO_SIZE, n.y, ZERO_SIZE, n.z,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
+        [&kernelSize, &n, &kernels, &finer, &coarser](
+            size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
             size_t kBegin, size_t kEnd) {
             std::array<size_t, 4> kIndices{};
 
@@ -151,7 +152,10 @@ void BuildSingleSystem(FDMMatrix3* A, FDMVector3* b,
     const Vector3D invHSqr = ElemMul(invH, invH);
 
     // Build linear system
-    ParallelForEachIndex(A->Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(A->Size(), [&A, &b, &fluidSDF, &size, &uWeights,
+                                     &invHSqr, &input, &invH, &vWeights,
+                                     &wWeights, &boundaryVel, &uPos, &vPos,
+                                     &wPos](size_t i, size_t j, size_t k) {
         auto& row = (*A)(i, j, k);
 
         // initialize
@@ -362,7 +366,8 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
 
     size_t numRows = 0;
     Array3<size_t> coordToIndex{ size };
-    ForEachIndex(fluidSDF.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(fluidSDF.Size(), [&fluidSDFAcc, &fluidSDF, &coordToIndex,
+                                   &numRows](size_t i, size_t j, size_t k) {
         const size_t cIdx = fluidSDFAcc.Index(i, j, k);
         const double centerPhi = fluidSDF[cIdx];
 
@@ -372,7 +377,11 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
         }
     });
 
-    ForEachIndex(fluidSDF.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(fluidSDF.Size(), [&fluidSDFAcc, &fluidSDF, &coordToIndex,
+                                   &size, &uWeights, &invHSqr, &input, &invH,
+                                   &vWeights, &wWeights, &boundaryVel, &uPos,
+                                   &vPos, &wPos, &A,
+                                   &b](size_t i, size_t j, size_t k) {
         const size_t cIdx = fluidSDFAcc.Index(i, j, k);
         const double centerPhi = fluidSDF[cIdx];
 
@@ -687,81 +696,85 @@ void GridFractionalSinglePhasePressureSolver3::BuildWeights(
     Vector3D h = input.GridSpacing();
 
     ParallelForEachIndex(
-        m_fluidSDF[0].Size(), [&](size_t i, size_t j, size_t k) {
+        m_fluidSDF[0].Size(),
+        [this, &fluidSDF, &cellPos](size_t i, size_t j, size_t k) {
             m_fluidSDF[0](i, j, k) = fluidSDF.Sample(cellPos(i, j, k));
         });
 
-    ParallelForEachIndex(m_uWeights[0].Size(), [&](size_t i, size_t j,
-                                                   size_t k) {
-        const Vector3D pt = uPos(i, j, k);
-        const double phi0 =
-            boundarySDF.Sample(pt + Vector3D{ 0.0, -0.5 * h.y, -0.5 * h.z });
-        const double phi1 =
-            boundarySDF.Sample(pt + Vector3D{ 0.0, 0.5 * h.y, -0.5 * h.z });
-        const double phi2 =
-            boundarySDF.Sample(pt + Vector3D{ 0.0, -0.5 * h.y, 0.5 * h.z });
-        const double phi3 =
-            boundarySDF.Sample(pt + Vector3D{ 0.0, 0.5 * h.y, 0.5 * h.z });
-        const double frac = FractionInside(phi0, phi1, phi2, phi3);
-        double weight = std::clamp(1.0 - frac, 0.0, 1.0);
+    ParallelForEachIndex(
+        m_uWeights[0].Size(),
+        [&uPos, &boundarySDF, &h, this](size_t i, size_t j, size_t k) {
+            const Vector3D pt = uPos(i, j, k);
+            const double phi0 = boundarySDF.Sample(
+                pt + Vector3D{ 0.0, -0.5 * h.y, -0.5 * h.z });
+            const double phi1 =
+                boundarySDF.Sample(pt + Vector3D{ 0.0, 0.5 * h.y, -0.5 * h.z });
+            const double phi2 =
+                boundarySDF.Sample(pt + Vector3D{ 0.0, -0.5 * h.y, 0.5 * h.z });
+            const double phi3 =
+                boundarySDF.Sample(pt + Vector3D{ 0.0, 0.5 * h.y, 0.5 * h.z });
+            const double frac = FractionInside(phi0, phi1, phi2, phi3);
+            double weight = std::clamp(1.0 - frac, 0.0, 1.0);
 
-        // Clamp non-zero weight to kMinWeight. Having nearly-zero element
-        // in the matrix can be an issue.
-        if (weight < MIN_WEIGHT && weight > 0.0)
-        {
-            weight = MIN_WEIGHT;
-        }
+            // Clamp non-zero weight to kMinWeight. Having nearly-zero element
+            // in the matrix can be an issue.
+            if (weight < MIN_WEIGHT && weight > 0.0)
+            {
+                weight = MIN_WEIGHT;
+            }
 
-        m_uWeights[0](i, j, k) = weight;
-    });
+            m_uWeights[0](i, j, k) = weight;
+        });
 
-    ParallelForEachIndex(m_vWeights[0].Size(), [&](size_t i, size_t j,
-                                                   size_t k) {
-        const Vector3D pt = vPos(i, j, k);
-        const double phi0 =
-            boundarySDF.Sample(pt + Vector3D{ -0.5 * h.x, 0.0, -0.5 * h.z });
-        const double phi1 =
-            boundarySDF.Sample(pt + Vector3D{ -0.5 * h.x, 0.0, 0.5 * h.z });
-        const double phi2 =
-            boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, 0.0, -0.5 * h.z });
-        const double phi3 =
-            boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, 0.0, 0.5 * h.z });
-        const double frac = FractionInside(phi0, phi1, phi2, phi3);
-        double weight = std::clamp(1.0 - frac, 0.0, 1.0);
+    ParallelForEachIndex(
+        m_vWeights[0].Size(),
+        [&vPos, &boundarySDF, &h, this](size_t i, size_t j, size_t k) {
+            const Vector3D pt = vPos(i, j, k);
+            const double phi0 = boundarySDF.Sample(
+                pt + Vector3D{ -0.5 * h.x, 0.0, -0.5 * h.z });
+            const double phi1 =
+                boundarySDF.Sample(pt + Vector3D{ -0.5 * h.x, 0.0, 0.5 * h.z });
+            const double phi2 =
+                boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, 0.0, -0.5 * h.z });
+            const double phi3 =
+                boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, 0.0, 0.5 * h.z });
+            const double frac = FractionInside(phi0, phi1, phi2, phi3);
+            double weight = std::clamp(1.0 - frac, 0.0, 1.0);
 
-        // Clamp non-zero weight to kMinWeight. Having nearly-zero element
-        // in the matrix can be an issue.
-        if (weight < MIN_WEIGHT && weight > 0.0)
-        {
-            weight = MIN_WEIGHT;
-        }
+            // Clamp non-zero weight to kMinWeight. Having nearly-zero element
+            // in the matrix can be an issue.
+            if (weight < MIN_WEIGHT && weight > 0.0)
+            {
+                weight = MIN_WEIGHT;
+            }
 
-        m_vWeights[0](i, j, k) = weight;
-    });
+            m_vWeights[0](i, j, k) = weight;
+        });
 
-    ParallelForEachIndex(m_wWeights[0].Size(), [&](size_t i, size_t j,
-                                                   size_t k) {
-        const Vector3D pt = wPos(i, j, k);
-        const double phi0 =
-            boundarySDF.Sample(pt + Vector3D{ -0.5 * h.x, -0.5 * h.y, 0.0 });
-        const double phi1 =
-            boundarySDF.Sample(pt + Vector3D{ -0.5 * h.x, 0.5 * h.y, 0.0 });
-        const double phi2 =
-            boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, -0.5 * h.y, 0.0 });
-        const double phi3 =
-            boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, 0.5 * h.y, 0.0 });
-        const double frac = FractionInside(phi0, phi1, phi2, phi3);
-        double weight = std::clamp(1.0 - frac, 0.0, 1.0);
+    ParallelForEachIndex(
+        m_wWeights[0].Size(),
+        [&wPos, &boundarySDF, &h, this](size_t i, size_t j, size_t k) {
+            const Vector3D pt = wPos(i, j, k);
+            const double phi0 = boundarySDF.Sample(
+                pt + Vector3D{ -0.5 * h.x, -0.5 * h.y, 0.0 });
+            const double phi1 =
+                boundarySDF.Sample(pt + Vector3D{ -0.5 * h.x, 0.5 * h.y, 0.0 });
+            const double phi2 =
+                boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, -0.5 * h.y, 0.0 });
+            const double phi3 =
+                boundarySDF.Sample(pt + Vector3D{ 0.5 * h.x, 0.5 * h.y, 0.0 });
+            const double frac = FractionInside(phi0, phi1, phi2, phi3);
+            double weight = std::clamp(1.0 - frac, 0.0, 1.0);
 
-        // Clamp non-zero weight to kMinWeight. Having nearly-zero element
-        // in the matrix can be an issue.
-        if (weight < MIN_WEIGHT && weight > 0.0)
-        {
-            weight = MIN_WEIGHT;
-        }
+            // Clamp non-zero weight to kMinWeight. Having nearly-zero element
+            // in the matrix can be an issue.
+            if (weight < MIN_WEIGHT && weight > 0.0)
+            {
+                weight = MIN_WEIGHT;
+            }
 
-        m_wWeights[0](i, j, k) = weight;
-    });
+            m_wWeights[0](i, j, k) = weight;
+        });
 
     // Build sub-levels
     for (size_t l = 1; l < m_fluidSDF.size(); ++l)
@@ -789,13 +802,14 @@ void GridFractionalSinglePhasePressureSolver3::DecompressSolution()
     m_system.x.Resize(acc.Size());
 
     size_t row = 0;
-    ForEachIndex(m_fluidSDF[0].Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF(acc(i, j, k)))
-        {
-            m_system.x(i, j, k) = m_compSystem.x[row];
-            ++row;
-        }
-    });
+    ForEachIndex(m_fluidSDF[0].Size(),
+                 [&acc, this, &row](size_t i, size_t j, size_t k) {
+                     if (IsInsideSDF(acc(i, j, k)))
+                     {
+                         m_system.x(i, j, k) = m_compSystem.x[row];
+                         ++row;
+                     }
+                 });
 }
 
 void GridFractionalSinglePhasePressureSolver3::BuildSystem(
@@ -890,7 +904,8 @@ void GridFractionalSinglePhasePressureSolver3::ApplyPressureGradient(
 
     Vector3D invH = 1.0 / input.GridSpacing();
 
-    ParallelForEachIndex(x.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(x.Size(), [this, &size, &u0, &u, &invH, &x, &v0, &v,
+                                    &w0, &w](size_t i, size_t j, size_t k) {
         const double centerPhi = m_fluidSDF[0](i, j, k);
 
         if (i + 1 < size.x && m_uWeights[0](i + 1, j, k) > 0.0 &&
