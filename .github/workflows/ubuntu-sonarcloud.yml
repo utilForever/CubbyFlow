@@ -34,7 +34,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -yq autoconf autoconf-archive automake libtool lcov curl
+          sudo apt-get install -yq autoconf autoconf-archive automake libtool lcov gcovr curl
       - name: Configure Compiler
         run: |
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -50,14 +50,8 @@ jobs:
         run: cd build && build-wrapper-linux-x86-64 --out-dir ../bw-output make all
       - name: Run Unit Test
         run: |
-          cd build
-          GCOV_TOOL="$(command -v gcov-${{ matrix.version }})"
-          lcov --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch -c -i -d Tests/UnitTests -o base.info
-          bin/UnitTests
-          lcov --gcov-tool "${GCOV_TOOL}" --ignore-errors mismatch -c -d Tests/UnitTests -o test.info
-          lcov --gcov-tool "${GCOV_TOOL}" -a base.info -a test.info -o coverage.info
-          lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" -r coverage.info '*/Includes/*' -o coverage.info
-          lcov --gcov-tool "${GCOV_TOOL}" -l coverage.info
+          build/bin/UnitTests
+          gcovr --gcov-executable "gcov-${{ matrix.version }}" --root . --filter '^Sources/' --sonarqube build/coverage.xml build
       - name: SonarCloud Scan
         run: sonar-scanner -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=utilforever-github -Dsonar.login=$SONAR_TOKEN
         env:
