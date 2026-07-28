@@ -24,14 +24,16 @@ void SemiLagrangian3::Advect(const ScalarGrid3& input, const VectorField3& flow,
     GridDataPositionFunc<3> outputDataPos = output->DataPosition();
     ArrayView<double, 3> outputDataAcc = output->DataView();
 
-    output->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        if (boundarySDF.Sample(inputDataPos(i, j, k)) > 0.0)
-        {
-            const Vector3D pt =
-                BackTrace(flow, dt, h, outputDataPos(i, j, k), boundarySDF);
-            outputDataAcc(i, j, k) = inputSamplerFunc(pt);
-        }
-    });
+    output->ParallelForEachDataPointIndex(
+        [&boundarySDF, &inputDataPos, this, &flow, &dt, &h, &outputDataPos,
+         &outputDataAcc, &inputSamplerFunc](size_t i, size_t j, size_t k) {
+            if (boundarySDF.Sample(inputDataPos(i, j, k)) > 0.0)
+            {
+                const Vector3D pt =
+                    BackTrace(flow, dt, h, outputDataPos(i, j, k), boundarySDF);
+                outputDataAcc(i, j, k) = inputSamplerFunc(pt);
+            }
+        });
 }
 
 void SemiLagrangian3::Advect(const CollocatedVectorGrid3& input,
@@ -47,14 +49,16 @@ void SemiLagrangian3::Advect(const CollocatedVectorGrid3& input,
     GridDataPositionFunc<3> outputDataPos = output->DataPosition();
     ArrayView<Vector<double, 3>, 3> outputDataAcc = output->DataView();
 
-    output->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        if (boundarySDF.Sample(inputDataPos(i, j, k)) > 0.0)
-        {
-            const Vector3D pt =
-                BackTrace(flow, dt, h, outputDataPos(i, j, k), boundarySDF);
-            outputDataAcc(i, j, k) = inputSamplerFunc(pt);
-        }
-    });
+    output->ParallelForEachDataPointIndex(
+        [&boundarySDF, &inputDataPos, this, &flow, &dt, &h, &outputDataPos,
+         &outputDataAcc, &inputSamplerFunc](size_t i, size_t j, size_t k) {
+            if (boundarySDF.Sample(inputDataPos(i, j, k)) > 0.0)
+            {
+                const Vector3D pt =
+                    BackTrace(flow, dt, h, outputDataPos(i, j, k), boundarySDF);
+                outputDataAcc(i, j, k) = inputSamplerFunc(pt);
+            }
+        });
 }
 
 void SemiLagrangian3::Advect(const FaceCenteredGrid3& input,
@@ -70,7 +74,9 @@ void SemiLagrangian3::Advect(const FaceCenteredGrid3& input,
     auto uTargetDataPos = output->UPosition();
     ArrayView<double, 3> uTargetDataAcc = output->UView();
 
-    output->ParallelForEachUIndex([&](const Vector3UZ& idx) {
+    output->ParallelForEachUIndex([&boundarySDF, &uSourceDataPos, this, &flow,
+                                   &dt, &h, &uTargetDataPos, &uTargetDataAcc,
+                                   &inputSamplerFunc](const Vector3UZ& idx) {
         if (boundarySDF.Sample(uSourceDataPos(idx)) > 0.0)
         {
             const Vector3D pt =
@@ -83,7 +89,9 @@ void SemiLagrangian3::Advect(const FaceCenteredGrid3& input,
     auto vTargetDataPos = output->VPosition();
     ArrayView<double, 3> vTargetDataAcc = output->VView();
 
-    output->ParallelForEachVIndex([&](const Vector3UZ& idx) {
+    output->ParallelForEachVIndex([&boundarySDF, &vSourceDataPos, this, &flow,
+                                   &dt, &h, &vTargetDataPos, &vTargetDataAcc,
+                                   &inputSamplerFunc](const Vector3UZ& idx) {
         if (boundarySDF.Sample(vSourceDataPos(idx)) > 0.0)
         {
             const Vector3D pt =
@@ -96,7 +104,9 @@ void SemiLagrangian3::Advect(const FaceCenteredGrid3& input,
     auto wTargetDataPos = output->WPosition();
     ArrayView<double, 3> wTargetDataAcc = output->WView();
 
-    output->ParallelForEachWIndex([&](const Vector3UZ& idx) {
+    output->ParallelForEachWIndex([&boundarySDF, &wSourceDataPos, this, &flow,
+                                   &dt, &h, &wTargetDataPos, &wTargetDataAcc,
+                                   &inputSamplerFunc](const Vector3UZ& idx) {
         if (boundarySDF.Sample(wSourceDataPos(idx)) > 0.0)
         {
             const Vector3D pt =

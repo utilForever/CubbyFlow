@@ -24,14 +24,16 @@ void SemiLagrangian2::Advect(const ScalarGrid2& input, const VectorField2& flow,
     GridDataPositionFunc<2> outputDataPos = output->DataPosition();
     ArrayView<double, 2> outputDataAcc = output->DataView();
 
-    output->ParallelForEachDataPointIndex([&](size_t i, size_t j) {
-        if (boundarySDF.Sample(inputDataPos(i, j)) > 0.0)
-        {
-            const Vector2D pt =
-                BackTrace(flow, dt, h, outputDataPos(i, j), boundarySDF);
-            outputDataAcc(i, j) = inputSamplerFunc(pt);
-        }
-    });
+    output->ParallelForEachDataPointIndex(
+        [&boundarySDF, &inputDataPos, this, &flow, &dt, &h, &outputDataPos,
+         &outputDataAcc, &inputSamplerFunc](size_t i, size_t j) {
+            if (boundarySDF.Sample(inputDataPos(i, j)) > 0.0)
+            {
+                const Vector2D pt =
+                    BackTrace(flow, dt, h, outputDataPos(i, j), boundarySDF);
+                outputDataAcc(i, j) = inputSamplerFunc(pt);
+            }
+        });
 }
 
 void SemiLagrangian2::Advect(const CollocatedVectorGrid2& input,
@@ -47,14 +49,16 @@ void SemiLagrangian2::Advect(const CollocatedVectorGrid2& input,
     GridDataPositionFunc<2> outputDataPos = output->DataPosition();
     ArrayView<Vector<double, 2>, 2> outputDataAcc = output->DataView();
 
-    output->ParallelForEachDataPointIndex([&](size_t i, size_t j) {
-        if (boundarySDF.Sample(inputDataPos(i, j)) > 0.0)
-        {
-            const Vector2D pt =
-                BackTrace(flow, dt, h, outputDataPos(i, j), boundarySDF);
-            outputDataAcc(i, j) = inputSamplerFunc(pt);
-        }
-    });
+    output->ParallelForEachDataPointIndex(
+        [&boundarySDF, &inputDataPos, this, &flow, &dt, &h, &outputDataPos,
+         &outputDataAcc, &inputSamplerFunc](size_t i, size_t j) {
+            if (boundarySDF.Sample(inputDataPos(i, j)) > 0.0)
+            {
+                const Vector2D pt =
+                    BackTrace(flow, dt, h, outputDataPos(i, j), boundarySDF);
+                outputDataAcc(i, j) = inputSamplerFunc(pt);
+            }
+        });
 }
 
 void SemiLagrangian2::Advect(const FaceCenteredGrid2& input,
@@ -70,7 +74,9 @@ void SemiLagrangian2::Advect(const FaceCenteredGrid2& input,
     auto uTargetDataPos = output->UPosition();
     ArrayView<double, 2> uTargetDataAcc = output->UView();
 
-    output->ParallelForEachUIndex([&](const Vector2UZ& idx) {
+    output->ParallelForEachUIndex([&boundarySDF, &uSourceDataPos, this, &flow,
+                                   &dt, &h, &uTargetDataPos, &uTargetDataAcc,
+                                   &inputSamplerFunc](const Vector2UZ& idx) {
         if (boundarySDF.Sample(uSourceDataPos(idx)) > 0.0)
         {
             const Vector2D pt =
@@ -83,7 +89,9 @@ void SemiLagrangian2::Advect(const FaceCenteredGrid2& input,
     auto vTargetDataPos = output->VPosition();
     ArrayView<double, 2> vTargetDataAcc = output->VView();
 
-    output->ParallelForEachVIndex([&](const Vector2UZ& idx) {
+    output->ParallelForEachVIndex([&boundarySDF, &vSourceDataPos, this, &flow,
+                                   &dt, &h, &vTargetDataPos, &vTargetDataAcc,
+                                   &inputSamplerFunc](const Vector2UZ& idx) {
         if (boundarySDF.Sample(vSourceDataPos(idx)) > 0.0)
         {
             const Vector2D pt =

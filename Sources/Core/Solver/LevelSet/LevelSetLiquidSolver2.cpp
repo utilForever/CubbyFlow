@@ -70,7 +70,7 @@ double LevelSetLiquidSolver2::ComputeVolume() const
     const double h = std::max(gridSpacing.x, gridSpacing.y);
 
     double volume = 0.0;
-    sdf->ForEachDataPointIndex([&](size_t i, size_t j) {
+    sdf->ForEachDataPointIndex([&volume, &sdf, &h](size_t i, size_t j) {
         volume += 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / h);
     });
     volume *= cellVolume;
@@ -162,29 +162,31 @@ void LevelSetLiquidSolver2::ExtrapolateVelocityToAir(double currentCFL)
     Array2<char> uMarker{ u.Size() };
     Array2<char> vMarker{ v.Size() };
 
-    ParallelForEachIndex(uMarker.Size(), [&](size_t i, size_t j) {
-        if (IsInsideSDF(sdf->Sample(uPos(i, j))))
-        {
-            uMarker(i, j) = 1;
-        }
-        else
-        {
-            uMarker(i, j) = 0;
-            u(i, j) = 0.0;
-        }
-    });
+    ParallelForEachIndex(uMarker.Size(),
+                         [&sdf, &uPos, &uMarker, &u](size_t i, size_t j) {
+                             if (IsInsideSDF(sdf->Sample(uPos(i, j))))
+                             {
+                                 uMarker(i, j) = 1;
+                             }
+                             else
+                             {
+                                 uMarker(i, j) = 0;
+                                 u(i, j) = 0.0;
+                             }
+                         });
 
-    ParallelForEachIndex(vMarker.Size(), [&](size_t i, size_t j) {
-        if (IsInsideSDF(sdf->Sample(vPos(i, j))))
-        {
-            vMarker(i, j) = 1;
-        }
-        else
-        {
-            vMarker(i, j) = 0;
-            v(i, j) = 0.0;
-        }
-    });
+    ParallelForEachIndex(vMarker.Size(),
+                         [&sdf, &vPos, &vMarker, &v](size_t i, size_t j) {
+                             if (IsInsideSDF(sdf->Sample(vPos(i, j))))
+                             {
+                                 vMarker(i, j) = 1;
+                             }
+                             else
+                             {
+                                 vMarker(i, j) = 0;
+                                 v(i, j) = 0.0;
+                             }
+                         });
 
     const Vector2D gridSpacing = sdf->GridSpacing();
     const double h = std::max(gridSpacing.x, gridSpacing.y);
@@ -208,10 +210,11 @@ void LevelSetLiquidSolver2::AddVolume(double volDiff)
 
     double volume0 = 0.0;
     double volume1 = 0.0;
-    sdf->ForEachDataPointIndex([&](size_t i, size_t j) {
-        volume0 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / h);
-        volume1 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / h + 1.0);
-    });
+    sdf->ForEachDataPointIndex(
+        [&volume0, &sdf, &h, &volume1](size_t i, size_t j) {
+            volume0 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / h);
+            volume1 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / h + 1.0);
+        });
     volume0 *= cellVolume;
     volume1 *= cellVolume;
 
@@ -222,7 +225,7 @@ void LevelSetLiquidSolver2::AddVolume(double volDiff)
         double dist = volDiff / dVdh;
 
         sdf->ParallelForEachDataPointIndex(
-            [&](size_t i, size_t j) { (*sdf)(i, j) += dist; });
+            [&sdf, &dist](size_t i, size_t j) { (*sdf)(i, j) += dist; });
     }
 }
 
