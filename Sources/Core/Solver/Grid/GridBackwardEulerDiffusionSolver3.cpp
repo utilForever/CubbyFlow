@@ -183,9 +183,9 @@ void GridBackwardEulerDiffusionSolver3::SetLinearSystemSolver(
     m_systemSolver = Solver;
 }
 
+template <typename PositionFunc>
 void GridBackwardEulerDiffusionSolver3::BuildMarkers(
-    const Vector3UZ& size,
-    const std::function<Vector3D(size_t, size_t, size_t)>& pos,
+    const Vector3UZ& size, const PositionFunc& pos,
     const ScalarField3& boundarySDF, const ScalarField3& fluidSDF)
 {
     m_markers.Resize(size);

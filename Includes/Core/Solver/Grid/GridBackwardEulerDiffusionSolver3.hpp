@@ -114,10 +114,10 @@ class GridBackwardEulerDiffusionSolver3 final : public GridDiffusionSolver3
     void SetLinearSystemSolver(const FDMLinearSystemSolver3Ptr& solver);
 
  private:
-    void BuildMarkers(
-        const Vector3UZ& size,
-        const std::function<Vector3D(size_t, size_t, size_t)>& pos,
-        const ScalarField3& boundarySDF, const ScalarField3& fluidSDF);
+    template <typename PositionFunc>
+    void BuildMarkers(const Vector3UZ& size, const PositionFunc& pos,
+                      const ScalarField3& boundarySDF,
+                      const ScalarField3& fluidSDF);
 
     void BuildMatrix(const Vector3UZ& size, const Vector3D& c);
 

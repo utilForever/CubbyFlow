@@ -159,8 +159,9 @@ void GridForwardEulerDiffusionSolver2::Solve(const FaceCenteredGrid2& source,
     });
 }
 
+template <typename PositionFunc>
 void GridForwardEulerDiffusionSolver2::BuildMarkers(
-    const Vector2UZ& size, const std::function<Vector2D(const Vector2UZ&)>& pos,
+    const Vector2UZ& size, const PositionFunc& pos,
     const ScalarField2& boundarySDF, const ScalarField2& fluidSDF)
 {
     m_markers.Resize(size);

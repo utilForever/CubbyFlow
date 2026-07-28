@@ -114,10 +114,10 @@ class GridSinglePhasePressureSolver3 : public GridPressureSolver3
     [[nodiscard]] const FDMVector3& GetPressure() const;
 
  private:
-    void BuildMarkers(
-        const Vector3UZ& size,
-        const std::function<Vector3D(size_t, size_t, size_t)>& pos,
-        const ScalarField3& boundarySDF, const ScalarField3& fluidSDF);
+    template <typename PositionFunc>
+    void BuildMarkers(const Vector3UZ& size, const PositionFunc& pos,
+                      const ScalarField3& boundarySDF,
+                      const ScalarField3& fluidSDF);
 
     void DecompressSolution();
 

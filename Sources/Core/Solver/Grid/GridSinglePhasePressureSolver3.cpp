@@ -299,9 +299,9 @@ const FDMVector3& GridSinglePhasePressureSolver3::GetPressure() const
     return m_mgSystem.x.levels.front();
 }
 
+template <typename PositionFunc>
 void GridSinglePhasePressureSolver3::BuildMarkers(
-    const Vector3UZ& size,
-    const std::function<Vector3D(size_t, size_t, size_t)>& pos,
+    const Vector3UZ& size, const PositionFunc& pos,
     const ScalarField3& boundarySDF, const ScalarField3& fluidSDF)
 {
     // Build levels

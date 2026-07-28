@@ -107,11 +107,12 @@ void Restrict(const Array2<double>& finer, Array2<double>* coarser)
         });
 }
 
+template <typename BoundaryVelocityFunc>
 void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
                        const Array2<double>& fluidSDF,
                        const Array2<double>& uWeights,
                        const Array2<double>& vWeights,
-                       std::function<Vector2D(const Vector2D&)> boundaryVel,
+                       const BoundaryVelocityFunc& boundaryVel,
                        const FaceCenteredGrid2& input)
 {
     const Vector2UZ size = input.Resolution();
@@ -257,11 +258,12 @@ void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
     });
 }
 
+template <typename BoundaryVelocityFunc>
 void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
                        const Array2<double>& fluidSDF,
                        const Array2<double>& uWeights,
                        const Array2<double>& vWeights,
-                       std::function<Vector2D(const Vector2D&)> boundaryVel,
+                       const BoundaryVelocityFunc& boundaryVel,
                        const FaceCenteredGrid2& input)
 {
     const Vector2UZ size = input.Resolution();

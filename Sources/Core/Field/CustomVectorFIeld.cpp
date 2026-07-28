@@ -14,8 +14,8 @@ namespace CubbyFlow
 {
 namespace Internal
 {
-double Curl(const std::function<Vector2D(const Vector2D&)>& func,
-            const Vector2D& x, double resolution)
+template <typename Callback>
+double Curl(const Callback& func, const Vector2D& x, double resolution)
 {
     const Vector2D left = func(x - Vector2D{ 0.5 * resolution, 0.0 });
     const Vector2D right = func(x + Vector2D{ 0.5 * resolution, 0.0 });
@@ -32,8 +32,8 @@ double Curl(const std::function<Vector2D(const Vector2D&)>& func,
            0.5 * (Fx_yp - Fx_ym) / resolution;
 }
 
-Vector3D Curl(const std::function<Vector3D(const Vector3D&)>& func,
-              const Vector3D& x, double resolution)
+template <typename Callback>
+Vector3D Curl(const Callback& func, const Vector3D& x, double resolution)
 {
     const Vector3D left = func(x - Vector3D{ 0.5 * resolution, 0.0, 0.0 });
     const Vector3D right = func(x + Vector3D{ 0.5 * resolution, 0.0, 0.0 });
