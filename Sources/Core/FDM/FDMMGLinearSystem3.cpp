@@ -64,8 +64,8 @@ void FDMMGUtils3::Restrict(const FDMVector3 &finer, FDMVector3 *coarser)
     const Vector3UZ n = coarser->Size();
     ParallelRangeFor(
         ZERO_SIZE, n.x, ZERO_SIZE, n.y, ZERO_SIZE, n.z,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-            size_t kBegin, size_t kEnd) {
+        [&n, &finer, &coarser](size_t iBegin, size_t iEnd, size_t jBegin,
+                               size_t jEnd, size_t kBegin, size_t kEnd) {
             std::array<size_t, 4> kIndices{};
 
             for (size_t k = kBegin; k < kEnd; ++k)
@@ -127,8 +127,8 @@ void FDMMGUtils3::Correct(const FDMVector3 &coarser, FDMVector3 *finer)
     const Vector3UZ n = finer->Size();
     ParallelRangeFor(
         ZERO_SIZE, n.x, ZERO_SIZE, n.y, ZERO_SIZE, n.z,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-            size_t kBegin, size_t kEnd) {
+        [&n, &coarser, &finer](size_t iBegin, size_t iEnd, size_t jBegin,
+                               size_t jEnd, size_t kBegin, size_t kEnd) {
             for (size_t k = kBegin; k < kEnd; ++k)
             {
                 for (size_t j = jBegin; j < jEnd; ++j)

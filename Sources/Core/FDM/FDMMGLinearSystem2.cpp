@@ -64,7 +64,8 @@ void FDMMGUtils2::Restrict(const FDMVector2& finer, FDMVector2* coarser)
     const Vector2UZ n = coarser->Size();
     ParallelRangeFor(
         ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
+        [&n, &finer, &coarser](size_t iBegin, size_t iEnd, size_t jBegin,
+                               size_t jEnd) {
             std::array<size_t, 4> jIndices{};
 
             for (size_t j = jBegin; j < jEnd; ++j)
@@ -108,62 +109,63 @@ void FDMMGUtils2::Correct(const FDMVector2& coarser, FDMVector2* finer)
     //  1/4   3/4   3/4   1/4
     // --*--|--*--|--*--|--*--
     const Vector2UZ n = finer->Size();
-    ParallelRangeFor(
-        ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
-            for (size_t j = jBegin; j < jEnd; ++j)
-            {
-                for (size_t i = iBegin; i < iEnd; ++i)
-                {
-                    std::array<size_t, 2> iIndices{};
-                    std::array<size_t, 2> jIndices{};
-                    std::array<double, 2> iWeights{};
-                    std::array<double, 2> jWeights{};
+    ParallelRangeFor(ZERO_SIZE, n.x, ZERO_SIZE, n.y,
+                     [&n, &coarser, &finer](size_t iBegin, size_t iEnd,
+                                            size_t jBegin, size_t jEnd) {
+                         for (size_t j = jBegin; j < jEnd; ++j)
+                         {
+                             for (size_t i = iBegin; i < iEnd; ++i)
+                             {
+                                 std::array<size_t, 2> iIndices{};
+                                 std::array<size_t, 2> jIndices{};
+                                 std::array<double, 2> iWeights{};
+                                 std::array<double, 2> jWeights{};
 
-                    const size_t ci = i / 2;
-                    const size_t cj = j / 2;
+                                 const size_t ci = i / 2;
+                                 const size_t cj = j / 2;
 
-                    if (i % 2 == 0)
-                    {
-                        iIndices[0] = (i > 1) ? ci - 1 : ci;
-                        iIndices[1] = ci;
-                        iWeights[0] = 0.25;
-                        iWeights[1] = 0.75;
-                    }
-                    else
-                    {
-                        iIndices[0] = ci;
-                        iIndices[1] = (i + 1 < n.x) ? ci + 1 : ci;
-                        iWeights[0] = 0.75;
-                        iWeights[1] = 0.25;
-                    }
+                                 if (i % 2 == 0)
+                                 {
+                                     iIndices[0] = (i > 1) ? ci - 1 : ci;
+                                     iIndices[1] = ci;
+                                     iWeights[0] = 0.25;
+                                     iWeights[1] = 0.75;
+                                 }
+                                 else
+                                 {
+                                     iIndices[0] = ci;
+                                     iIndices[1] = (i + 1 < n.x) ? ci + 1 : ci;
+                                     iWeights[0] = 0.75;
+                                     iWeights[1] = 0.25;
+                                 }
 
-                    if (j % 2 == 0)
-                    {
-                        jIndices[0] = (j > 1) ? cj - 1 : cj;
-                        jIndices[1] = cj;
-                        jWeights[0] = 0.25;
-                        jWeights[1] = 0.75;
-                    }
-                    else
-                    {
-                        jIndices[0] = cj;
-                        jIndices[1] = (j + 1 < n.y) ? cj + 1 : cj;
-                        jWeights[0] = 0.75;
-                        jWeights[1] = 0.25;
-                    }
+                                 if (j % 2 == 0)
+                                 {
+                                     jIndices[0] = (j > 1) ? cj - 1 : cj;
+                                     jIndices[1] = cj;
+                                     jWeights[0] = 0.25;
+                                     jWeights[1] = 0.75;
+                                 }
+                                 else
+                                 {
+                                     jIndices[0] = cj;
+                                     jIndices[1] = (j + 1 < n.y) ? cj + 1 : cj;
+                                     jWeights[0] = 0.75;
+                                     jWeights[1] = 0.25;
+                                 }
 
-                    for (size_t y = 0; y < 2; ++y)
-                    {
-                        for (size_t x = 0; x < 2; ++x)
-                        {
-                            const double w = iWeights[x] * jWeights[y] *
+                                 for (size_t y = 0; y < 2; ++y)
+                                 {
+                                     for (size_t x = 0; x < 2; ++x)
+                                     {
+                                         const double w =
+                                             iWeights[x] * jWeights[y] *
                                              coarser(iIndices[x], jIndices[y]);
-                            (*finer)(i, j) += w;
-                        }
-                    }
-                }
-            }
-        });
+                                         (*finer)(i, j) += w;
+                                     }
+                                 }
+                             }
+                         }
+                     });
 }
 }  // namespace CubbyFlow

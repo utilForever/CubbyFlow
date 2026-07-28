@@ -132,7 +132,8 @@ void FDMGaussSeidelSolver3::Relax(const FDMMatrix3& A, const FDMVector3& b,
     Vector3UZ size = A.Size();
     FDMVector3& xRef = *x;
 
-    ForEachIndex(size, [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(size, [&A, &xRef, &size, &sorFactor, &b](size_t i, size_t j,
+                                                          size_t k) {
         const double r =
             ((i > 0) ? A(i - 1, j, k).right * xRef(i - 1, j, k) : 0.0) +
             ((i + 1 < size.x) ? A(i, j, k).right * xRef(i + 1, j, k) : 0.0) +
@@ -155,7 +156,8 @@ void FDMGaussSeidelSolver3::Relax(const MatrixCSRD& A, const VectorND& b,
 
     VectorND& xRef = *x;
 
-    ForEachIndex(b.GetRows(), [&](size_t i) {
+    ForEachIndex(b.GetRows(), [&rp, &ci, &nnz, &xRef, &sorFactor,
+                               &b](size_t i) {
         const size_t rowBegin = rp[i];
         const size_t rowEnd = rp[i + 1];
 
@@ -189,8 +191,9 @@ void FDMGaussSeidelSolver3::RelaxRedBlack(const FDMMatrix3& A,
     // Red update
     ParallelRangeFor(
         ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-            size_t kBegin, size_t kEnd) {
+        [&A, &xRef, &size, &sorFactor, &b](size_t iBegin, size_t iEnd,
+                                           size_t jBegin, size_t jEnd,
+                                           size_t kBegin, size_t kEnd) {
             for (size_t k = kBegin; k < kEnd; ++k)
             {
                 for (size_t j = jBegin; j < jEnd; ++j)
@@ -228,8 +231,9 @@ void FDMGaussSeidelSolver3::RelaxRedBlack(const FDMMatrix3& A,
     // Black update
     ParallelRangeFor(
         ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-            size_t kBegin, size_t kEnd) {
+        [&A, &xRef, &size, &sorFactor, &b](size_t iBegin, size_t iEnd,
+                                           size_t jBegin, size_t jEnd,
+                                           size_t kBegin, size_t kEnd) {
             for (size_t k = kBegin; k < kEnd; ++k)
             {
                 for (size_t j = jBegin; j < jEnd; ++j)

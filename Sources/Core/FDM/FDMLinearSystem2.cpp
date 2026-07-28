@@ -86,7 +86,7 @@ void FDMBLAS2::AXPlusY(double a, const FDMVector2& x, const FDMVector2& y,
     assert(x.Size() == y.Size());
     assert(x.Size() == result->Size());
 
-    ParallelForEachIndex(size, [&](size_t i, size_t j) {
+    ParallelForEachIndex(size, [&result, &a, &x, &y](size_t i, size_t j) {
         (*result)(i, j) = a * x(i, j) + y(i, j);
     });
 }
@@ -98,7 +98,7 @@ void FDMBLAS2::MVM(const FDMMatrix2& m, const FDMVector2& v, FDMVector2* result)
     assert(size == v.Size());
     assert(size == result->Size());
 
-    ParallelForEachIndex(size, [&](size_t i, size_t j) {
+    ParallelForEachIndex(size, [&result, &m, &v, &size](size_t i, size_t j) {
         (*result)(i, j) =
             m(i, j).center * v(i, j) +
             ((i > 0) ? m(i - 1, j).right * v(i - 1, j) : 0.0) +
@@ -117,14 +117,15 @@ void FDMBLAS2::Residual(const FDMMatrix2& a, const FDMVector2& x,
     assert(size == b.Size());
     assert(size == result->Size());
 
-    ParallelForEachIndex(size, [&](size_t i, size_t j) {
-        (*result)(i, j) =
-            b(i, j) - a(i, j).center * x(i, j) -
-            ((i > 0) ? a(i - 1, j).right * x(i - 1, j) : 0.0) -
-            ((i + 1 < size.x) ? a(i, j).right * x(i + 1, j) : 0.0) -
-            ((j > 0) ? a(i, j - 1).up * x(i, j - 1) : 0.0) -
-            ((j + 1 < size.y) ? a(i, j).up * x(i, j + 1) : 0.0);
-    });
+    ParallelForEachIndex(
+        size, [&result, &b, &a, &x, &size](size_t i, size_t j) {
+            (*result)(i, j) =
+                b(i, j) - a(i, j).center * x(i, j) -
+                ((i > 0) ? a(i - 1, j).right * x(i - 1, j) : 0.0) -
+                ((i + 1 < size.x) ? a(i, j).right * x(i + 1, j) : 0.0) -
+                ((j > 0) ? a(i, j - 1).up * x(i, j - 1) : 0.0) -
+                ((j + 1 < size.y) ? a(i, j).up * x(i, j + 1) : 0.0);
+        });
 }
 
 double FDMBLAS2::L2Norm(const FDMVector2& v)
@@ -186,7 +187,7 @@ void FDMCompressedBLAS2::MVM(const MatrixCSRD& m, const VectorND& v,
     const auto ci = m.ColumnIndicesBegin();
     const auto nnz = m.NonZeroBegin();
 
-    ParallelForEachIndex(v.GetRows(), [&](size_t i) {
+    ParallelForEachIndex(v.GetRows(), [&rp, &ci, &nnz, &v, &result](size_t i) {
         const size_t rowBegin = rp[i];
         const size_t rowEnd = rp[i + 1];
 
@@ -209,20 +210,21 @@ void FDMCompressedBLAS2::Residual(const MatrixCSRD& a, const VectorND& x,
     const auto ci = a.ColumnIndicesBegin();
     const auto nnz = a.NonZeroBegin();
 
-    ParallelForEachIndex(x.GetRows(), [&](size_t i) {
-        const size_t rowBegin = rp[i];
-        const size_t rowEnd = rp[i + 1];
+    ParallelForEachIndex(x.GetRows(),
+                         [&rp, &ci, &nnz, &x, &result, &b](size_t i) {
+                             const size_t rowBegin = rp[i];
+                             const size_t rowEnd = rp[i + 1];
 
-        double sum = 0.0;
+                             double sum = 0.0;
 
-        for (size_t jj = rowBegin; jj < rowEnd; ++jj)
-        {
-            const size_t j = ci[jj];
-            sum += nnz[jj] * x[j];
-        }
+                             for (size_t jj = rowBegin; jj < rowEnd; ++jj)
+                             {
+                                 const size_t j = ci[jj];
+                                 sum += nnz[jj] * x[j];
+                             }
 
-        (*result)[i] = b[i] - sum;
-    });
+                             (*result)[i] = b[i] - sum;
+                         });
 }
 
 double FDMCompressedBLAS2::L2Norm(const VectorND& v)

@@ -89,9 +89,10 @@ void FDMBLAS3::AXPlusY(double a, const FDMVector3& x, const FDMVector3& y,
     assert(x.Size() == y.Size());
     assert(x.Size() == result->Size());
 
-    ParallelForEachIndex(size, [&](size_t i, size_t j, size_t k) {
-        (*result)(i, j, k) = a * x(i, j, k) + y(i, j, k);
-    });
+    ParallelForEachIndex(size,
+                         [&result, &a, &x, &y](size_t i, size_t j, size_t k) {
+                             (*result)(i, j, k) = a * x(i, j, k) + y(i, j, k);
+                         });
 }
 
 void FDMBLAS3::MVM(const FDMMatrix3& m, const FDMVector3& v, FDMVector3* result)
@@ -101,16 +102,17 @@ void FDMBLAS3::MVM(const FDMMatrix3& m, const FDMVector3& v, FDMVector3* result)
     assert(size == v.Size());
     assert(size == result->Size());
 
-    ParallelForEachIndex(size, [&](size_t i, size_t j, size_t k) {
-        (*result)(i, j, k) =
-            m(i, j, k).center * v(i, j, k) +
-            ((i > 0) ? m(i - 1, j, k).right * v(i - 1, j, k) : 0.0) +
-            ((i + 1 < size.x) ? m(i, j, k).right * v(i + 1, j, k) : 0.0) +
-            ((j > 0) ? m(i, j - 1, k).up * v(i, j - 1, k) : 0.0) +
-            ((j + 1 < size.y) ? m(i, j, k).up * v(i, j + 1, k) : 0.0) +
-            ((k > 0) ? m(i, j, k - 1).front * v(i, j, k - 1) : 0.0) +
-            ((k + 1 < size.z) ? m(i, j, k).front * v(i, j, k + 1) : 0.0);
-    });
+    ParallelForEachIndex(
+        size, [&result, &m, &v, &size](size_t i, size_t j, size_t k) {
+            (*result)(i, j, k) =
+                m(i, j, k).center * v(i, j, k) +
+                ((i > 0) ? m(i - 1, j, k).right * v(i - 1, j, k) : 0.0) +
+                ((i + 1 < size.x) ? m(i, j, k).right * v(i + 1, j, k) : 0.0) +
+                ((j > 0) ? m(i, j - 1, k).up * v(i, j - 1, k) : 0.0) +
+                ((j + 1 < size.y) ? m(i, j, k).up * v(i, j + 1, k) : 0.0) +
+                ((k > 0) ? m(i, j, k - 1).front * v(i, j, k - 1) : 0.0) +
+                ((k + 1 < size.z) ? m(i, j, k).front * v(i, j, k + 1) : 0.0);
+        });
 }
 
 void FDMBLAS3::Residual(const FDMMatrix3& a, const FDMVector3& x,
@@ -122,16 +124,17 @@ void FDMBLAS3::Residual(const FDMMatrix3& a, const FDMVector3& x,
     assert(size == b.Size());
     assert(size == result->Size());
 
-    ParallelForEachIndex(size, [&](size_t i, size_t j, size_t k) {
-        (*result)(i, j, k) =
-            b(i, j, k) - a(i, j, k).center * x(i, j, k) -
-            ((i > 0) ? a(i - 1, j, k).right * x(i - 1, j, k) : 0.0) -
-            ((i + 1 < size.x) ? a(i, j, k).right * x(i + 1, j, k) : 0.0) -
-            ((j > 0) ? a(i, j - 1, k).up * x(i, j - 1, k) : 0.0) -
-            ((j + 1 < size.y) ? a(i, j, k).up * x(i, j + 1, k) : 0.0) -
-            ((k > 0) ? a(i, j, k - 1).front * x(i, j, k - 1) : 0.0) -
-            ((k + 1 < size.z) ? a(i, j, k).front * x(i, j, k + 1) : 0.0);
-    });
+    ParallelForEachIndex(
+        size, [&result, &b, &a, &x, &size](size_t i, size_t j, size_t k) {
+            (*result)(i, j, k) =
+                b(i, j, k) - a(i, j, k).center * x(i, j, k) -
+                ((i > 0) ? a(i - 1, j, k).right * x(i - 1, j, k) : 0.0) -
+                ((i + 1 < size.x) ? a(i, j, k).right * x(i + 1, j, k) : 0.0) -
+                ((j > 0) ? a(i, j - 1, k).up * x(i, j - 1, k) : 0.0) -
+                ((j + 1 < size.y) ? a(i, j, k).up * x(i, j + 1, k) : 0.0) -
+                ((k > 0) ? a(i, j, k - 1).front * x(i, j, k - 1) : 0.0) -
+                ((k + 1 < size.z) ? a(i, j, k).front * x(i, j, k + 1) : 0.0);
+        });
 }
 
 double FDMBLAS3::L2Norm(const FDMVector3& v)
@@ -196,7 +199,7 @@ void FDMCompressedBLAS3::MVM(const MatrixCSRD& m, const VectorND& v,
     const auto ci = m.ColumnIndicesBegin();
     const auto nnz = m.NonZeroBegin();
 
-    ParallelForEachIndex(v.GetRows(), [&](size_t i) {
+    ParallelForEachIndex(v.GetRows(), [&rp, &ci, &nnz, &v, &result](size_t i) {
         const size_t rowBegin = rp[i];
         const size_t rowEnd = rp[i + 1];
 
@@ -219,20 +222,21 @@ void FDMCompressedBLAS3::Residual(const MatrixCSRD& a, const VectorND& x,
     const auto ci = a.ColumnIndicesBegin();
     const auto nnz = a.NonZeroBegin();
 
-    ParallelForEachIndex(x.GetRows(), [&](size_t i) {
-        const size_t rowBegin = rp[i];
-        const size_t rowEnd = rp[i + 1];
+    ParallelForEachIndex(x.GetRows(),
+                         [&rp, &ci, &nnz, &x, &result, &b](size_t i) {
+                             const size_t rowBegin = rp[i];
+                             const size_t rowEnd = rp[i + 1];
 
-        double sum = 0.0;
+                             double sum = 0.0;
 
-        for (size_t jj = rowBegin; jj < rowEnd; ++jj)
-        {
-            const size_t j = ci[jj];
-            sum += nnz[jj] * x[j];
-        }
+                             for (size_t jj = rowBegin; jj < rowEnd; ++jj)
+                             {
+                                 const size_t j = ci[jj];
+                                 sum += nnz[jj] * x[j];
+                             }
 
-        (*result)[i] = b[i] - sum;
-    });
+                             (*result)[i] = b[i] - sum;
+                         });
 }
 
 double FDMCompressedBLAS3::L2Norm(const VectorND& v)

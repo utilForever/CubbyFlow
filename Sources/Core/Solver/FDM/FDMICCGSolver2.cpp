@@ -22,7 +22,7 @@ void FDMICCGSolver2::Preconditioner::Build(const FDMMatrix2& matrix)
     d.Resize(size, 0.0);
     y.Resize(size, 0.0);
 
-    ForEachIndex(size, [&](size_t i, size_t j) {
+    ForEachIndex(size, [&matrix, this](size_t i, size_t j) {
         const double denom =
             matrix(i, j).center -
             ((i > 0) ? Square(matrix(i - 1, j).right) * d(i - 1, j) : 0.0) -
@@ -45,7 +45,7 @@ void FDMICCGSolver2::Preconditioner::Solve(const FDMVector2& b, FDMVector2* x)
     const auto sx = static_cast<ssize_t>(size.x);
     const auto sy = static_cast<ssize_t>(size.y);
 
-    ForEachIndex(size, [&](size_t i, size_t j) {
+    ForEachIndex(size, [this, &b](size_t i, size_t j) {
         y(i, j) = (b(i, j) - ((i > 0) ? A(i - 1, j).right * y(i - 1, j) : 0.0) -
                    ((j > 0) ? A(i, j - 1).up * y(i, j - 1) : 0.0)) *
                   d(i, j);
@@ -76,7 +76,7 @@ void FDMICCGSolver2::PreconditionerCompressed::Build(const MatrixCSRD& matrix)
     const auto ci = A->ColumnIndicesBegin();
     const auto nnz = A->NonZeroBegin();
 
-    ForEachIndex(size, [&](size_t i) {
+    ForEachIndex(size, [&rp, &ci, &nnz, this](size_t i) {
         const size_t rowBegin = rp[i];
         const size_t rowEnd = rp[i + 1];
 
@@ -115,7 +115,7 @@ void FDMICCGSolver2::PreconditionerCompressed::Solve(const VectorND& b,
     const auto ci = A->ColumnIndicesBegin();
     const auto nnz = A->NonZeroBegin();
 
-    ForEachIndex(b.GetRows(), [&](size_t i) {
+    ForEachIndex(b.GetRows(), [&rp, &b, &ci, &nnz, this](size_t i) {
         const size_t rowBegin = rp[i];
         const size_t rowEnd = rp[i + 1];
 
