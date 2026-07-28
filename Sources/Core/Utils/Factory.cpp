@@ -100,8 +100,7 @@ const Registry& GetRegistry()
 ScalarGrid2Ptr Factory::BuildScalarGrid2(const std::string& name)
 {
     const auto& builders = GetRegistry().sScalarGrid2Builders;
-    const auto result = builders.find(name);
-    if (result != builders.end())
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0 }, { 1, 1 }, { 0, 0 }, 0.0);
@@ -113,8 +112,7 @@ ScalarGrid2Ptr Factory::BuildScalarGrid2(const std::string& name)
 ScalarGrid3Ptr Factory::BuildScalarGrid3(const std::string& name)
 {
     const auto& builders = GetRegistry().sScalarGrid3Builders;
-    const auto result = builders.find(name);
-    if (result != builders.end())
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0, 0 }, { 1, 1, 1 }, { 0, 0, 0 }, 0.0);
@@ -126,8 +124,7 @@ ScalarGrid3Ptr Factory::BuildScalarGrid3(const std::string& name)
 VectorGrid2Ptr Factory::BuildVectorGrid2(const std::string& name)
 {
     const auto& builders = GetRegistry().sVectorGrid2Builders;
-    const auto result = builders.find(name);
-    if (result != builders.end())
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0 }, { 1, 1 }, { 0, 0 }, { 0, 0 });
@@ -139,8 +136,7 @@ VectorGrid2Ptr Factory::BuildVectorGrid2(const std::string& name)
 VectorGrid3Ptr Factory::BuildVectorGrid3(const std::string& name)
 {
     const auto& builders = GetRegistry().sVectorGrid3Builders;
-    const auto result = builders.find(name);
-    if (result != builders.end())
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0, 0 }, { 1, 1, 1 }, { 0, 0, 0 },
@@ -154,8 +150,7 @@ PointNeighborSearcher2Ptr Factory::BuildPointNeighborSearcher2(
     const std::string& name)
 {
     const auto& builders = GetRegistry().sPointNeighborSearcher2Builders;
-    const auto result = builders.find(name);
-    if (result != builders.end())
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->BuildPointNeighborSearcher();
@@ -168,8 +163,7 @@ PointNeighborSearcher3Ptr Factory::BuildPointNeighborSearcher3(
     const std::string& name)
 {
     const auto& builders = GetRegistry().sPointNeighborSearcher3Builders;
-    const auto result = builders.find(name);
-    if (result != builders.end())
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->BuildPointNeighborSearcher();
