@@ -95,13 +95,13 @@ void APICSolver2::TransferFromParticlesToGrids()
         }
     }
 
-    ParallelForEachIndex(uWeight.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(uWeight.Size(), [&uWeight, &u](size_t i, size_t j) {
         if (uWeight(i, j) > 0.0)
         {
             u(i, j) /= uWeight(i, j);
         }
     });
-    ParallelForEachIndex(vWeight.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(vWeight.Size(), [&vWeight, &v](size_t i, size_t j) {
         if (vWeight(i, j) > 0.0)
         {
             v(i, j) /= vWeight(i, j);
@@ -133,36 +133,39 @@ void APICSolver2::TransferFromGridsToParticles()
     LinearArraySampler2<double> vSampler{ v, flow->GridSpacing(),
                                           flow->VOrigin() };
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        velocities[i] = flow->Sample(positions[i]);
+    ParallelFor(
+        ZERO_SIZE, numberOfParticles,
+        [&velocities, &flow, &positions, &bbox, &hh, &uSampler, this, &u,
+         &vSampler, &v](size_t i) {
+            velocities[i] = flow->Sample(positions[i]);
 
-        std::array<Vector2UZ, 4> indices{};
-        std::array<Vector2D, 4> gradWeights{};
+            std::array<Vector2UZ, 4> indices{};
+            std::array<Vector2D, 4> gradWeights{};
 
-        // x
-        Vector2<double> uPosClamped = positions[i];
-        uPosClamped.y = std::clamp(uPosClamped.y, bbox.lowerCorner.y + hh.y,
-                                   bbox.upperCorner.y - hh.y);
-        uSampler.GetCoordinatesAndGradientWeights(uPosClamped, indices,
-                                                  gradWeights);
+            // x
+            Vector2<double> uPosClamped = positions[i];
+            uPosClamped.y = std::clamp(uPosClamped.y, bbox.lowerCorner.y + hh.y,
+                                       bbox.upperCorner.y - hh.y);
+            uSampler.GetCoordinatesAndGradientWeights(uPosClamped, indices,
+                                                      gradWeights);
 
-        for (int j = 0; j < 4; ++j)
-        {
-            m_cX[i] += gradWeights[j] * u(indices[j]);
-        }
+            for (int j = 0; j < 4; ++j)
+            {
+                m_cX[i] += gradWeights[j] * u(indices[j]);
+            }
 
-        // y
-        Vector2<double> vPosClamped = positions[i];
-        vPosClamped.x = std::clamp(vPosClamped.x, bbox.lowerCorner.x + hh.x,
-                                   bbox.upperCorner.x - hh.x);
-        vSampler.GetCoordinatesAndGradientWeights(vPosClamped, indices,
-                                                  gradWeights);
+            // y
+            Vector2<double> vPosClamped = positions[i];
+            vPosClamped.x = std::clamp(vPosClamped.x, bbox.lowerCorner.x + hh.x,
+                                       bbox.upperCorner.x - hh.x);
+            vSampler.GetCoordinatesAndGradientWeights(vPosClamped, indices,
+                                                      gradWeights);
 
-        for (int j = 0; j < 4; ++j)
-        {
-            m_cY[i] += gradWeights[j] * v(indices[j]);
-        }
-    });
+            for (int j = 0; j < 4; ++j)
+            {
+                m_cY[i] += gradWeights[j] * v(indices[j]);
+            }
+        });
 }
 
 APICSolver2::Builder APICSolver2::GetBuilder()

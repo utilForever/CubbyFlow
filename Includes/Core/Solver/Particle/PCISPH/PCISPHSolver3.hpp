@@ -77,6 +77,8 @@ class PCISPHSolver3 : public SPHSolver3
     [[nodiscard]] static Builder GetBuilder();
 
  protected:
+    using SPHSolver3::AccumulatePressureForce;
+
     //! Accumulates the pressure force to the forces array in the particle
     //! system.
     void AccumulatePressureForce(double timeIntervalInSeconds) override;

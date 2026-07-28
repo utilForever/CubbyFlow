@@ -165,13 +165,13 @@ void PICSolver2::TransferFromParticlesToGrids()
         }
     }
 
-    ParallelForEachIndex(uWeight.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(uWeight.Size(), [&uWeight, &u](size_t i, size_t j) {
         if (uWeight(i, j) > 0.0)
         {
             u(i, j) /= uWeight(i, j);
         }
     });
-    ParallelForEachIndex(vWeight.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(vWeight.Size(), [&vWeight, &v](size_t i, size_t j) {
         if (vWeight(i, j) > 0.0)
         {
             v(i, j) /= vWeight(i, j);
@@ -187,7 +187,9 @@ void PICSolver2::TransferFromGridsToParticles()
     const size_t numberOfParticles = m_particles->NumberOfParticles();
 
     ParallelFor(ZERO_SIZE, numberOfParticles,
-                [&](size_t i) { velocities[i] = flow->Sample(positions[i]); });
+                [&velocities, &flow, &positions](size_t i) {
+                    velocities[i] = flow->Sample(positions[i]);
+                });
 }
 
 void PICSolver2::MoveParticles(double timeIntervalInSeconds)
@@ -199,62 +201,66 @@ void PICSolver2::MoveParticles(double timeIntervalInSeconds)
     int domainBoundaryFlag = GetClosedDomainBoundaryFlag();
     BoundingBox2D boundingBox = flow->GetBoundingBox();
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        Vector2D pt0 = positions[i];
-        Vector2D pt1 = pt0;
-        Vector2D vel = velocities[i];
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&positions, &velocities, this, &timeIntervalInSeconds, &flow,
+                 &domainBoundaryFlag, &boundingBox](size_t i) {
+                    Vector2D pt0 = positions[i];
+                    Vector2D pt1 = pt0;
+                    Vector2D vel = velocities[i];
 
-        // Adaptive time-stepping
-        const unsigned int numSubSteps =
-            static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
-        const double dt = timeIntervalInSeconds / numSubSteps;
-        for (unsigned int t = 0; t < numSubSteps; ++t)
-        {
-            Vector2D vel0 = flow->Sample(pt0);
+                    // Adaptive time-stepping
+                    const unsigned int numSubSteps =
+                        static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
+                    const double dt = timeIntervalInSeconds / numSubSteps;
+                    for (unsigned int t = 0; t < numSubSteps; ++t)
+                    {
+                        Vector2D vel0 = flow->Sample(pt0);
 
-            // Mid-point rule
-            Vector2D midPt = pt0 + 0.5 * dt * vel0;
-            Vector2D midVel = flow->Sample(midPt);
-            pt1 = pt0 + dt * midVel;
+                        // Mid-point rule
+                        Vector2D midPt = pt0 + 0.5 * dt * vel0;
+                        Vector2D midVel = flow->Sample(midPt);
+                        pt1 = pt0 + dt * midVel;
 
-            pt0 = pt1;
-        }
+                        pt0 = pt1;
+                    }
 
-        if ((domainBoundaryFlag & DIRECTION_LEFT) &&
-            pt1.x <= boundingBox.lowerCorner.x)
-        {
-            pt1.x = boundingBox.lowerCorner.x;
-            vel.x = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
-            pt1.x >= boundingBox.upperCorner.x)
-        {
-            pt1.x = boundingBox.upperCorner.x;
-            vel.x = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_DOWN) &&
-            pt1.y <= boundingBox.lowerCorner.y)
-        {
-            pt1.y = boundingBox.lowerCorner.y;
-            vel.y = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_UP) &&
-            pt1.y >= boundingBox.upperCorner.y)
-        {
-            pt1.y = boundingBox.upperCorner.y;
-            vel.y = 0.0;
-        }
+                    if ((domainBoundaryFlag & DIRECTION_LEFT) &&
+                        pt1.x <= boundingBox.lowerCorner.x)
+                    {
+                        pt1.x = boundingBox.lowerCorner.x;
+                        vel.x = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
+                        pt1.x >= boundingBox.upperCorner.x)
+                    {
+                        pt1.x = boundingBox.upperCorner.x;
+                        vel.x = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_DOWN) &&
+                        pt1.y <= boundingBox.lowerCorner.y)
+                    {
+                        pt1.y = boundingBox.lowerCorner.y;
+                        vel.y = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_UP) &&
+                        pt1.y >= boundingBox.upperCorner.y)
+                    {
+                        pt1.y = boundingBox.upperCorner.y;
+                        vel.y = 0.0;
+                    }
 
-        positions[i] = pt1;
-        velocities[i] = vel;
-    });
+                    positions[i] = pt1;
+                    velocities[i] = vel;
+                });
 
     Collider2Ptr col = GetCollider();
     if (col != nullptr)
     {
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            col->ResolveCollision(0.0, 0.0, &positions[i], &velocities[i]);
-        });
+        ParallelFor(ZERO_SIZE, numberOfParticles,
+                    [&col, &positions, &velocities](size_t i) {
+                        col->ResolveCollision(0.0, 0.0, &positions[i],
+                                              &velocities[i]);
+                    });
     }
 }
 
@@ -278,16 +284,18 @@ void PICSolver2::BuildSignedDistanceField()
 
     m_particles->BuildNeighborSearcher(2 * radius);
     auto searcher = m_particles->NeighborSearcher();
-    sdf->ParallelForEachDataPointIndex([&](size_t i, size_t j) {
-        Vector2D pt = sdfPos(i, j);
-        double minDist = 2.0 * radius;
+    sdf->ParallelForEachDataPointIndex(
+        [&sdfPos, &radius, &searcher, &sdf](size_t i, size_t j) {
+            Vector2D pt = sdfPos(i, j);
+            double minDist = 2.0 * radius;
 
-        searcher->ForEachNearbyPoint(
-            pt, 2.0 * radius, [&](size_t, const Vector2D& x) {
-                minDist = std::min(minDist, pt.DistanceTo(x));
-            });
-        (*sdf)(i, j) = minDist - radius;
-    });
+            searcher->ForEachNearbyPoint(
+                pt, 2.0 * radius,
+                [&radius, &minDist, &pt](size_t, const Vector2D& x) {
+                    minDist = std::min(minDist, pt.DistanceTo(x));
+                });
+            (*sdf)(i, j) = minDist - radius;
+        });
 
     ExtrapolateIntoCollider(sdf.get());
 }

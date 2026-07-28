@@ -180,24 +180,27 @@ void PICSolver3::TransferFromParticlesToGrids()
         }
     }
 
-    ParallelForEachIndex(uWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (uWeight(i, j, k) > 0.0)
-        {
-            u(i, j, k) /= uWeight(i, j, k);
-        }
-    });
-    ParallelForEachIndex(vWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (vWeight(i, j, k) > 0.0)
-        {
-            v(i, j, k) /= vWeight(i, j, k);
-        }
-    });
-    ParallelForEachIndex(wWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (wWeight(i, j, k) > 0.0)
-        {
-            w(i, j, k) /= wWeight(i, j, k);
-        }
-    });
+    ParallelForEachIndex(uWeight.Size(),
+                         [&uWeight, &u](size_t i, size_t j, size_t k) {
+                             if (uWeight(i, j, k) > 0.0)
+                             {
+                                 u(i, j, k) /= uWeight(i, j, k);
+                             }
+                         });
+    ParallelForEachIndex(vWeight.Size(),
+                         [&vWeight, &v](size_t i, size_t j, size_t k) {
+                             if (vWeight(i, j, k) > 0.0)
+                             {
+                                 v(i, j, k) /= vWeight(i, j, k);
+                             }
+                         });
+    ParallelForEachIndex(wWeight.Size(),
+                         [&wWeight, &w](size_t i, size_t j, size_t k) {
+                             if (wWeight(i, j, k) > 0.0)
+                             {
+                                 w(i, j, k) /= wWeight(i, j, k);
+                             }
+                         });
 }
 
 void PICSolver3::TransferFromGridsToParticles()
@@ -208,7 +211,9 @@ void PICSolver3::TransferFromGridsToParticles()
     const size_t numberOfParticles = m_particles->NumberOfParticles();
 
     ParallelFor(ZERO_SIZE, numberOfParticles,
-                [&](size_t i) { velocities[i] = flow->Sample(positions[i]); });
+                [&velocities, &flow, &positions](size_t i) {
+                    velocities[i] = flow->Sample(positions[i]);
+                });
 }
 
 void PICSolver3::MoveParticles(double timeIntervalInSeconds)
@@ -220,74 +225,78 @@ void PICSolver3::MoveParticles(double timeIntervalInSeconds)
     int domainBoundaryFlag = GetClosedDomainBoundaryFlag();
     BoundingBox3D boundingBox = flow->GetBoundingBox();
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        Vector3D pt0 = positions[i];
-        Vector3D pt1 = pt0;
-        Vector3D vel = velocities[i];
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&positions, &velocities, this, &timeIntervalInSeconds, &flow,
+                 &domainBoundaryFlag, &boundingBox](size_t i) {
+                    Vector3D pt0 = positions[i];
+                    Vector3D pt1 = pt0;
+                    Vector3D vel = velocities[i];
 
-        // Adaptive time-stepping
-        const unsigned int numSubSteps =
-            static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
-        const double dt = timeIntervalInSeconds / numSubSteps;
-        for (unsigned int t = 0; t < numSubSteps; ++t)
-        {
-            Vector3D vel0 = flow->Sample(pt0);
+                    // Adaptive time-stepping
+                    const unsigned int numSubSteps =
+                        static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
+                    const double dt = timeIntervalInSeconds / numSubSteps;
+                    for (unsigned int t = 0; t < numSubSteps; ++t)
+                    {
+                        Vector3D vel0 = flow->Sample(pt0);
 
-            // Mid-point rule
-            Vector3D midPt = pt0 + 0.5 * dt * vel0;
-            Vector3D midVel = flow->Sample(midPt);
-            pt1 = pt0 + dt * midVel;
+                        // Mid-point rule
+                        Vector3D midPt = pt0 + 0.5 * dt * vel0;
+                        Vector3D midVel = flow->Sample(midPt);
+                        pt1 = pt0 + dt * midVel;
 
-            pt0 = pt1;
-        }
+                        pt0 = pt1;
+                    }
 
-        if ((domainBoundaryFlag & DIRECTION_LEFT) &&
-            pt1.x <= boundingBox.lowerCorner.x)
-        {
-            pt1.x = boundingBox.lowerCorner.x;
-            vel.x = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
-            pt1.x >= boundingBox.upperCorner.x)
-        {
-            pt1.x = boundingBox.upperCorner.x;
-            vel.x = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_DOWN) &&
-            pt1.y <= boundingBox.lowerCorner.y)
-        {
-            pt1.y = boundingBox.lowerCorner.y;
-            vel.y = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_UP) &&
-            pt1.y >= boundingBox.upperCorner.y)
-        {
-            pt1.y = boundingBox.upperCorner.y;
-            vel.y = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_BACK) &&
-            pt1.z <= boundingBox.lowerCorner.z)
-        {
-            pt1.z = boundingBox.lowerCorner.z;
-            vel.z = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_FRONT) &&
-            pt1.z >= boundingBox.upperCorner.z)
-        {
-            pt1.z = boundingBox.upperCorner.z;
-            vel.z = 0.0;
-        }
+                    if ((domainBoundaryFlag & DIRECTION_LEFT) &&
+                        pt1.x <= boundingBox.lowerCorner.x)
+                    {
+                        pt1.x = boundingBox.lowerCorner.x;
+                        vel.x = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
+                        pt1.x >= boundingBox.upperCorner.x)
+                    {
+                        pt1.x = boundingBox.upperCorner.x;
+                        vel.x = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_DOWN) &&
+                        pt1.y <= boundingBox.lowerCorner.y)
+                    {
+                        pt1.y = boundingBox.lowerCorner.y;
+                        vel.y = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_UP) &&
+                        pt1.y >= boundingBox.upperCorner.y)
+                    {
+                        pt1.y = boundingBox.upperCorner.y;
+                        vel.y = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_BACK) &&
+                        pt1.z <= boundingBox.lowerCorner.z)
+                    {
+                        pt1.z = boundingBox.lowerCorner.z;
+                        vel.z = 0.0;
+                    }
+                    if ((domainBoundaryFlag & DIRECTION_FRONT) &&
+                        pt1.z >= boundingBox.upperCorner.z)
+                    {
+                        pt1.z = boundingBox.upperCorner.z;
+                        vel.z = 0.0;
+                    }
 
-        positions[i] = pt1;
-        velocities[i] = vel;
-    });
+                    positions[i] = pt1;
+                    velocities[i] = vel;
+                });
 
     Collider3Ptr col = GetCollider();
     if (col != nullptr)
     {
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            col->ResolveCollision(0.0, 0.0, &positions[i], &velocities[i]);
-        });
+        ParallelFor(ZERO_SIZE, numberOfParticles,
+                    [&col, &positions, &velocities](size_t i) {
+                        col->ResolveCollision(0.0, 0.0, &positions[i],
+                                              &velocities[i]);
+                    });
     }
 }
 
@@ -315,12 +324,15 @@ void PICSolver3::BuildSignedDistanceField()
 
     m_particles->BuildNeighborSearcher(2 * radius);
     PointNeighborSearcher3Ptr searcher = m_particles->NeighborSearcher();
-    sdf->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
+    sdf->ParallelForEachDataPointIndex([&sdfPos, &sdfBandRadius, &searcher,
+                                        &sdf,
+                                        &radius](size_t i, size_t j, size_t k) {
         Vector3D pt = sdfPos(i, j, k);
         double minDist = sdfBandRadius;
 
         searcher->ForEachNearbyPoint(
-            pt, sdfBandRadius, [&](size_t, const Vector3D& x) {
+            pt, sdfBandRadius,
+            [&sdfBandRadius, &minDist, &pt](size_t, const Vector3D& x) {
                 minDist = std::min(minDist, pt.DistanceTo(x));
             });
         (*sdf)(i, j, k) = minDist - radius;

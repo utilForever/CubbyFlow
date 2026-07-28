@@ -125,24 +125,27 @@ void APICSolver3::TransferFromParticlesToGrids()
         }
     }
 
-    ParallelForEachIndex(uWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (uWeight(i, j, k) > 0.0)
-        {
-            u(i, j, k) /= uWeight(i, j, k);
-        }
-    });
-    ParallelForEachIndex(vWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (vWeight(i, j, k) > 0.0)
-        {
-            v(i, j, k) /= vWeight(i, j, k);
-        }
-    });
-    ParallelForEachIndex(wWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (wWeight(i, j, k) > 0.0)
-        {
-            w(i, j, k) /= wWeight(i, j, k);
-        }
-    });
+    ParallelForEachIndex(uWeight.Size(),
+                         [&uWeight, &u](size_t i, size_t j, size_t k) {
+                             if (uWeight(i, j, k) > 0.0)
+                             {
+                                 u(i, j, k) /= uWeight(i, j, k);
+                             }
+                         });
+    ParallelForEachIndex(vWeight.Size(),
+                         [&vWeight, &v](size_t i, size_t j, size_t k) {
+                             if (vWeight(i, j, k) > 0.0)
+                             {
+                                 v(i, j, k) /= vWeight(i, j, k);
+                             }
+                         });
+    ParallelForEachIndex(wWeight.Size(),
+                         [&wWeight, &w](size_t i, size_t j, size_t k) {
+                             if (wWeight(i, j, k) > 0.0)
+                             {
+                                 w(i, j, k) /= wWeight(i, j, k);
+                             }
+                         });
 }
 
 void APICSolver3::TransferFromGridsToParticles()
@@ -174,54 +177,57 @@ void APICSolver3::TransferFromGridsToParticles()
     LinearArraySampler3<double> wSampler{ w, flow->GridSpacing(),
                                           flow->WOrigin() };
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        velocities[i] = flow->Sample(positions[i]);
+    ParallelFor(
+        ZERO_SIZE, numberOfParticles,
+        [&velocities, &flow, &positions, &bbox, &hh, &uSampler, this, &u,
+         &vSampler, &v, &wSampler, &w](size_t i) {
+            velocities[i] = flow->Sample(positions[i]);
 
-        std::array<Vector3UZ, 8> indices{};
-        std::array<Vector3D, 8> gradWeights{};
+            std::array<Vector3UZ, 8> indices{};
+            std::array<Vector3D, 8> gradWeights{};
 
-        // x
-        Vector3<double> uPosClamped = positions[i];
-        uPosClamped.y = std::clamp(uPosClamped.y, bbox.lowerCorner.y + hh.y,
-                                   bbox.upperCorner.y - hh.y);
-        uPosClamped.z = std::clamp(uPosClamped.z, bbox.lowerCorner.z + hh.z,
-                                   bbox.upperCorner.z - hh.z);
-        uSampler.GetCoordinatesAndGradientWeights(uPosClamped, indices,
-                                                  gradWeights);
+            // x
+            Vector3<double> uPosClamped = positions[i];
+            uPosClamped.y = std::clamp(uPosClamped.y, bbox.lowerCorner.y + hh.y,
+                                       bbox.upperCorner.y - hh.y);
+            uPosClamped.z = std::clamp(uPosClamped.z, bbox.lowerCorner.z + hh.z,
+                                       bbox.upperCorner.z - hh.z);
+            uSampler.GetCoordinatesAndGradientWeights(uPosClamped, indices,
+                                                      gradWeights);
 
-        for (int j = 0; j < 8; ++j)
-        {
-            m_cX[i] += gradWeights[j] * u(indices[j]);
-        }
+            for (int j = 0; j < 8; ++j)
+            {
+                m_cX[i] += gradWeights[j] * u(indices[j]);
+            }
 
-        // y
-        Vector3<double> vPosClamped = positions[i];
-        vPosClamped.x = std::clamp(vPosClamped.x, bbox.lowerCorner.x + hh.x,
-                                   bbox.upperCorner.x - hh.x);
-        vPosClamped.z = std::clamp(vPosClamped.z, bbox.lowerCorner.z + hh.z,
-                                   bbox.upperCorner.z - hh.z);
-        vSampler.GetCoordinatesAndGradientWeights(vPosClamped, indices,
-                                                  gradWeights);
+            // y
+            Vector3<double> vPosClamped = positions[i];
+            vPosClamped.x = std::clamp(vPosClamped.x, bbox.lowerCorner.x + hh.x,
+                                       bbox.upperCorner.x - hh.x);
+            vPosClamped.z = std::clamp(vPosClamped.z, bbox.lowerCorner.z + hh.z,
+                                       bbox.upperCorner.z - hh.z);
+            vSampler.GetCoordinatesAndGradientWeights(vPosClamped, indices,
+                                                      gradWeights);
 
-        for (int j = 0; j < 8; ++j)
-        {
-            m_cY[i] += gradWeights[j] * v(indices[j]);
-        }
+            for (int j = 0; j < 8; ++j)
+            {
+                m_cY[i] += gradWeights[j] * v(indices[j]);
+            }
 
-        // z
-        Vector3<double> wPosClamped = positions[i];
-        wPosClamped.x = std::clamp(wPosClamped.x, bbox.lowerCorner.x + hh.x,
-                                   bbox.upperCorner.x - hh.x);
-        wPosClamped.y = std::clamp(wPosClamped.y, bbox.lowerCorner.y + hh.y,
-                                   bbox.upperCorner.y - hh.y);
-        wSampler.GetCoordinatesAndGradientWeights(wPosClamped, indices,
-                                                  gradWeights);
+            // z
+            Vector3<double> wPosClamped = positions[i];
+            wPosClamped.x = std::clamp(wPosClamped.x, bbox.lowerCorner.x + hh.x,
+                                       bbox.upperCorner.x - hh.x);
+            wPosClamped.y = std::clamp(wPosClamped.y, bbox.lowerCorner.y + hh.y,
+                                       bbox.upperCorner.y - hh.y);
+            wSampler.GetCoordinatesAndGradientWeights(wPosClamped, indices,
+                                                      gradWeights);
 
-        for (int j = 0; j < 8; ++j)
-        {
-            m_cZ[i] += gradWeights[j] * w(indices[j]);
-        }
-    });
+            for (int j = 0; j < 8; ++j)
+            {
+                m_cZ[i] += gradWeights[j] * w(indices[j]);
+            }
+        });
 }
 
 APICSolver3::Builder APICSolver3::GetBuilder()

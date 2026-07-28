@@ -70,7 +70,7 @@ void PCISPHSolver2::AccumulatePressureForce(double timeIntervalInSeconds)
     SPHStdKernel2 kernel{ particles->KernelRadius() };
 
     // Initialize buffers
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
+    ParallelFor(ZERO_SIZE, numberOfParticles, [&p, this, &ds, &d](size_t i) {
         p[i] = 0.0;
         m_pressureForces[i] = Vector2D{};
         m_densityErrors[i] = 0.0;
@@ -84,43 +84,47 @@ void PCISPHSolver2::AccumulatePressureForce(double timeIntervalInSeconds)
     for (unsigned int k = 0; k < m_maxNumberOfIterations; ++k)
     {
         // Predict velocity and position
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            m_tempVelocities[i] = v[i] + timeIntervalInSeconds / mass *
-                                             (f[i] + m_pressureForces[i]);
-            m_tempPositions[i] =
-                x[i] + timeIntervalInSeconds * m_tempVelocities[i];
-        });
+        ParallelFor(
+            ZERO_SIZE, numberOfParticles,
+            [this, &v, &timeIntervalInSeconds, &mass, &f, &x](size_t i) {
+                m_tempVelocities[i] = v[i] + timeIntervalInSeconds / mass *
+                                                 (f[i] + m_pressureForces[i]);
+                m_tempPositions[i] =
+                    x[i] + timeIntervalInSeconds * m_tempVelocities[i];
+            });
 
         // Resolve collisions
         ResolveCollision(m_tempPositions, m_tempVelocities);
 
         // Compute pressure from density error
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            double weightSum = 0.0;
-            const auto& neighbors = particles->NeighborLists()[i];
+        ParallelFor(ZERO_SIZE, numberOfParticles,
+                    [&particles, this, &kernel, &mass, &targetDensity, &delta,
+                     &p, &ds](size_t i) {
+                        double weightSum = 0.0;
+                        const auto& neighbors = particles->NeighborLists()[i];
 
-            for (size_t j : neighbors)
-            {
-                const double dist =
-                    m_tempPositions[j].DistanceTo(m_tempPositions[i]);
-                weightSum += kernel(dist);
-            }
-            weightSum += kernel(0);
+                        for (size_t j : neighbors)
+                        {
+                            const double dist = m_tempPositions[j].DistanceTo(
+                                m_tempPositions[i]);
+                            weightSum += kernel(dist);
+                        }
+                        weightSum += kernel(0);
 
-            const double density = mass * weightSum;
-            double densityError = (density - targetDensity);
-            double pressure = delta * densityError;
+                        const double density = mass * weightSum;
+                        double densityError = (density - targetDensity);
+                        double pressure = delta * densityError;
 
-            if (pressure < 0.0)
-            {
-                pressure *= GetNegativePressureScale();
-                densityError *= GetNegativePressureScale();
-            }
+                        if (pressure < 0.0)
+                        {
+                            pressure *= GetNegativePressureScale();
+                            densityError *= GetNegativePressureScale();
+                        }
 
-            p[i] += pressure;
-            ds[i] = density;
-            m_densityErrors[i] = densityError;
-        });
+                        p[i] += pressure;
+                        ds[i] = density;
+                        m_densityErrors[i] = densityError;
+                    });
 
         // Compute pressure gradient force
         m_pressureForces.Fill(Vector2D{});
