@@ -35,7 +35,8 @@ void RunExperiment(size_t n, double height, bool compressed)
         }
     }
 
-    fluidSDF.Fill([&](const Vector3D& x) { return x.y - height * n; });
+    fluidSDF.Fill(
+        [&height, &n](const Vector3D& x) { return x.y - height * n; });
 
     GridFractionalSinglePhasePressureSolver3 solver;
     solver.Solve(vel, 1.0, &vel,

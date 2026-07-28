@@ -60,7 +60,7 @@ BENCHMARK_DEFINE_F(PointParallelHashGridSearcher3, ForEachNearbyPoints)
     while (state.KeepRunning())
     {
         grid.ForEachNearbyPoint(MakeVec(), 1.0 / 64.0,
-                                [&](size_t, const Vector3D&) { ++cnt; });
+                                [&cnt](size_t, const Vector3D&) { ++cnt; });
     }
 }
 

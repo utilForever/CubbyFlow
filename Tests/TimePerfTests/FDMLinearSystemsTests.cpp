@@ -32,7 +32,7 @@ class FDMBLAS2 : public ::benchmark::Fixture
         std::mt19937 rng;
         std::uniform_real_distribution<> d(0.0, 1.0);
 
-        ForEachIndex(m.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(m.Size(), [this, &d, &rng](size_t i, size_t j) {
             m(i, j).center = d(rng);
             m(i, j).right = d(rng);
             m(i, j).up = d(rng);
@@ -59,7 +59,7 @@ class FDMBLAS3 : public ::benchmark::Fixture
         std::mt19937 rng;
         std::uniform_real_distribution<> d(0.0, 1.0);
 
-        ForEachIndex(m.Size(), [&](size_t i, size_t j, size_t k) {
+        ForEachIndex(m.Size(), [this, &d, &rng](size_t i, size_t j, size_t k) {
             m(i, j, k).center = d(rng);
             m(i, j, k).right = d(rng);
             m(i, j, k).up = d(rng);
@@ -89,7 +89,8 @@ class FDMCompressedBLAS3 : public ::benchmark::Fixture
         Array3<size_t> coordToIndex(size);
         const auto acc = coordToIndex.View();
 
-        ForEachIndex(coordToIndex.Size(), [&](size_t i, size_t j, size_t k) {
+        ForEachIndex(coordToIndex.Size(), [&acc, &coordToIndex, &size, &system](
+                                              size_t i, size_t j, size_t k) {
             const size_t cIdx = acc.Index(i, j, k);
             const size_t lIdx = acc.Index(i - 1, j, k);
             const size_t rIdx = acc.Index(i + 1, j, k);

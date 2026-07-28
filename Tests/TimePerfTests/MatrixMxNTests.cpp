@@ -27,8 +27,8 @@ class MatrixMxN : public ::benchmark::Fixture
         y.Resize(n);
         CubbyFlow::ForEachIndex(
             Vector2UZ{}, Vector2UZ{ mat.GetCols(), mat.GetRows() },
-            [&](size_t i, size_t j) { mat(i, j) = d(rng); });
-        CubbyFlow::ForEachIndex(x.GetRows(), [&](size_t i) {
+            [this, &d, &rng](size_t i, size_t j) { mat(i, j) = d(rng); });
+        CubbyFlow::ForEachIndex(x.GetRows(), [this, &d, &rng](size_t i) {
             x[i] = d(rng);
             y[i] = d(rng);
         });
