@@ -11,7 +11,6 @@
 #include <API/Python/Geometry/Collider.hpp>
 #include <API/Python/Utils/pybind11Utils.hpp>
 #include <Core/Geometry/Collider.hpp>
-#include <Core/Geometry/Collider.hpp>
 
 #include <pybind11/pybind11.h>
 

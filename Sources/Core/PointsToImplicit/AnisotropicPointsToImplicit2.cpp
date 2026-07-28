@@ -107,73 +107,80 @@ void AnisotropicPointsToImplicit2::Convert(
     std::vector<Matrix2x2D> gs(points.Length());
     Array1<Vector2D> xMeans{ points.Length() };
 
-    ParallelFor(ZERO_SIZE, points.Length(), [&](size_t i) {
-        const Vector2D& x = points[i];
+    ParallelFor(
+        ZERO_SIZE, points.Length(),
+        [&points, &meanNeighborSearcher, &r, &xMeans, this, &invH, &gs,
+         &h](size_t i) {
+            const Vector2D& x = points[i];
 
-        // Compute xMean
-        Vector2D xMean;
-        double wSum = 0.0;
-        size_t numNeighbors = 0;
-        const auto getXMean = [&](size_t, const Vector2D& xj) {
-            const double wj = Wij((x - xj).Length(), r);
-            wSum += wj;
-            xMean += wj * xj;
-            ++numNeighbors;
-        };
-        meanNeighborSearcher->ForEachNearbyPoint(x, r, getXMean);
-
-        assert(wSum > 0.0);
-        xMean /= wSum;
-
-        xMeans[i] = Lerp(x, xMean, m_positionSmoothingFactor);
-
-        if (numNeighbors < m_minNumNeighbors)
-        {
-            const Matrix2x2D g = Matrix2x2D::MakeScaleMatrix(invH, invH);
-            gs[i] = g;
-        }
-        else
-        {
-            // Compute covariance matrix
-            // We start with small scale matrix (h*h) in order to
-            // prevent zero covariance matrix when points are all
-            // perfectly lined up.
-            auto cov = Matrix2x2D::MakeScaleMatrix(h * h, h * h);
-            wSum = 0.0;
-            const auto getCov = [&](size_t, const Vector2D& xj) {
-                const double wj = Wij((xMean - xj).Length(), r);
+            // Compute xMean
+            Vector2D xMean;
+            double wSum = 0.0;
+            size_t numNeighbors = 0;
+            const auto getXMean = [&x, &r, &wSum, &xMean, &numNeighbors](
+                                      size_t, const Vector2D& xj) {
+                const double wj = Wij((x - xj).Length(), r);
                 wSum += wj;
-                cov += wj * Vvt(xj - xMean);
+                xMean += wj * xj;
+                ++numNeighbors;
             };
-            meanNeighborSearcher->ForEachNearbyPoint(x, r, getCov);
+            meanNeighborSearcher->ForEachNearbyPoint(x, r, getXMean);
 
-            cov /= wSum;
+            assert(wSum > 0.0);
+            xMean /= wSum;
 
-            // SVD
-            Matrix2x2D u;
-            Vector2D v;
-            Matrix2x2D w;
-            SVD(cov, u, v, w);
+            xMeans[i] = Lerp(x, xMean, m_positionSmoothingFactor);
 
-            // Take off the sign
-            v.x = std::fabs(v.x);
-            v.y = std::fabs(v.y);
+            if (numNeighbors < m_minNumNeighbors)
+            {
+                const Matrix2x2D g = Matrix2x2D::MakeScaleMatrix(invH, invH);
+                gs[i] = g;
+            }
+            else
+            {
+                // Compute covariance matrix
+                // We start with small scale matrix (h*h) in order to
+                // prevent zero covariance matrix when points are all
+                // perfectly lined up.
+                auto cov = Matrix2x2D::MakeScaleMatrix(h * h, h * h);
+                wSum = 0.0;
+                const auto getCov = [&xMean, &r, &wSum, &cov](
+                                        size_t, const Vector2D& xj) {
+                    const double wj = Wij((xMean - xj).Length(), r);
+                    wSum += wj;
+                    cov += wj * Vvt(xj - xMean);
+                };
+                meanNeighborSearcher->ForEachNearbyPoint(x, r, getCov);
 
-            // Constrain Sigma
-            const double maxSingularVal = v.Max();
-            const double kr = 4.0;
-            v.x = std::max(v.x, maxSingularVal / kr);
-            v.y = std::max(v.y, maxSingularVal / kr);
+                cov /= wSum;
 
-            const Matrix2x2D invSigma = Matrix2x2D::MakeScaleMatrix(1.0 / v);
+                // SVD
+                Matrix2x2D u;
+                Vector2D v;
+                Matrix2x2D w;
+                SVD(cov, u, v, w);
 
-            // Compute G
-            // Area preservation
-            const double scale = std::sqrt(v.x * v.y);
-            const Matrix2x2D g = invH * scale * (w * invSigma * u.Transposed());
-            gs[i] = g;
-        }
-    });
+                // Take off the sign
+                v.x = std::fabs(v.x);
+                v.y = std::fabs(v.y);
+
+                // Constrain Sigma
+                const double maxSingularVal = v.Max();
+                const double kr = 4.0;
+                v.x = std::max(v.x, maxSingularVal / kr);
+                v.y = std::max(v.y, maxSingularVal / kr);
+
+                const Matrix2x2D invSigma =
+                    Matrix2x2D::MakeScaleMatrix(1.0 / v);
+
+                // Compute G
+                // Area preservation
+                const double scale = std::sqrt(v.x * v.y);
+                const Matrix2x2D g =
+                    invH * scale * (w * invSigma * u.Transposed());
+                gs[i] = g;
+            }
+        });
 
     CUBBYFLOW_INFO << "Computed G and means.";
 
@@ -188,16 +195,19 @@ void AnisotropicPointsToImplicit2::Convert(
 
     // Compute SDF
     std::shared_ptr<ScalarGrid2> temp = output->Clone();
-    temp->Fill([&](const Vector2D& x) {
-        double sum = 0.0;
-        meanNeighborSearcher2.ForEachNearbyPoint(
-            x, r, [&](size_t i, const Vector2D& neighborPosition) {
-                sum += m / d[i] *
-                       W(neighborPosition - x, gs[i], gs[i].Determinant());
-            });
+    temp->Fill(
+        [&meanNeighborSearcher2, this, &r, &m, &d, &gs](const Vector2D& x) {
+            double sum = 0.0;
+            meanNeighborSearcher2.ForEachNearbyPoint(
+                x, r,
+                [&r, &sum, &m, &d, &x, &gs](size_t i,
+                                            const Vector2D& neighborPosition) {
+                    sum += m / d[i] *
+                           W(neighborPosition - x, gs[i], gs[i].Determinant());
+                });
 
-        return m_cutOffDensity - sum;
-    });
+            return m_cutOffDensity - sum;
+        });
 
     CUBBYFLOW_INFO << "Computed SDF.";
 

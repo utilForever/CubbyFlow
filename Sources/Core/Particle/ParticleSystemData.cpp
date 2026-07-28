@@ -334,22 +334,25 @@ void ParticleSystemData<N>::AddParticles(
     ArrayView1<Matrix<double, N, 1>> vel = Velocities();
     ArrayView1<Matrix<double, N, 1>> frc = Forces();
 
-    ParallelFor(ZERO_SIZE, newPositions.Length(), [&](size_t i) {
-        pos[i + oldNumberOfParticles] = newPositions[i];
-    });
+    ParallelFor(ZERO_SIZE, newPositions.Length(),
+                [&pos, &oldNumberOfParticles, &newPositions](size_t i) {
+                    pos[i + oldNumberOfParticles] = newPositions[i];
+                });
 
     if (newVelocities.Length() > 0)
     {
-        ParallelFor(ZERO_SIZE, newPositions.Length(), [&](size_t i) {
-            vel[i + oldNumberOfParticles] = newVelocities[i];
-        });
+        ParallelFor(ZERO_SIZE, newPositions.Length(),
+                    [&vel, &oldNumberOfParticles, &newVelocities](size_t i) {
+                        vel[i + oldNumberOfParticles] = newVelocities[i];
+                    });
     }
 
     if (newForces.Length() > 0)
     {
-        ParallelFor(ZERO_SIZE, newPositions.Length(), [&](size_t i) {
-            frc[i + oldNumberOfParticles] = newForces[i];
-        });
+        ParallelFor(ZERO_SIZE, newPositions.Length(),
+                    [&frc, &oldNumberOfParticles, &newForces](size_t i) {
+                        frc[i + oldNumberOfParticles] = newForces[i];
+                    });
     }
 }
 
@@ -401,7 +404,8 @@ void ParticleSystemData<N>::BuildNeighborLists(double maxSearchRadius)
         m_neighborLists[i].Clear();
 
         m_neighborSearcher->ForEachNearbyPoint(
-            origin, maxSearchRadius, [&](size_t j, const Vector<double, N>&) {
+            origin, maxSearchRadius,
+            [&i, this](size_t j, const Vector<double, N>&) {
                 if (i != j)
                 {
                     m_neighborLists[i].Append(j);

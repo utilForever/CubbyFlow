@@ -99,7 +99,9 @@ void VolumeParticleEmitter2::Emit(const ParticleSystemData2Ptr& particles,
     if (m_allowOverlapping || m_isOneShot)
     {
         m_pointsGen->ForEachPoint(
-            region, m_spacing, [&](const Vector2D& point) {
+            region, m_spacing,
+            [this, &maxJitterDist, &newPositions,
+             &numNewParticles](const Vector2D& point) {
                 const double newAngleInRadian =
                     (Random() - 0.5) * (2 * PI_DOUBLE);
                 const Matrix2x2D rotationMatrix =
@@ -139,7 +141,9 @@ void VolumeParticleEmitter2::Emit(const ParticleSystemData2Ptr& particles,
         }
 
         m_pointsGen->ForEachPoint(
-            region, m_spacing, [&](const Vector2D& point) {
+            region, m_spacing,
+            [this, &maxJitterDist, &neighborSearcher, &newPositions,
+             &numNewParticles](const Vector2D& point) {
                 const double newAngleInRadian =
                     (Random() - 0.5) * (2 * PI_DOUBLE);
                 const Matrix2x2D rotationMatrix =
@@ -175,7 +179,8 @@ void VolumeParticleEmitter2::Emit(const ParticleSystemData2Ptr& particles,
                    << m_numberOfEmittedParticles;
 
     newVelocities->Resize(newPositions->Length());
-    ParallelForEachIndex(newVelocities->Length(), [&](size_t i) {
+    ParallelForEachIndex(newVelocities->Length(), [&newVelocities, this,
+                                                   &newPositions](size_t i) {
         (*newVelocities)[i] = VelocityAt((*newPositions)[i]);
     });
 }

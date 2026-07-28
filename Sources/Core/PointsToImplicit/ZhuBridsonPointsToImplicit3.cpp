@@ -62,10 +62,11 @@ void ZhuBridsonPointsToImplicit3::Convert(
     const double isoContValue = m_cutOffThreshold * m_kernelRadius;
 
     auto temp = output->Clone();
-    temp->Fill([&](const Vector3D& x) -> double {
+    temp->Fill([&neighborSearcher, this, &isoContValue,
+                &output](const Vector3D& x) -> double {
         Vector3D xAvg;
         double wSum = 0.0;
-        const auto func = [&](size_t, const Vector3D& xi) {
+        const auto func = [&x, this, &wSum, &xAvg](size_t, const Vector3D& xi) {
             const double wi = k((x - xi).Length() / m_kernelRadius);
             wSum += wi;
             xAvg += wi * xi;

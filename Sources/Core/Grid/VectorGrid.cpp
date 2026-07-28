@@ -33,7 +33,7 @@ struct GetFlatbuffersVectorGrid<2>
         return CreateVectorGrid2(fbb, resolution, gridSpacing, origin, data);
     }
 
-    static const fbs::VectorGrid2* GetVectorGrid(const void* buf)
+    static const fbs::VectorGrid2* GetVectorGrid(const uint8_t* buf)
     {
         return fbs::GetVectorGrid2(buf);
     }
@@ -50,7 +50,7 @@ struct GetFlatbuffersVectorGrid<3>
         return CreateVectorGrid3(fbb, resolution, gridSpacing, origin, data);
     }
 
-    static const fbs::VectorGrid3* GetVectorGrid(const void* buf)
+    static const fbs::VectorGrid3* GetVectorGrid(const uint8_t* buf)
     {
         return fbs::GetVectorGrid3(buf);
     }

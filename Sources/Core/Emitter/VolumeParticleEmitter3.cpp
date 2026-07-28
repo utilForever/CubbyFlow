@@ -99,7 +99,9 @@ void VolumeParticleEmitter3::Emit(const ParticleSystemData3Ptr& particles,
     if (m_allowOverlapping || m_isOneShot)
     {
         m_pointsGen->ForEachPoint(
-            region, m_spacing, [&](const Vector3D& point) {
+            region, m_spacing,
+            [this, &maxJitterDist, &newPositions,
+             &numNewParticles](const Vector3D& point) {
                 const Vector3D randomDir =
                     UniformSampleSphere(Random(), Random());
                 const Vector3D offset = maxJitterDist * randomDir;
@@ -137,7 +139,9 @@ void VolumeParticleEmitter3::Emit(const ParticleSystemData3Ptr& particles,
         }
 
         m_pointsGen->ForEachPoint(
-            region, m_spacing, [&](const Vector3D& point) {
+            region, m_spacing,
+            [this, &maxJitterDist, &neighborSearcher, &newPositions,
+             &numNewParticles](const Vector3D& point) {
                 const Vector3D randomDir =
                     UniformSampleSphere(Random(), Random());
                 const Vector3D offset = maxJitterDist * randomDir;
@@ -170,7 +174,8 @@ void VolumeParticleEmitter3::Emit(const ParticleSystemData3Ptr& particles,
                    << m_numberOfEmittedParticles;
 
     newVelocities->Resize(newPositions->Length());
-    ParallelForEachIndex(newVelocities->Length(), [&](size_t i) {
+    ParallelForEachIndex(newVelocities->Length(), [&newVelocities, this,
+                                                   &newPositions](size_t i) {
         (*newVelocities)[i] = VelocityAt((*newPositions)[i]);
     });
 }

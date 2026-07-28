@@ -671,8 +671,8 @@ void FaceCenteredGrid<N>::GetData(Array1<double>& data) const
     size_t cnt = 0;
     for (size_t i = 0; i < N; ++i)
     {
-        std::ranges::for_each(m_data[i],
-                              [&](double value) { data[cnt++] = value; });
+        std::ranges::for_each(
+            m_data[i], [&data, &cnt](double value) { data[cnt++] = value; });
     }
 }
 
@@ -689,9 +689,10 @@ void FaceCenteredGrid<N>::SetData(const ConstArrayView1<double>& data)
     size_t cnt = 0;
     for (size_t i = 0; i < N; ++i)
     {
-        ForEachIndex(m_data[i].Size(), [&](auto... indices) {
-            m_data[i](indices...) = data[cnt++];
-        });
+        ForEachIndex(m_data[i].Size(),
+                     [this, &i, &data, &cnt](auto... indices) {
+                         m_data[i](indices...) = data[cnt++];
+                     });
     }
 }
 

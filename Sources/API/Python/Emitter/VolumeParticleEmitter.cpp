@@ -39,7 +39,8 @@ void AddVolumeParticleEmitter2(pybind11::module& m)
                 bool allowOverlapping = false;
                 uint32_t seed = 0;
 
-                const auto parseImplicitSurface = [&](pybind11::object arg) {
+                const auto parseImplicitSurface =
+                    [&implicitSurface, &maxRegion](pybind11::object arg) {
                     if (pybind11::isinstance<ImplicitSurface2>(arg))
                     {
                         implicitSurface = arg.cast<ImplicitSurface2Ptr>();
@@ -262,7 +263,8 @@ void AddVolumeParticleEmitter3(pybind11::module& m)
                 bool allowOverlapping = false;
                 uint32_t seed = 0;
 
-                const auto parseImplicitSurface = [&](pybind11::object arg) {
+                const auto parseImplicitSurface =
+                    [&implicitSurface, &maxRegion](pybind11::object arg) {
                     if (pybind11::isinstance<ImplicitSurface3>(arg))
                     {
                         implicitSurface = arg.cast<ImplicitSurface3Ptr>();

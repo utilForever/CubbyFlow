@@ -34,7 +34,7 @@ struct GetFlatbuffersScalarGrid<2>
         return CreateScalarGrid2(fbb, resolution, gridSpacing, origin, data);
     }
 
-    static const fbs::ScalarGrid2* GetScalarGrid(const void* buf)
+    static const fbs::ScalarGrid2* GetScalarGrid(const uint8_t* buf)
     {
         return fbs::GetScalarGrid2(buf);
     }
@@ -51,7 +51,7 @@ struct GetFlatbuffersScalarGrid<3>
         return CreateScalarGrid3(fbb, resolution, gridSpacing, origin, data);
     }
 
-    static const fbs::ScalarGrid3* GetScalarGrid(const void* buf)
+    static const fbs::ScalarGrid3* GetScalarGrid(const uint8_t* buf)
     {
         return fbs::GetScalarGrid3(buf);
     }

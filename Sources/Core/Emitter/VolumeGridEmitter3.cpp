@@ -108,12 +108,13 @@ void VolumeGridEmitter3::Emit()
         const auto& mapper = std::get<1>(target);
 
         GridDataPositionFunc<3> pos = grid->DataPosition();
-        grid->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-            const Vector3D gx = pos(i, j, k);
-            const double sdf = GetSourceRegion()->SignedDistance(gx);
+        grid->ParallelForEachDataPointIndex(
+            [&pos, this, &grid, &mapper](size_t i, size_t j, size_t k) {
+                const Vector3D gx = pos(i, j, k);
+                const double sdf = GetSourceRegion()->SignedDistance(gx);
 
-            (*grid)(i, j, k) = mapper(sdf, gx, (*grid)(i, j, k));
-        });
+                (*grid)(i, j, k) = mapper(sdf, gx, (*grid)(i, j, k));
+            });
     }
 
     for (const auto& target : m_customVectorTargets)
@@ -127,7 +128,8 @@ void VolumeGridEmitter3::Emit()
         {
             GridDataPositionFunc<3> pos = collocated->DataPosition();
             collocated->ParallelForEachDataPointIndex(
-                [&](size_t i, size_t j, size_t k) {
+                [&pos, this, &collocated, &mapper](size_t i, size_t j,
+                                                   size_t k) {
                     const Vector3D gx = pos(i, j, k);
                     const double sdf = GetSourceRegion()->SignedDistance(gx);
 
@@ -149,32 +151,35 @@ void VolumeGridEmitter3::Emit()
             auto vPos = faceCentered->VPosition();
             auto wPos = faceCentered->WPosition();
 
-            faceCentered->ParallelForEachUIndex([&](const Vector3UZ& idx) {
-                const Vector3D gx = uPos(idx);
-                const double sdf = GetSourceRegion()->SignedDistance(gx);
-                const Vector3D oldVal = faceCentered->Sample(gx);
-                const Vector3D newVal = mapper(sdf, gx, oldVal);
+            faceCentered->ParallelForEachUIndex(
+                [&uPos, this, &faceCentered, &mapper](const Vector3UZ& idx) {
+                    const Vector3D gx = uPos(idx);
+                    const double sdf = GetSourceRegion()->SignedDistance(gx);
+                    const Vector3D oldVal = faceCentered->Sample(gx);
+                    const Vector3D newVal = mapper(sdf, gx, oldVal);
 
-                faceCentered->U(idx) = newVal.x;
-            });
+                    faceCentered->U(idx) = newVal.x;
+                });
 
-            faceCentered->ParallelForEachVIndex([&](const Vector3UZ& idx) {
-                const Vector3D gx = vPos(idx);
-                const double sdf = GetSourceRegion()->SignedDistance(gx);
-                const Vector3D oldVal = faceCentered->Sample(gx);
-                const Vector3D newVal = mapper(sdf, gx, oldVal);
+            faceCentered->ParallelForEachVIndex(
+                [&vPos, this, &faceCentered, &mapper](const Vector3UZ& idx) {
+                    const Vector3D gx = vPos(idx);
+                    const double sdf = GetSourceRegion()->SignedDistance(gx);
+                    const Vector3D oldVal = faceCentered->Sample(gx);
+                    const Vector3D newVal = mapper(sdf, gx, oldVal);
 
-                faceCentered->V(idx) = newVal.y;
-            });
+                    faceCentered->V(idx) = newVal.y;
+                });
 
-            faceCentered->ParallelForEachWIndex([&](const Vector3UZ& idx) {
-                const Vector3D gx = wPos(idx);
-                const double sdf = GetSourceRegion()->SignedDistance(gx);
-                const Vector3D oldVal = faceCentered->Sample(gx);
-                const Vector3D newVal = mapper(sdf, gx, oldVal);
+            faceCentered->ParallelForEachWIndex(
+                [&wPos, this, &faceCentered, &mapper](const Vector3UZ& idx) {
+                    const Vector3D gx = wPos(idx);
+                    const double sdf = GetSourceRegion()->SignedDistance(gx);
+                    const Vector3D oldVal = faceCentered->Sample(gx);
+                    const Vector3D newVal = mapper(sdf, gx, oldVal);
 
-                faceCentered->W(idx) = newVal.z;
-            });
+                    faceCentered->W(idx) = newVal.z;
+                });
         }
     }
 }
