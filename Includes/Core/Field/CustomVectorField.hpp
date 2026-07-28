@@ -30,9 +30,10 @@ class CustomVectorField final : public VectorField<N>
     //! differencing is used. Thus, the differencing resolution also can be
     //! provided as the last parameter.
     //!
-    CustomVectorField(std::function<Vector<double, N>(const Vector<double, N>&)>
-                          customFunction,
-                      double derivativeResolution = 1e-3);
+    explicit CustomVectorField(
+        std::function<Vector<double, N>(const Vector<double, N>&)>
+            customFunction,
+        double derivativeResolution = 1e-3);
 
     //!
     //! \brief Constructs a field with given field and gradient function.

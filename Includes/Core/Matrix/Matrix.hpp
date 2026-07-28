@@ -63,7 +63,7 @@ class Matrix final
 
     Matrix(const NestedInitializerListsT<T, 2>& lst);
 
-    Matrix(ConstPointer ptr);
+    explicit Matrix(ConstPointer ptr);
 
     ~Matrix() = default;
 
@@ -608,7 +608,7 @@ class Matrix<T, MATRIX_SIZE_DYNAMIC, 1> final
 
     Matrix();
 
-    Matrix(size_t rows, ConstReference value = ValueType{});
+    explicit Matrix(size_t rows, ConstReference value = ValueType{});
 
     template <size_t R, size_t C, typename E>
     Matrix(const MatrixExpression<T, R, C, E>& expression);

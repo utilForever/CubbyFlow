@@ -89,7 +89,7 @@ struct DoAbsMax
 template <typename T>
 struct SimilarTo
 {
-    constexpr SimilarTo(
+    explicit constexpr SimilarTo(
         double _tolerance = std::numeric_limits<double>::epsilon())
         : tolerance(_tolerance)
     {

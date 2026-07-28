@@ -37,15 +37,16 @@ class ImplicitSurfaceSet final : public ImplicitSurface<N>
     ImplicitSurfaceSet() = default;
 
     //! Constructs an implicit surface set using list of other surfaces.
-    ImplicitSurfaceSet(
+    explicit ImplicitSurfaceSet(
         ConstArrayView1<std::shared_ptr<ImplicitSurface<N>>> surfaces,
         const Transform<N>& _transform = Transform<N>{},
         bool _isNormalFlipped = false);
 
     //! Constructs an implicit surface set using list of other surfaces.
-    ImplicitSurfaceSet(ConstArrayView1<std::shared_ptr<Surface<N>>> surfaces,
-                       const Transform<N>& _transform = Transform<N>{},
-                       bool _isNormalFlipped = false);
+    explicit ImplicitSurfaceSet(
+        ConstArrayView1<std::shared_ptr<Surface<N>>> surfaces,
+        const Transform<N>& _transform = Transform<N>{},
+        bool _isNormalFlipped = false);
 
     //! Default virtual destructor.
     ~ImplicitSurfaceSet() override = default;

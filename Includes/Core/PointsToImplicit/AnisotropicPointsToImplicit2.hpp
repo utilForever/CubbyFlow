@@ -40,11 +40,11 @@ class AnisotropicPointsToImplicit2 final : public PointsToImplicit2
     //! kernel.
     //! \param isOutputSDF True if the output should be signed-distance field.
     //!
-    AnisotropicPointsToImplicit2(double kernelRadius = 1.0,
-                                 double cutOffDensity = 0.5,
-                                 double positionSmoothingFactor = 0.5,
-                                 size_t minNumNeighbors = 8,
-                                 bool isOutputSDF = true);
+    explicit AnisotropicPointsToImplicit2(double kernelRadius = 1.0,
+                                          double cutOffDensity = 0.5,
+                                          double positionSmoothingFactor = 0.5,
+                                          size_t minNumNeighbors = 8,
+                                          bool isOutputSDF = true);
 
     //! Converts the given points to implicit surface scalar field.
     void Convert(const ConstArrayView1<Vector2D>& points,

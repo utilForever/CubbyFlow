@@ -40,7 +40,7 @@ class VertexCenteredScalarGrid final : public ScalarGrid<N>
 
     //! Constructs a grid with given resolution, grid spacing, origin and
     //! initial value.
-    VertexCenteredScalarGrid(
+    explicit VertexCenteredScalarGrid(
         const Vector<size_t, N>& resolution,
         const Vector<double, N>& gridSpacing =
             Vector<double, N>::MakeConstant(1),

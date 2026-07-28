@@ -313,7 +313,7 @@ class MatrixDiagonal
     : public MatrixExpression<T, Rows, Cols, MatrixDiagonal<T, Rows, Cols, M1>>
 {
  public:
-    constexpr MatrixDiagonal(const M1& mat1) : m_mat1(mat1)
+    explicit constexpr MatrixDiagonal(const M1& mat1) : m_mat1(mat1)
     {
         // Do nothing
     }
@@ -334,7 +334,7 @@ class MatrixOffDiagonal
                               MatrixOffDiagonal<T, Rows, Cols, M1>>
 {
  public:
-    constexpr MatrixOffDiagonal(const M1& mat1) : m_mat1(mat1)
+    explicit constexpr MatrixOffDiagonal(const M1& mat1) : m_mat1(mat1)
     {
         // Do nothing
     }
@@ -377,7 +377,7 @@ class MatrixTranspose
     : public MatrixExpression<T, Rows, Cols, MatrixTranspose<T, Rows, Cols, M1>>
 {
  public:
-    constexpr MatrixTranspose(const M1& m_mat1) : m_mat1(m_mat1)
+    explicit constexpr MatrixTranspose(const M1& m_mat1) : m_mat1(m_mat1)
     {
         // Do nothing
     }
@@ -399,7 +399,7 @@ class MatrixUnaryOp
                               MatrixUnaryOp<T, Rows, Cols, M1, UnaryOperation>>
 {
  public:
-    constexpr MatrixUnaryOp(const M1& mat1) : m_mat1(mat1)
+    explicit constexpr MatrixUnaryOp(const M1& mat1) : m_mat1(mat1)
     {
         // Do nothing
     }

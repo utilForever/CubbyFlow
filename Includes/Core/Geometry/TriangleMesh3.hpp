@@ -39,8 +39,8 @@ class TriangleMesh3 final : public Surface3
     using UVArray = Vector2DArray;
 
     //! Constructs an empty triangle mesh.
-    TriangleMesh3(const Transform3& _transform = Transform3{},
-                  bool _isNormalFlipped = false);
+    explicit TriangleMesh3(const Transform3& _transform = Transform3{},
+                           bool _isNormalFlipped = false);
 
     //! Constructs mesh with points, normals, uvs, and their indices.
     TriangleMesh3(PointArray points, NormalArray normals, UVArray uvs,

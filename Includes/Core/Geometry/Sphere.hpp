@@ -28,8 +28,8 @@ class Sphere final : public Surface<N>
     class Builder;
 
     //! Constructs a sphere with center at the origin and radius of 1.
-    Sphere(const Transform<N>& _transform = Transform<N>{},
-           bool _isNormalFlipped = false);
+    explicit Sphere(const Transform<N>& _transform = Transform<N>{},
+                    bool _isNormalFlipped = false);
 
     //! Constructs a sphere with \p center and \p radius.
     Sphere(const Vector<double, N>& center, double radius,

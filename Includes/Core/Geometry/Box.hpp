@@ -33,8 +33,8 @@ class Box final : public Surface<N>
         Vector<double, N>{}, Vector<double, N>::MakeConstant(1.0));
 
     //! Constructs (0, 0, ...) x (1, 1, ...) box.
-    Box(const Transform<N>& _transform = Transform<N>{},
-        bool _isNormalFlipped = false);
+    explicit Box(const Transform<N>& _transform = Transform<N>{},
+                 bool _isNormalFlipped = false);
 
     //! Constructs a box with given \p lowerCorner and \p upperCorner.
     Box(const Vector<double, N>& lowerCorner,
@@ -43,9 +43,9 @@ class Box final : public Surface<N>
         bool _isNormalFlipped = false);
 
     //! Constructs a box with BoundingBox instance.
-    Box(const BoundingBox<double, N>& boundingBox,
-        const Transform<N>& _transform = Transform<N>{},
-        bool _isNormalFlipped = false);
+    explicit Box(const BoundingBox<double, N>& boundingBox,
+                 const Transform<N>& _transform = Transform<N>{},
+                 bool _isNormalFlipped = false);
 
     //! Default virtual destructor.
     ~Box() override = default;
