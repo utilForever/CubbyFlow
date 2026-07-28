@@ -39,10 +39,12 @@ TEST(ListQueryEngine2, BoxIntersection)
     EXPECT_EQ(hasIntersection, engine.Intersects(testBox2, testFunc));
 
     size_t measured = 0;
-    engine.ForEachIntersectingItem(testBox2, testFunc, [&](const Vector2D& pt) {
-        EXPECT_TRUE(testFunc(pt, testBox2));
-        ++measured;
-    });
+    engine.ForEachIntersectingItem(
+        testBox2, testFunc,
+        [&testFunc, &testBox2, &measured](const Vector2D& pt) {
+            EXPECT_TRUE(testFunc(pt, testBox2));
+            ++measured;
+        });
 
     EXPECT_EQ(numIntersections, measured);
 }
@@ -59,7 +61,7 @@ TEST(ListQueryEngine2, RayIntersection)
     Array1<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::generate(items.begin(), items.end(), [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 
@@ -106,7 +108,7 @@ TEST(ListQueryEngine2, ClosestIntersection)
     Array1<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::generate(items.begin(), items.end(), [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 

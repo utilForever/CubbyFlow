@@ -16,7 +16,7 @@ class FDMLinearSystemSolverTestHelper3
         system->x.Resize(size);
         system->b.Resize(size);
 
-        ForEachIndex(system->A.Size(), [&](size_t i, size_t j, size_t k) {
+        ForEachIndex(system->A.Size(), [&system](size_t i, size_t j, size_t k) {
             if (i > 0)
             {
                 system->A(i, j, k).center += 1.0;
@@ -64,7 +64,8 @@ class FDMLinearSystemSolverTestHelper3
         Array3<size_t> coordToIndex(size);
         const auto acc = coordToIndex.View();
 
-        ForEachIndex(coordToIndex.Size(), [&](size_t i, size_t j, size_t k) {
+        ForEachIndex(coordToIndex.Size(), [&acc, &coordToIndex, &system, &size](
+                                              size_t i, size_t j, size_t k) {
             const size_t cIdx = acc.Index(i, j, k);
 
             coordToIndex[cIdx] = system->b.GetRows();

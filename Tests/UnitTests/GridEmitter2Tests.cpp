@@ -40,7 +40,7 @@ TEST(VolumeGridEmitter2, Velocity)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<2> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j) {
+    grid->ForEachDataPointIndex([&pos, &emitter, &grid](size_t i, size_t j) {
         Vector2D gx = pos(i, j);
         double sdf = emitter->GetSourceRegion()->SignedDistance(gx);
 
@@ -77,7 +77,7 @@ TEST(VolumeGridEmitter2, SignedDistance)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<2> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j) {
+    grid->ForEachDataPointIndex([&pos, &sphere, &grid](size_t i, size_t j) {
         Vector2D gx = pos(i, j);
         double answer = (sphere->center - gx).Length() - 0.15;
         double acttual = (*grid)(i, j);
@@ -107,7 +107,7 @@ TEST(VolumeGridEmitter2, StepFunction)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<2> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j) {
+    grid->ForEachDataPointIndex([&pos, &sphere, &grid](size_t i, size_t j) {
         Vector2D gx = pos(i, j);
         double answer = (sphere->center - gx).Length() - 0.15;
         answer = 4.0 * (1.0 - SmearedHeavisideSDF(answer * 16.0)) + 3.0;

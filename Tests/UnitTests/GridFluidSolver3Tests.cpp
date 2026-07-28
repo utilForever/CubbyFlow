@@ -75,11 +75,11 @@ TEST(GridFluidSolver3, GravityOnly)
     frame.timeIntervalInSeconds = 0.01;
     solver.Update(frame);
 
-    solver.GetVelocity()->ForEachUIndex([&](const Vector3UZ& idx) {
+    solver.GetVelocity()->ForEachUIndex([&solver](const Vector3UZ& idx) {
         EXPECT_NEAR(0.0, solver.GetVelocity()->U(idx), 1e-8);
     });
 
-    solver.GetVelocity()->ForEachVIndex([&](const Vector3UZ& idx) {
+    solver.GetVelocity()->ForEachVIndex([&solver](const Vector3UZ& idx) {
         if (idx.y == 0 || idx.y == 3)
         {
             EXPECT_NEAR(0.0, solver.GetVelocity()->V(idx), 1e-8);
@@ -90,7 +90,7 @@ TEST(GridFluidSolver3, GravityOnly)
         }
     });
 
-    solver.GetVelocity()->ForEachWIndex([&](const Vector3UZ& idx) {
+    solver.GetVelocity()->ForEachWIndex([&solver](const Vector3UZ& idx) {
         EXPECT_NEAR(0.0, solver.GetVelocity()->W(idx), 1e-8);
     });
 }

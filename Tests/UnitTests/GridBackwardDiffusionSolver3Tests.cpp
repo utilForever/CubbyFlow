@@ -27,7 +27,7 @@ TEST(GridBackwardEulerDiffusionSolver3, Solve)
                                   { 0.005291, 0.041270, 0.005291 },
                                   { 0.001058, 0.005291, 0.001058 } } };
 
-    dst.ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
+    dst.ForEachDataPointIndex([&solution, &dst](size_t i, size_t j, size_t k) {
         EXPECT_NEAR(solution(i, j, k), dst(i, j, k), 1e-6);
     });
 }

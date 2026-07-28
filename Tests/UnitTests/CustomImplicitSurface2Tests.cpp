@@ -28,7 +28,7 @@ TEST(CustomImplicitSurface2, ClosestPoint)
                       .MakeShared();
     SurfaceToImplicit2 refSurf(sphere);
     CustomImplicitSurface2 cis1(
-        [&](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox2D({ 0, 0 }, { 1, 1 }), 1e-3);
 
     for (size_t i = 0; i < GetNumberOfSamplePoints2(); ++i)
@@ -52,7 +52,7 @@ TEST(CustomImplicitSurface2, ClosestNormal)
                       .MakeShared();
     SurfaceToImplicit2 refSurf(sphere);
     CustomImplicitSurface2 cis1(
-        [&](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox2D({ 0, 0 }, { 1, 1 }), 1e-3);
 
     for (size_t i = 0; i < GetNumberOfSamplePoints2(); ++i)
@@ -73,7 +73,7 @@ TEST(CustomImplicitSurface2, Intersects)
                       .MakeShared();
     SurfaceToImplicit2 refSurf(sphere);
     CustomImplicitSurface2 cis1(
-        [&](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox2D({ 0, 0 }, { 1, 1 }), 1e-3);
 
     for (size_t i = 0; i < GetNumberOfSamplePoints2(); ++i)
@@ -95,7 +95,7 @@ TEST(CustomImplicitSurface2, ClosestIntersection)
                             .MakeShared();
     SurfaceToImplicit2 refSurf{ sphere };
     const CustomImplicitSurface2 cis1{
-        [&](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector2D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox2D{ { 0, 0 }, { 1, 1 } }, 1e-3, 1e-3
     };
 

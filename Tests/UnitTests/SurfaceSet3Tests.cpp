@@ -103,7 +103,7 @@ TEST(SurfaceSet3, ClosestPoint)
         sset1.AddSurface(sph);
     }
 
-    const auto bruteForceSearch = [&](const Vector3D& pt) {
+    const auto bruteForceSearch = [&numSamples, &sset1](const Vector3D& pt) {
         double minDist2 = std::numeric_limits<double>::max();
         Vector3D result;
 
@@ -170,7 +170,7 @@ TEST(SurfaceSet3, ClosestNormal)
         sset1.AddSurface(sph);
     }
 
-    const auto bruteForceSearch = [&](const Vector3D& pt) {
+    const auto bruteForceSearch = [&numSamples, &sset1](const Vector3D& pt) {
         double minDist2 = std::numeric_limits<double>::max();
         Vector3D result;
 
@@ -233,7 +233,7 @@ TEST(SurfaceSet3, ClosestDistance)
         sset1.AddSurface(sph);
     }
 
-    const auto bruteForceSearch = [&](const Vector3D& pt) {
+    const auto bruteForceSearch = [&numSamples, &sset1](const Vector3D& pt) {
         double minDist = std::numeric_limits<double>::max();
 
         for (size_t i = 0; i < numSamples / 2; ++i)
@@ -291,7 +291,7 @@ TEST(SurfaceSet3, Intersects)
         sset1.AddSurface(sph);
     }
 
-    const auto bruteForceTest = [&](const Ray3D& ray) {
+    const auto bruteForceTest = [&numSamples, &sset1](const Ray3D& ray) {
         for (size_t i = 0; i < numSamples / 2; ++i)
         {
             if (sset1.SurfaceAt(i)->Intersects(ray))
@@ -348,7 +348,7 @@ TEST(SurfaceSet3, ClosestIntersection)
         sset1.AddSurface(sph);
     }
 
-    const auto bruteForceTest = [&](const Ray3D& ray) {
+    const auto bruteForceTest = [&numSamples, &sset1](const Ray3D& ray) {
         SurfaceRayIntersection3 result{};
 
         for (size_t i = 0; i < numSamples / 2; ++i)

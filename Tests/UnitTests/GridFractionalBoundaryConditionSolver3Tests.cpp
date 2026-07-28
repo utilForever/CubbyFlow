@@ -18,7 +18,7 @@ TEST(GridFractionalBoundaryConditionSolver3, ClosedDomain)
 
     bndSolver.ConstrainVelocity(&velocity);
 
-    velocity.ForEachUIndex([&](const Vector3UZ& idx) {
+    velocity.ForEachUIndex([&gridSize, &velocity](const Vector3UZ& idx) {
         if (idx.x == 0 || idx.x == gridSize.x)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.U(idx));
@@ -29,7 +29,7 @@ TEST(GridFractionalBoundaryConditionSolver3, ClosedDomain)
         }
     });
 
-    velocity.ForEachVIndex([&](const Vector3UZ& idx) {
+    velocity.ForEachVIndex([&gridSize, &velocity](const Vector3UZ& idx) {
         if (idx.y == 0 || idx.y == gridSize.y)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.V(idx));
@@ -40,7 +40,7 @@ TEST(GridFractionalBoundaryConditionSolver3, ClosedDomain)
         }
     });
 
-    velocity.ForEachWIndex([&](const Vector3UZ& idx) {
+    velocity.ForEachWIndex([&gridSize, &velocity](const Vector3UZ& idx) {
         if (idx.z == 0 || idx.z == gridSize.z)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.W(idx));
@@ -69,7 +69,7 @@ TEST(GridFractionalBoundaryConditionSolver3, OpenDomain)
 
     bndSolver.ConstrainVelocity(&velocity);
 
-    velocity.ForEachUIndex([&](const Vector3UZ& idx) {
+    velocity.ForEachUIndex([&velocity](const Vector3UZ& idx) {
         if (idx.x == 0)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.U(idx));
@@ -80,7 +80,7 @@ TEST(GridFractionalBoundaryConditionSolver3, OpenDomain)
         }
     });
 
-    velocity.ForEachVIndex([&](const Vector3UZ& idx) {
+    velocity.ForEachVIndex([&gridSize, &velocity](const Vector3UZ& idx) {
         if (idx.y == gridSize.y)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.V(idx));
@@ -91,7 +91,7 @@ TEST(GridFractionalBoundaryConditionSolver3, OpenDomain)
         }
     });
 
-    velocity.ForEachWIndex([&](const Vector3UZ& idx) {
+    velocity.ForEachWIndex([&gridSize, &velocity](const Vector3UZ& idx) {
         if (idx.z == gridSize.z)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.W(idx));

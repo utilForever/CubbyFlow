@@ -15,7 +15,7 @@ TEST(PointSimpleListSearcher3, ForEachNearByPoint)
     searcher.Build(points);
 
     searcher.ForEachNearbyPoint(Vector3D(0, 0, 1), std::sqrt(15.0),
-                                [&](size_t i, const Vector3D& pt) {
+                                [&points](size_t i, const Vector3D& pt) {
                                     EXPECT_TRUE(i == 0 || i == 2);
                                     if (i == 0)
                                     {

@@ -40,19 +40,20 @@ TEST(VolumeGridEmitter3, Velocity)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<3> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        Vector3D gx = pos(i, j, k);
-        double sdf = emitter->GetSourceRegion()->SignedDistance(gx);
+    grid->ForEachDataPointIndex(
+        [&pos, &emitter, &grid](size_t i, size_t j, size_t k) {
+            Vector3D gx = pos(i, j, k);
+            double sdf = emitter->GetSourceRegion()->SignedDistance(gx);
 
-        if (IsInsideSDF(sdf))
-        {
-            Vector3D answer{ gx.y, -gx.x, 3.5 };
-            Vector3D acttual = (*grid)(i, j, k);
+            if (IsInsideSDF(sdf))
+            {
+                Vector3D answer{ gx.y, -gx.x, 3.5 };
+                Vector3D acttual = (*grid)(i, j, k);
 
-            EXPECT_NEAR(answer.x, acttual.x, 1e-6);
-            EXPECT_NEAR(answer.y, acttual.y, 1e-6);
-        }
-    });
+                EXPECT_NEAR(answer.x, acttual.x, 1e-6);
+                EXPECT_NEAR(answer.y, acttual.y, 1e-6);
+            }
+        });
 }
 
 TEST(VolumeGridEmitter3, SignedDistance)
@@ -77,13 +78,14 @@ TEST(VolumeGridEmitter3, SignedDistance)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<3> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        Vector3D gx = pos(i, j, k);
-        double answer = (sphere->center - gx).Length() - 0.15;
-        double acttual = (*grid)(i, j, k);
+    grid->ForEachDataPointIndex(
+        [&pos, &sphere, &grid](size_t i, size_t j, size_t k) {
+            Vector3D gx = pos(i, j, k);
+            double answer = (sphere->center - gx).Length() - 0.15;
+            double acttual = (*grid)(i, j, k);
 
-        EXPECT_NEAR(answer, acttual, 1e-6);
-    });
+            EXPECT_NEAR(answer, acttual, 1e-6);
+        });
 }
 
 TEST(VolumeGridEmitter3, StepFunction)
@@ -107,12 +109,13 @@ TEST(VolumeGridEmitter3, StepFunction)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<3> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        Vector3D gx = pos(i, j, k);
-        double answer = (sphere->center - gx).Length() - 0.15;
-        answer = 4.0 * (1.0 - SmearedHeavisideSDF(answer * 16.0)) + 3.0;
-        double acttual = (*grid)(i, j, k);
+    grid->ForEachDataPointIndex(
+        [&pos, &sphere, &grid](size_t i, size_t j, size_t k) {
+            Vector3D gx = pos(i, j, k);
+            double answer = (sphere->center - gx).Length() - 0.15;
+            answer = 4.0 * (1.0 - SmearedHeavisideSDF(answer * 16.0)) + 3.0;
+            double acttual = (*grid)(i, j, k);
 
-        EXPECT_NEAR(answer, acttual, 1e-6);
-    });
+            EXPECT_NEAR(answer, acttual, 1e-6);
+        });
 }

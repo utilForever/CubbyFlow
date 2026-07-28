@@ -39,10 +39,12 @@ TEST(FaceCenteredGrid2, Constructors)
     EXPECT_DOUBLE_EQ(5.0, grid2.UOrigin().y);
     EXPECT_DOUBLE_EQ(3.5, grid2.VOrigin().x);
     EXPECT_DOUBLE_EQ(4.0, grid2.VOrigin().y);
-    grid2.ForEachUIndex(
-        [&](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(5.0, grid2.U(idx)); });
-    grid2.ForEachVIndex(
-        [&](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(6.0, grid2.V(idx)); });
+    grid2.ForEachUIndex([&grid2](const Vector2UZ& idx) {
+        EXPECT_DOUBLE_EQ(5.0, grid2.U(idx));
+    });
+    grid2.ForEachVIndex([&grid2](const Vector2UZ& idx) {
+        EXPECT_DOUBLE_EQ(6.0, grid2.V(idx));
+    });
 
     // Copy constructor
     FaceCenteredGrid2 grid3(grid2);
@@ -60,10 +62,12 @@ TEST(FaceCenteredGrid2, Constructors)
     EXPECT_DOUBLE_EQ(5.0, grid3.UOrigin().y);
     EXPECT_DOUBLE_EQ(3.5, grid3.VOrigin().x);
     EXPECT_DOUBLE_EQ(4.0, grid3.VOrigin().y);
-    grid3.ForEachUIndex(
-        [&](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(5.0, grid3.U(idx)); });
-    grid3.ForEachVIndex(
-        [&](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(6.0, grid3.V(idx)); });
+    grid3.ForEachUIndex([&grid3](const Vector2UZ& idx) {
+        EXPECT_DOUBLE_EQ(5.0, grid3.U(idx));
+    });
+    grid3.ForEachVIndex([&grid3](const Vector2UZ& idx) {
+        EXPECT_DOUBLE_EQ(6.0, grid3.V(idx));
+    });
 }
 
 TEST(FaceCenteredGrid2, Fill)
@@ -160,12 +164,12 @@ TEST(FaceCenteredGrid2, CurlAtCellCenter)
 TEST(FaceCenteredGrid2, ValueAtCellCenter)
 {
     FaceCenteredGrid2 grid({ 5, 8 }, { 2.0, 3.0 });
-    grid.Fill([&](const Vector2D& x) {
+    grid.Fill([](const Vector2D& x) {
         return Vector2D(3.0 * x.y + 1.0, 5.0 * x.x + 7.0);
     });
 
     auto pos = grid.CellCenterPosition();
-    grid.ForEachCellIndex([&](const Vector2UZ& idx) {
+    grid.ForEachCellIndex([&grid, &pos](const Vector2UZ& idx) {
         Vector2D val = grid.ValueAtCellCenter(idx);
         Vector2D x = pos(idx);
         Vector2D expected = Vector2D(3.0 * x.y + 1.0, 5.0 * x.x + 7.0);
@@ -177,12 +181,12 @@ TEST(FaceCenteredGrid2, ValueAtCellCenter)
 TEST(FaceCenteredGrid2, Sample)
 {
     FaceCenteredGrid2 grid({ 5, 8 }, { 2.0, 3.0 });
-    grid.Fill([&](const Vector2D& x) {
+    grid.Fill([](const Vector2D& x) {
         return Vector2D(3.0 * x.y + 1.0, 5.0 * x.x + 7.0);
     });
 
     auto pos = grid.CellCenterPosition();
-    grid.ForEachCellIndex([&](const Vector2UZ& idx) {
+    grid.ForEachCellIndex([&pos, &grid](const Vector2UZ& idx) {
         Vector2D x = pos(idx);
         Vector2D val = grid.Sample(x);
         Vector2D expected = Vector2D(3.0 * x.y + 1.0, 5.0 * x.x + 7.0);
@@ -228,17 +232,19 @@ TEST(FaceCenteredGrid2, Builder)
         EXPECT_EQ(Vector2D(2.0, 4.0), grid.GridSpacing());
         EXPECT_EQ(Vector2D(-1.0, 2.0), grid.Origin());
 
-        grid.ForEachUIndex(
-            [&](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(3.0, grid.U(idx)); });
-        grid.ForEachVIndex(
-            [&](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(5.0, grid.V(idx)); });
+        grid.ForEachUIndex([&grid](const Vector2UZ& idx) {
+            EXPECT_DOUBLE_EQ(3.0, grid.U(idx));
+        });
+        grid.ForEachVIndex([&grid](const Vector2UZ& idx) {
+            EXPECT_DOUBLE_EQ(5.0, grid.V(idx));
+        });
     }
 }
 
 TEST(FaceCenteredGrid2, Serialization)
 {
     FaceCenteredGrid2 grid1({ 5, 4 }, { 1.0, 2.0 }, { -5.0, 3.0 });
-    grid1.Fill([&](const Vector2D& pt) { return Vector2D(pt.x, pt.y); });
+    grid1.Fill([](const Vector2D& pt) { return Vector2D(pt.x, pt.y); });
 
     // Serialize to in-memory stream
     std::vector<uint8_t> buffer1;
@@ -266,11 +272,11 @@ TEST(FaceCenteredGrid2, Serialization)
     EXPECT_DOUBLE_EQ(-4.5, grid2.VOrigin().x);
     EXPECT_DOUBLE_EQ(3.0, grid2.VOrigin().y);
 
-    grid1.ForEachUIndex([&](const Vector2UZ& idx) {
+    grid1.ForEachUIndex([&grid1, &grid2](const Vector2UZ& idx) {
         EXPECT_DOUBLE_EQ(grid1.U(idx), grid2.U(idx));
     });
 
-    grid1.ForEachVIndex([&](const Vector2UZ& idx) {
+    grid1.ForEachVIndex([&grid1, &grid2](const Vector2UZ& idx) {
         EXPECT_DOUBLE_EQ(grid1.V(idx), grid2.V(idx));
     });
 

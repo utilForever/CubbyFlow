@@ -32,7 +32,7 @@ TEST(VertexCenteredScalarGrid2, Constructors)
     EXPECT_DOUBLE_EQ(3.0, grid2.DataOrigin().x);
     EXPECT_DOUBLE_EQ(4.0, grid2.DataOrigin().y);
     grid2.ForEachDataPointIndex(
-        [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(5.0, grid2(i, j)); });
+        [&grid2](size_t i, size_t j) { EXPECT_DOUBLE_EQ(5.0, grid2(i, j)); });
 
     // Copy constructor
     VertexCenteredScalarGrid2 grid3(grid2);
@@ -47,7 +47,7 @@ TEST(VertexCenteredScalarGrid2, Constructors)
     EXPECT_DOUBLE_EQ(3.0, grid3.DataOrigin().x);
     EXPECT_DOUBLE_EQ(4.0, grid3.DataOrigin().y);
     grid3.ForEachDataPointIndex(
-        [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(5.0, grid3(i, j)); });
+        [&grid3](size_t i, size_t j) { EXPECT_DOUBLE_EQ(5.0, grid3(i, j)); });
 }
 
 TEST(VertexCenteredScalarGrid2, Swap)
@@ -67,7 +67,7 @@ TEST(VertexCenteredScalarGrid2, Swap)
     EXPECT_DOUBLE_EQ(1.0, grid1.DataOrigin().x);
     EXPECT_DOUBLE_EQ(5.0, grid1.DataOrigin().y);
     grid1.ForEachDataPointIndex(
-        [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, grid1(i, j)); });
+        [&grid1](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, grid1(i, j)); });
 
     EXPECT_EQ(5u, grid2.Resolution().x);
     EXPECT_EQ(4u, grid2.Resolution().y);
@@ -80,7 +80,7 @@ TEST(VertexCenteredScalarGrid2, Swap)
     EXPECT_DOUBLE_EQ(3.0, grid2.DataOrigin().x);
     EXPECT_DOUBLE_EQ(4.0, grid2.DataOrigin().y);
     grid2.ForEachDataPointIndex(
-        [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(5.0, grid2(i, j)); });
+        [&grid2](size_t i, size_t j) { EXPECT_DOUBLE_EQ(5.0, grid2(i, j)); });
 }
 
 TEST(VertexCenteredScalarGrid2, Set)
@@ -100,7 +100,7 @@ TEST(VertexCenteredScalarGrid2, Set)
     EXPECT_DOUBLE_EQ(1.0, grid1.DataOrigin().x);
     EXPECT_DOUBLE_EQ(5.0, grid1.DataOrigin().y);
     grid1.ForEachDataPointIndex(
-        [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, grid1(i, j)); });
+        [&grid1](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, grid1(i, j)); });
 }
 
 TEST(VertexCenteredScalarGrid2, AssignmentOperator)
@@ -120,7 +120,7 @@ TEST(VertexCenteredScalarGrid2, AssignmentOperator)
     EXPECT_DOUBLE_EQ(1.0, grid1.DataOrigin().x);
     EXPECT_DOUBLE_EQ(5.0, grid1.DataOrigin().y);
     grid1.ForEachDataPointIndex(
-        [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, grid1(i, j)); });
+        [&grid1](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, grid1(i, j)); });
 }
 
 TEST(VertexCenteredScalarGrid2, Clone)
@@ -138,8 +138,9 @@ TEST(VertexCenteredScalarGrid2, Clone)
     EXPECT_EQ(9u, grid1->DataSize().y);
     EXPECT_DOUBLE_EQ(1.0, grid1->DataOrigin().x);
     EXPECT_DOUBLE_EQ(5.0, grid1->DataOrigin().y);
-    grid1->ForEachDataPointIndex(
-        [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, (*grid1)(i, j)); });
+    grid1->ForEachDataPointIndex([&grid1](size_t i, size_t j) {
+        EXPECT_DOUBLE_EQ(4.0, (*grid1)(i, j));
+    });
 }
 
 TEST(VertexCenteredScalarGrid2, Builder)
@@ -162,8 +163,9 @@ TEST(VertexCenteredScalarGrid2, Builder)
         EXPECT_EQ(9u, grid1->DataSize().y);
         EXPECT_DOUBLE_EQ(1.0, grid1->DataOrigin().x);
         EXPECT_DOUBLE_EQ(5.0, grid1->DataOrigin().y);
-        grid1->ForEachDataPointIndex(
-            [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, (*grid1)(i, j)); });
+        grid1->ForEachDataPointIndex([&grid1](size_t i, size_t j) {
+            EXPECT_DOUBLE_EQ(4.0, (*grid1)(i, j));
+        });
     }
 
     {
@@ -184,8 +186,9 @@ TEST(VertexCenteredScalarGrid2, Builder)
         EXPECT_EQ(9u, grid1.DataSize().y);
         EXPECT_DOUBLE_EQ(1.0, grid1.DataOrigin().x);
         EXPECT_DOUBLE_EQ(5.0, grid1.DataOrigin().y);
-        grid1.ForEachDataPointIndex(
-            [&](size_t i, size_t j) { EXPECT_DOUBLE_EQ(4.0, grid1(i, j)); });
+        grid1.ForEachDataPointIndex([&grid1](size_t i, size_t j) {
+            EXPECT_DOUBLE_EQ(4.0, grid1(i, j));
+        });
     }
 }
 
@@ -233,7 +236,7 @@ TEST(VertexCenteredScalarGrid2, Fill)
 TEST(VertexCenteredScalarGrid2, Serialization)
 {
     VertexCenteredScalarGrid2 grid1({ 5, 4 }, { 1.0, 2.0 }, { -5.0, 3.0 });
-    grid1.Fill([&](const Vector2D& pt) { return pt.x + pt.y; });
+    grid1.Fill([](const Vector2D& pt) { return pt.x + pt.y; });
 
     // Serialize to in-memory stream
     std::vector<uint8_t> buffer1;
@@ -253,7 +256,7 @@ TEST(VertexCenteredScalarGrid2, Serialization)
     EXPECT_DOUBLE_EQ(0.0, grid2.GetBoundingBox().upperCorner.x);
     EXPECT_DOUBLE_EQ(11.0, grid2.GetBoundingBox().upperCorner.y);
 
-    grid1.ForEachDataPointIndex([&](size_t i, size_t j) {
+    grid1.ForEachDataPointIndex([&grid1, &grid2](size_t i, size_t j) {
         EXPECT_DOUBLE_EQ(grid1(i, j), grid2(i, j));
     });
 

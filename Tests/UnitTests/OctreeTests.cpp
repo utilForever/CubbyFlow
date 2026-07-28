@@ -134,11 +134,12 @@ TEST(Octree, ForEachOverlappingItems)
     }
 
     size_t measured = 0;
-    octree.ForEachIntersectingItem(testBox, overlapsFunc,
-                                   [&](const Vector3D& pt) {
-                                       EXPECT_TRUE(overlapsFunc(pt, testBox));
-                                       ++measured;
-                                   });
+    octree.ForEachIntersectingItem(
+        testBox, overlapsFunc,
+        [&overlapsFunc, &testBox, &measured](const Vector3D& pt) {
+            EXPECT_TRUE(overlapsFunc(pt, testBox));
+            ++measured;
+        });
 
     EXPECT_EQ(numOverlaps, measured);
 }
@@ -159,7 +160,7 @@ TEST(Octree, RayIntersects)
     std::vector<BoundingBox3D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::generate(items.begin(), items.end(), [&i]() {
         auto c = GetSamplePoints3()[i++];
         BoundingBox3D box(c, c);
 
@@ -218,7 +219,7 @@ TEST(Octree, ClosestIntersection)
     std::vector<BoundingBox3D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::generate(items.begin(), items.end(), [&i]() {
         auto c = GetSamplePoints3()[i++];
         BoundingBox3D box(c, c);
 

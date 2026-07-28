@@ -19,7 +19,7 @@ TEST(GridForwardEulerDiffusionSolver2, Solve)
                                 { 1.0 / 8.0, 1.0 / 2.0, 1.0 / 8.0 },
                                 { 0.0, 1.0 / 8.0, 0.0 } };
 
-    dst.ForEachDataPointIndex([&](size_t i, size_t j) {
+    dst.ForEachDataPointIndex([&solution, &dst](size_t i, size_t j) {
         EXPECT_NEAR(solution(i, j), dst(i, j), 1e-6);
     });
 }

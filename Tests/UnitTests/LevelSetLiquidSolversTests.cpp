@@ -25,7 +25,9 @@ TEST(LevelSetLiquidSolver2, ComputeVolume)
         std::make_shared<Sphere2>(domain.MidPoint(), radius));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     // Measure the volume
     double volume = solver.ComputeVolume();
@@ -51,7 +53,9 @@ TEST(LevelSetLiquidSolver3, ComputeVolume)
         std::make_shared<Sphere3>(domain.MidPoint(), radius));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector3D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector3D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     // Measure the volume
     double volume = solver.ComputeVolume();
