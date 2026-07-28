@@ -23,7 +23,7 @@ CUBBYFLOW_BEGIN_TEST_F(SemiLagrangian2, Boundary)
 {
     CellCenteredVectorGrid2 src({ 200, 200 }, { 1.0 / 200.0, 1.0 / 200.0 });
     CellCenteredVectorGrid2 dst({ 200, 200 }, { 1.0 / 200.0, 1.0 / 200.0 });
-    src.Fill([&](const Vector2D& pt) -> Vector2D {
+    src.Fill([](const Vector2D& pt) -> Vector2D {
         return { 0.5 * (std::sin(15 * pt.x) + 1.0),
                  0.5 * (std::sin(15 * pt.y) + 1.0) };
     });
@@ -34,7 +34,7 @@ CUBBYFLOW_BEGIN_TEST_F(SemiLagrangian2, Boundary)
     });
 
     Array3<double> data(3, src.Resolution().x, src.Resolution().y);
-    ForEachIndex(data.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(data.Size(), [&data, &src](size_t i, size_t j, size_t k) {
         if (i < 2)
         {
             data(i, j, k) = src(j, k)[i];
@@ -45,7 +45,7 @@ CUBBYFLOW_BEGIN_TEST_F(SemiLagrangian2, Boundary)
     SemiLagrangian2 solver;
     solver.Advect(src, flow, 0.1, &dst, boundarySdf);
 
-    ForEachIndex(data.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(data.Size(), [&data, &dst](size_t i, size_t j, size_t k) {
         if (i < 2)
         {
             data(i, j, k) = dst(j, k)[i];

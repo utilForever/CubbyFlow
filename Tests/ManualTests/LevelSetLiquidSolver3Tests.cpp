@@ -51,10 +51,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver3, SubtleSloshing)
         Vector3D(0.02, 1, 0).Normalized(), Vector3D(0.0, 0.5, 0.0)));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector3D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector3D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(64, 64);
-    auto sdfToBinary = [&](size_t i, size_t j) {
+    auto sdfToBinary = [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j, 4) / dx);
     };
     ForEachIndex(output.Size(), sdfToBinary);

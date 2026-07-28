@@ -44,9 +44,7 @@ class SimpleMassSpringAnimation : public PhysicsAnimation
 
     std::vector<Constraint> constraints;
 
-    SimpleMassSpringAnimation()
-    {
-    }
+    SimpleMassSpringAnimation() = default;
 
     void MakeChain(size_t numberOfPoints)
     {

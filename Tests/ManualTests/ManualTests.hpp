@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 #endif
 
-#define CUBBYFLOW_TEST_OUTPUT_DIR "manual_tests_output"
+inline constexpr char CUBBYFLOW_TEST_OUTPUT_DIR[] = "manual_tests_output";
 
 inline void CreateDirectory(const std::string& dirName)
 {

@@ -34,10 +34,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, Drop)
         std::make_shared<Sphere2>(domain.MidPoint(), 0.15));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(32, 64);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -49,7 +51,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, Drop)
     {
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -105,9 +107,10 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropStopAndGo)
         {
             solver->Update(frame);
 
-            ForEachIndex(output.Size(), [&](size_t i, size_t j) {
-                output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
-            });
+            ForEachIndex(
+                output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
+                    output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
+                });
 
             snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
                      frame.index);
@@ -132,9 +135,10 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropStopAndGo)
         {
             solver->Update(frame);
 
-            ForEachIndex(output.Size(), [&](size_t i, size_t j) {
-                output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
-            });
+            ForEachIndex(
+                output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
+                    output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
+                });
 
             snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
                      frame.index);
@@ -161,10 +165,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropHighRes)
         std::make_shared<Sphere2>(domain.MidPoint(), 0.15));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(128, 256);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -176,7 +182,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropHighRes)
     {
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -201,10 +207,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithCollider)
         std::make_shared<Plane2>(Vector2D(0, 1), Vector2D(0, 0.5)));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(32, 150);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -227,7 +235,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithCollider)
 
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -256,10 +264,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropVariational)
         std::make_shared<Sphere2>(domain.MidPoint(), 0.15));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(32, 150);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -271,7 +281,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropVariational)
     {
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -298,10 +308,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithColliderVariational)
         std::make_shared<Plane2>(Vector2D(0, 1), Vector2D(0, 0.5)));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(32, 150);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -324,7 +336,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithColliderVariational)
 
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -354,10 +366,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, ViscousDropVariational)
         std::make_shared<Sphere2>(domain.MidPoint(), 0.15));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(50, 100);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -369,7 +383,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, ViscousDropVariational)
     {
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -395,10 +409,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithoutGlobalComp)
         std::make_shared<Sphere2>(domain.MidPoint(), 0.15));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(32, 64);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -410,7 +426,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithoutGlobalComp)
     {
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -436,10 +452,12 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithGlobalComp)
         std::make_shared<Sphere2>(domain.MidPoint(), 0.15));
 
     auto sdf = solver.GetSignedDistanceField();
-    sdf->Fill([&](const Vector2D& x) { return surfaceSet.SignedDistance(x); });
+    sdf->Fill([&surfaceSet](const Vector2D& x) {
+        return surfaceSet.SignedDistance(x);
+    });
 
     Array2<double> output(32, 64);
-    ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
         output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
     });
 
@@ -451,7 +469,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, DropWithGlobalComp)
     {
         solver.Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf, &dx](size_t i, size_t j) {
             output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) / dx);
         });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
@@ -510,7 +528,7 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetLiquidSolver2, RisingFloor)
     {
         solver->Update(frame);
 
-        ForEachIndex(output.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(output.Size(), [&output, &sdf](size_t i, size_t j) {
             output(i, j) = 1.0 - SmearedHeavisideSDF((*sdf)(i, j) * 5.0);
         });
         snprintf(fileName, sizeof(fileName), "output.#grid2,%04d.npy",

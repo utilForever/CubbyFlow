@@ -277,9 +277,10 @@ CUBBYFLOW_BEGIN_TEST_F(GridSmokeSolver3, Rising)
         solver->Update(frame);
 
         output.Fill(0.0);
-        density->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-            output(i, j) += (*density)(i, j, k);
-        });
+        density->ForEachDataPointIndex(
+            [&output, &density](size_t i, size_t j, size_t k) {
+                output(i, j) += (*density)(i, j, k);
+            });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
                  frame.index);
         SaveData(output.View(), fileName);
@@ -339,9 +340,10 @@ CUBBYFLOW_BEGIN_TEST_F(GridSmokeSolver3, RisingWithCollider)
         solver->Update(frame);
 
         output.Fill(0.0);
-        density->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-            output(i, j) += (*density)(i, j, k);
-        });
+        density->ForEachDataPointIndex(
+            [&output, &density](size_t i, size_t j, size_t k) {
+                output(i, j) += (*density)(i, j, k);
+            });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
                  frame.index);
         SaveData(output.View(), fileName);
@@ -401,9 +403,10 @@ CUBBYFLOW_BEGIN_TEST_F(GridSmokeSolver3, RisingWithColliderLinear)
         solver->Update(frame);
 
         output.Fill(0.0);
-        density->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-            output(i, j) += (*density)(i, j, k);
-        });
+        density->ForEachDataPointIndex(
+            [&output, &density](size_t i, size_t j, size_t k) {
+                output(i, j) += (*density)(i, j, k);
+            });
         snprintf(fileName, sizeof(fileName), "data.#grid2,%04d.npy",
                  frame.index);
         SaveData(output.View(), fileName);

@@ -118,11 +118,11 @@ CUBBYFLOW_BEGIN_TEST_F(FMMLevelSetSolver2, Extrapolate)
     CellCenteredScalarGrid2 input(size, gridSpacing);
     CellCenteredScalarGrid2 output(size, gridSpacing);
 
-    sdf.Fill([&](const Vector2D& x) {
+    sdf.Fill([](const Vector2D& x) {
         return (x - Vector2D(0.75, 0.5)).Length() - 0.3;
     });
 
-    input.Fill([&](const Vector2D& x) {
+    input.Fill([](const Vector2D& x) {
         if ((x - Vector2D(0.75, 0.5)).Length() <= 0.3)
         {
             double p = 10.0 * PI_DOUBLE;
@@ -179,7 +179,7 @@ CUBBYFLOW_BEGIN_TEST_F(FMMLevelSetSolver3, ExtrapolateSmall)
     sdf.Fill([](const Vector3D& x) {
         return (x - Vector3D(20, 20, 20)).Length() - 8.0;
     });
-    field.Fill([&](const Vector3D& x) {
+    field.Fill([](const Vector3D& x) {
         if ((x - Vector3D(20, 20, 20)).Length() <= 8.0)
         {
             return 0.5 * 0.25 * std::sin(x.x) * std::sin(x.y) * std::sin(x.z);
