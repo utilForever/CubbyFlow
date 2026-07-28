@@ -176,7 +176,7 @@ TEST(Octree, RayIntersects)
     std::vector<BoundingBox3D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&i]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints3()[i++];
         BoundingBox3D box(c, c);
 
@@ -235,7 +235,7 @@ TEST(Octree, ClosestIntersection)
     std::vector<BoundingBox3D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&i]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints3()[i++];
         BoundingBox3D box(c, c);
 

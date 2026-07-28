@@ -61,7 +61,7 @@ TEST(ListQueryEngine2, RayIntersection)
     Array1<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&i]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 
@@ -108,7 +108,7 @@ TEST(ListQueryEngine2, ClosestIntersection)
     Array1<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&i]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 

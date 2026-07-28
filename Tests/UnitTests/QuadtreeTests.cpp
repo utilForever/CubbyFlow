@@ -173,7 +173,7 @@ TEST(Quadtree, RayIntersects)
     std::vector<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&i]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 
@@ -232,7 +232,7 @@ TEST(Quadtree, ClosestIntersection)
     std::vector<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&i]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 
