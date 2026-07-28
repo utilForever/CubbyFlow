@@ -21,8 +21,8 @@
 #elif (defined(_AIX) || defined(__TOS__AIX__)) || \
     (defined(__sun__) || defined(__sun) ||        \
      defined(sun) && (defined(__SVR4) || defined(__svr4__)))
-#include <fstream>
 #include <procfs.h>
+#include <fstream>
 
 #elif defined(__linux__) || defined(__linux) || defined(linux) || \
     defined(__gnu_linux__)
@@ -53,7 +53,8 @@ size_t GetPeakRSS()
     /* AIX and Solaris ------------------------------------------ */
     struct psinfo psinfo{};
     std::ifstream input{ "/proc/self/psinfo", std::ios::binary };
-    if (!input.read(reinterpret_cast<char*>(&psinfo), sizeof(psinfo)))
+    if (input.rdbuf()->sgetn(reinterpret_cast<char*>(&psinfo),
+                             sizeof(psinfo)) != sizeof(psinfo))
     {
         return (size_t)0L; /* Can't read? */
     }
