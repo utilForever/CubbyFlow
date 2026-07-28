@@ -290,8 +290,7 @@ void PICSolver2::BuildSignedDistanceField()
             double minDist = 2.0 * radius;
 
             searcher->ForEachNearbyPoint(
-                pt, 2.0 * radius,
-                [&radius, &minDist, &pt](size_t, const Vector2D& x) {
+                pt, 2.0 * radius, [&minDist, &pt](size_t, const Vector2D& x) {
                     minDist = std::min(minDist, pt.DistanceTo(x));
                 });
             (*sdf)(i, j) = minDist - radius;

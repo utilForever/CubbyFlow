@@ -200,8 +200,8 @@ void AnisotropicPointsToImplicit2::Convert(
             double sum = 0.0;
             meanNeighborSearcher2.ForEachNearbyPoint(
                 x, r,
-                [&r, &sum, &m, &d, &x, &gs](size_t i,
-                                            const Vector2D& neighborPosition) {
+                [&sum, &m, &d, &x, &gs](size_t i,
+                                        const Vector2D& neighborPosition) {
                     sum += m / d[i] *
                            W(neighborPosition - x, gs[i], gs[i].Determinant());
                 });

@@ -331,8 +331,7 @@ void PICSolver3::BuildSignedDistanceField()
         double minDist = sdfBandRadius;
 
         searcher->ForEachNearbyPoint(
-            pt, sdfBandRadius,
-            [&sdfBandRadius, &minDist, &pt](size_t, const Vector3D& x) {
+            pt, sdfBandRadius, [&minDist, &pt](size_t, const Vector3D& x) {
                 minDist = std::min(minDist, pt.DistanceTo(x));
             });
         (*sdf)(i, j, k) = minDist - radius;
