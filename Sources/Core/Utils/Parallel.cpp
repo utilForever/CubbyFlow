@@ -20,10 +20,17 @@
 #include <memory>
 #include <thread>
 
-static unsigned int MAX_NUMBER_OF_THREADS = std::thread::hardware_concurrency();
-
 namespace CubbyFlow
 {
+namespace
+{
+unsigned int& MaxNumberOfThreads()
+{
+    static unsigned int value = std::thread::hardware_concurrency();
+    return value;
+}
+}  // namespace
+
 void SetMaxNumberOfThreads(unsigned int numThreads)
 {
 #if defined(CUBBYFLOW_TASKING_TBB)
@@ -41,11 +48,11 @@ void SetMaxNumberOfThreads(unsigned int numThreads)
 #elif defined(CUBBYFLOW_TASKING_OPENMP)
     omp_set_num_threads(numThreads);
 #endif
-    MAX_NUMBER_OF_THREADS = std::max(numThreads, 1u);
+    MaxNumberOfThreads() = std::max(numThreads, 1u);
 }
 
 unsigned int GetMaxNumberOfThreads()
 {
-    return MAX_NUMBER_OF_THREADS;
+    return MaxNumberOfThreads();
 }
 }  // namespace CubbyFlow

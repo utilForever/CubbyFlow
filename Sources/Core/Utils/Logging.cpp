@@ -17,27 +17,40 @@
 
 namespace CubbyFlow
 {
-static std::mutex critical;
+namespace
+{
+struct LoggingState
+{
+    std::mutex critical;
+    std::ostream* infoOutStream = &std::cout;
+    std::ostream* warnOutStream = &std::cout;
+    std::ostream* errorOutStream = &std::cerr;
+    std::ostream* debugOutStream = &std::cout;
+    LogLevel logLevel = LogLevel::All;
+};
 
-static std::ostream* infoOutStream = &std::cout;
-static std::ostream* warnOutStream = &std::cout;
-static std::ostream* errorOutStream = &std::cerr;
-static std::ostream* debugOutStream = &std::cout;
-static LogLevel logLevel = LogLevel::All;
+LoggingState& GetLoggingState()
+{
+    static LoggingState state;
+    return state;
+}
+}  // namespace
 
 inline std::ostream* LevelToStream(LogLevel level)
 {
+    const auto& state = GetLoggingState();
+
     switch (level)
     {
         case LogLevel::All:
         case LogLevel::Info:
-            return infoOutStream;
+            return state.infoOutStream;
         case LogLevel::Warn:
-            return warnOutStream;
+            return state.warnOutStream;
         case LogLevel::Error:
-            return errorOutStream;
+            return state.errorOutStream;
         case LogLevel::Debug:
-            return debugOutStream;
+            return state.debugOutStream;
         case LogLevel::Off:
             return nullptr;
     }
@@ -78,9 +91,10 @@ Logger::Logger(LogLevel level) : m_level{ level }
 
 Logger::~Logger()
 {
-    std::lock_guard<std::mutex> lock(critical);
+    auto& state = GetLoggingState();
+    std::lock_guard<std::mutex> lock(state.critical);
 
-    if (IsLeq(logLevel, m_level))
+    if (IsLeq(state.logLevel, m_level))
     {
         std::ostream* stream = LevelToStream(m_level);
         *stream << m_buffer.str() << std::endl;
@@ -90,26 +104,30 @@ Logger::~Logger()
 
 void Logging::SetInfoStream(std::ostream* stream)
 {
-    std::lock_guard<std::mutex> lock(critical);
-    infoOutStream = stream;
+    auto& state = GetLoggingState();
+    std::lock_guard<std::mutex> lock(state.critical);
+    state.infoOutStream = stream;
 }
 
 void Logging::SetWarnStream(std::ostream* stream)
 {
-    std::lock_guard<std::mutex> lock(critical);
-    warnOutStream = stream;
+    auto& state = GetLoggingState();
+    std::lock_guard<std::mutex> lock(state.critical);
+    state.warnOutStream = stream;
 }
 
 void Logging::SetErrorStream(std::ostream* stream)
 {
-    std::lock_guard<std::mutex> lock(critical);
-    errorOutStream = stream;
+    auto& state = GetLoggingState();
+    std::lock_guard<std::mutex> lock(state.critical);
+    state.errorOutStream = stream;
 }
 
 void Logging::SetDebugStream(std::ostream* stream)
 {
-    std::lock_guard<std::mutex> lock(critical);
-    debugOutStream = stream;
+    auto& state = GetLoggingState();
+    std::lock_guard<std::mutex> lock(state.critical);
+    state.debugOutStream = stream;
 }
 
 void Logging::SetAllStream(std::ostream* stream)
@@ -148,8 +166,9 @@ std::string Logging::GetHeader(LogLevel level)
 
 void Logging::SetLevel(LogLevel level)
 {
-    std::lock_guard<std::mutex> lock(critical);
-    logLevel = level;
+    auto& state = GetLoggingState();
+    std::lock_guard<std::mutex> lock(state.critical);
+    state.logLevel = level;
 }
 
 void Logging::Mute()
