@@ -26,8 +26,14 @@ namespace CubbyFlow
 class SPHPointsToImplicit3 final : public PointsToImplicit3
 {
  public:
+    //! Constructs the converter with default parameters.
+    SPHPointsToImplicit3() : SPHPointsToImplicit3(1.0)
+    {
+        // Do nothing
+    }
+
     //! Constructs the converter with given kernel radius and cut-off density.
-    explicit SPHPointsToImplicit3(double kernelRadius = 1.0,
+    explicit SPHPointsToImplicit3(double kernelRadius,
                                   double cutOffDensity = 0.5,
                                   bool isOutputSDF = true);
 

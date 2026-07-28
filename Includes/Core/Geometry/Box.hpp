@@ -33,8 +33,13 @@ class Box final : public Surface<N>
         Vector<double, N>{}, Vector<double, N>::MakeConstant(1.0));
 
     //! Constructs (0, 0, ...) x (1, 1, ...) box.
-    explicit Box(const Transform<N>& _transform = Transform<N>{},
-                 bool _isNormalFlipped = false);
+    Box() : Box(Transform<N>{})
+    {
+        // Do nothing
+    }
+
+    //! Constructs (0, 0, ...) x (1, 1, ...) box with a transform.
+    explicit Box(const Transform<N>& _transform, bool _isNormalFlipped = false);
 
     //! Constructs a box with given \p lowerCorner and \p upperCorner.
     Box(const Vector<double, N>& lowerCorner,

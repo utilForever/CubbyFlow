@@ -26,8 +26,14 @@ class Cylinder3 final : public Surface3
  public:
     class Builder;
 
+    //! Constructs a cylinder with default parameters.
+    Cylinder3() : Cylinder3(Transform3{})
+    {
+        // Do nothing
+    }
+
     //! Constructs a cylinder with \p _transform and \p _isNormalFlipped.
-    explicit Cylinder3(const Transform3& _transform = Transform3{},
+    explicit Cylinder3(const Transform3& _transform,
                        bool _isNormalFlipped = false);
 
     //! Constructs a cylinder with \p _center, \p _radius, \p _height,

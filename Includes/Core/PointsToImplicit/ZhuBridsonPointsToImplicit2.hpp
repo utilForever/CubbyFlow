@@ -24,8 +24,14 @@ namespace CubbyFlow
 class ZhuBridsonPointsToImplicit2 final : public PointsToImplicit2
 {
  public:
+    //! Constructs the converter with default parameters.
+    ZhuBridsonPointsToImplicit2() : ZhuBridsonPointsToImplicit2(1.0)
+    {
+        // Do nothing
+    }
+
     //! Constructs the converter with given kernel radius and cut-off threshold.
-    explicit ZhuBridsonPointsToImplicit2(double kernelRadius = 1.0,
+    explicit ZhuBridsonPointsToImplicit2(double kernelRadius,
                                          double cutOffThreshold = 0.25,
                                          bool isOutputSDF = true);
 

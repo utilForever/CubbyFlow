@@ -30,6 +30,12 @@ namespace CubbyFlow
 class AnisotropicPointsToImplicit2 final : public PointsToImplicit2
 {
  public:
+    //! Constructs the converter with default parameters.
+    AnisotropicPointsToImplicit2() : AnisotropicPointsToImplicit2(1.0)
+    {
+        // Do nothing
+    }
+
     //!
     //! \brief Constructs the converter with given parameters.
     //!
@@ -40,7 +46,7 @@ class AnisotropicPointsToImplicit2 final : public PointsToImplicit2
     //! kernel.
     //! \param isOutputSDF True if the output should be signed-distance field.
     //!
-    explicit AnisotropicPointsToImplicit2(double kernelRadius = 1.0,
+    explicit AnisotropicPointsToImplicit2(double kernelRadius,
                                           double cutOffDensity = 0.5,
                                           double positionSmoothingFactor = 0.5,
                                           size_t minNumNeighbors = 8,
