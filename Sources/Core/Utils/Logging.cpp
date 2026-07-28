@@ -92,7 +92,7 @@ Logger::Logger(LogLevel level) : m_level{ level }
 Logger::~Logger()
 {
     auto& state = GetLoggingState();
-    std::lock_guard<std::mutex> lock(state.critical);
+    std::scoped_lock lock(state.critical);
 
     if (IsLeq(state.logLevel, m_level))
     {
@@ -105,28 +105,28 @@ Logger::~Logger()
 void Logging::SetInfoStream(std::ostream* stream)
 {
     auto& state = GetLoggingState();
-    std::lock_guard<std::mutex> lock(state.critical);
+    std::scoped_lock lock(state.critical);
     state.infoOutStream = stream;
 }
 
 void Logging::SetWarnStream(std::ostream* stream)
 {
     auto& state = GetLoggingState();
-    std::lock_guard<std::mutex> lock(state.critical);
+    std::scoped_lock lock(state.critical);
     state.warnOutStream = stream;
 }
 
 void Logging::SetErrorStream(std::ostream* stream)
 {
     auto& state = GetLoggingState();
-    std::lock_guard<std::mutex> lock(state.critical);
+    std::scoped_lock lock(state.critical);
     state.errorOutStream = stream;
 }
 
 void Logging::SetDebugStream(std::ostream* stream)
 {
     auto& state = GetLoggingState();
-    std::lock_guard<std::mutex> lock(state.critical);
+    std::scoped_lock lock(state.critical);
     state.debugOutStream = stream;
 }
 
@@ -167,7 +167,7 @@ std::string Logging::GetHeader(LogLevel level)
 void Logging::SetLevel(LogLevel level)
 {
     auto& state = GetLoggingState();
-    std::lock_guard<std::mutex> lock(state.critical);
+    std::scoped_lock lock(state.critical);
     state.logLevel = level;
 }
 
