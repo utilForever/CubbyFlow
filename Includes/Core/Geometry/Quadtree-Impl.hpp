@@ -74,25 +74,16 @@ NearestNeighborQueryResult2<T> Quadtree<T>::Nearest(
     {
         if (node->IsLeaf())
         {
-            for (size_t itemIdx : node->items)
-            {
-                double d = distanceFunc(m_items[itemIdx], pt);
-                if (d < best.distance)
-                {
-                    best.distance = d;
-                    best.item = &m_items[itemIdx];
-                }
-            }
+            std::ranges::for_each(
+                node->items, [this, &distanceFunc, &pt, &best](size_t itemIdx) {
+                    const double distance = distanceFunc(m_items[itemIdx], pt);
 
-            // Grab next node to process from todo stack
-            if (todo.empty())
-            {
-                break;
-            }
-
-            node = todo.top().first;
-            bound = todo.top().second;
-            todo.pop();
+                    if (distance < best.distance)
+                    {
+                        best.distance = distance;
+                        best.item = &m_items[itemIdx];
+                    }
+                });
         }
         else
         {
@@ -117,25 +108,26 @@ NearestNeighborQueryResult2<T> Quadtree<T>::Nearest(
                           return std::get<1>(a) > std::get<1>(b);
                       });
 
-            for (int i = 0; i < 4; ++i)
-            {
-                const auto& childPair = childDistSqrPairs[i];
-                if (std::get<1>(childPair) < bestDistSqr)
-                {
-                    todo.emplace(std::get<0>(childPair),
-                                 std::get<2>(childPair));
-                }
-            }
-
-            if (todo.empty())
-            {
-                break;
-            }
-
-            node = todo.top().first;
-            bound = todo.top().second;
-            todo.pop();
+            std::ranges::for_each(
+                childDistSqrPairs,
+                [&todo, bestDistSqr](const NodeDistBox& childPair) {
+                    if (std::get<1>(childPair) < bestDistSqr)
+                    {
+                        todo.emplace(std::get<0>(childPair),
+                                     std::get<2>(childPair));
+                    }
+                });
         }
+
+        // Grab next node to process from todo stack
+        if (todo.empty())
+        {
+            break;
+        }
+
+        node = todo.top().first;
+        bound = todo.top().second;
+        todo.pop();
     }
 
     return best;
@@ -253,39 +245,41 @@ void Quadtree<T>::Build(size_t nodeIdx, size_t depth,
                         const BoundingBox2D& bound,
                         const BoxIntersectionTestFunc2<T>& testFunc)
 {
-    if (depth < m_maxDepth && !m_nodes[nodeIdx].items.empty())
+    if (depth >= m_maxDepth || m_nodes[nodeIdx].items.empty())
     {
-        const size_t firstChild = m_nodes[nodeIdx].firstChild = m_nodes.size();
-        m_nodes.resize(m_nodes[nodeIdx].firstChild + 4);
+        return;
+    }
 
-        BoundingBox2D bboxPerNode[4];
+    const size_t firstChild = m_nodes[nodeIdx].firstChild = m_nodes.size();
+    m_nodes.resize(m_nodes[nodeIdx].firstChild + 4);
 
-        for (int i = 0; i < 4; ++i)
+    BoundingBox2D bboxPerNode[4];
+
+    for (int i = 0; i < 4; ++i)
+    {
+        bboxPerNode[i] = BoundingBox2D{ bound.Corner(i), bound.MidPoint() };
+    }
+
+    auto& currentItems = m_nodes[nodeIdx].items;
+    for (size_t i = 0; i < currentItems.size(); ++i)
+    {
+        size_t currentItem = currentItems[i];
+        for (int j = 0; j < 4; ++j)
         {
-            bboxPerNode[i] = BoundingBox2D{ bound.Corner(i), bound.MidPoint() };
-        }
-
-        auto& currentItems = m_nodes[nodeIdx].items;
-        for (size_t i = 0; i < currentItems.size(); ++i)
-        {
-            size_t currentItem = currentItems[i];
-            for (int j = 0; j < 4; ++j)
+            if (testFunc(m_items[currentItem], bboxPerNode[j]))
             {
-                if (testFunc(m_items[currentItem], bboxPerNode[j]))
-                {
-                    m_nodes[firstChild + j].items.push_back(currentItem);
-                }
+                m_nodes[firstChild + j].items.push_back(currentItem);
             }
         }
+    }
 
-        // Remove non-leaf data
-        currentItems.clear();
+    // Remove non-leaf data
+    currentItems.clear();
 
-        // Refine
-        for (int i = 0; i < 4; ++i)
-        {
-            Build(firstChild + i, depth + 1, bboxPerNode[i], testFunc);
-        }
+    // Refine
+    for (int i = 0; i < 4; ++i)
+    {
+        Build(firstChild + i, depth + 1, bboxPerNode[i], testFunc);
     }
 }
 
