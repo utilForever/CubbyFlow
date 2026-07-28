@@ -139,57 +139,59 @@ SurfaceRayIntersection<N> CustomImplicitSurface<N>::ClosestIntersectionLocal(
     const Ray<double, N>& ray) const
 {
     SurfaceRayIntersection<N> result;
+    const BoundingBoxRayIntersectionD intersection =
+        m_domain.ClosestIntersection(ray);
 
-    if (const BoundingBoxRayIntersectionD intersection =
-            m_domain.ClosestIntersection(ray);
-        intersection.isIntersecting)
+    if (!intersection.isIntersecting)
     {
-        double start, end;
-        if (std::abs(intersection.far - std::numeric_limits<double>::max()) <
-            std::numeric_limits<double>::epsilon())
-        {
-            start = 0.0;
-            end = intersection.near;
-        }
-        else
-        {
-            start = intersection.near;
-            end = intersection.far;
-        }
+        return result;
+    }
 
-        double t = start;
-        double prev = t;
-        Vector<double, N> pt = ray.PointAt(t);
-        double prevPhi = m_func(pt);
+    double start, end;
+    if (std::abs(intersection.far - std::numeric_limits<double>::max()) <
+        std::numeric_limits<double>::epsilon())
+    {
+        start = 0.0;
+        end = intersection.near;
+    }
+    else
+    {
+        start = intersection.near;
+        end = intersection.far;
+    }
 
-        while (t <= end)
+    double t = start;
+    double prev = t;
+    Vector<double, N> pt = ray.PointAt(t);
+    double prevPhi = m_func(pt);
+
+    while (t <= end)
+    {
+        pt = ray.PointAt(t);
+        const double newPhi = m_func(pt);
+        const double newPhiAbs = std::fabs(newPhi);
+
+        if (newPhi * prevPhi < 0.0)
         {
-            pt = ray.PointAt(t);
-            const double newPhi = m_func(pt);
-            const double newPhiAbs = std::fabs(newPhi);
+            const double frac = prevPhi / (prevPhi - newPhi);
+            const double sub = prev + m_rayMarchingResolution * frac;
 
-            if (newPhi * prevPhi < 0.0)
+            result.isIntersecting = true;
+            result.distance = sub;
+            result.point = ray.PointAt(sub);
+            result.normal = GradientLocal(result.point);
+
+            if (result.normal.Length() > 0.0)
             {
-                const double frac = prevPhi / (prevPhi - newPhi);
-                const double sub = prev + m_rayMarchingResolution * frac;
-
-                result.isIntersecting = true;
-                result.distance = sub;
-                result.point = ray.PointAt(sub);
-                result.normal = GradientLocal(result.point);
-
-                if (result.normal.Length() > 0.0)
-                {
-                    result.normal.Normalize();
-                }
-
-                return result;
+                result.normal.Normalize();
             }
 
-            prev = t;
-            t += std::max(newPhiAbs, m_rayMarchingResolution);
-            prevPhi = newPhi;
+            return result;
         }
+
+        prev = t;
+        t += std::max(newPhiAbs, m_rayMarchingResolution);
+        prevPhi = newPhi;
     }
 
     return result;

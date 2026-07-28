@@ -23,15 +23,14 @@ void BccLatticePointGenerator::ForEachPoint(
 
     Vector3D position;
     bool hasOffset = false;
-    bool shouldQuit = false;
 
-    for (int k = 0; k * halfSpacing <= boxDepth && !shouldQuit; ++k)
+    for (int k = 0; k * halfSpacing <= boxDepth; ++k)
     {
         position.z = k * halfSpacing + boundingBox.lowerCorner.z;
 
         const double offset = (hasOffset) ? halfSpacing : 0.0;
 
-        for (int j = 0; j * spacing + offset <= boxHeight && !shouldQuit; ++j)
+        for (int j = 0; j * spacing + offset <= boxHeight; ++j)
         {
             position.y = j * spacing + offset + boundingBox.lowerCorner.y;
 
@@ -41,8 +40,7 @@ void BccLatticePointGenerator::ForEachPoint(
 
                 if (!callback(position))
                 {
-                    shouldQuit = true;
-                    break;
+                    return;
                 }
             }
         }
