@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#include <Core/Geometry/RigidBodyCollider.hpp>
+#include <Core/Geometry/Sphere.hpp>
 #include <Core/Solver/Grid/GridFractionalBoundaryConditionSolver3.hpp>
 
 using namespace CubbyFlow;
@@ -101,4 +103,24 @@ TEST(GridFractionalBoundaryConditionSolver3, OpenDomain)
             EXPECT_DOUBLE_EQ(1.0, velocity.W(idx));
         }
     });
+}
+
+TEST(GridFractionalBoundaryConditionSolver3, MovingCollider)
+{
+    FaceCenteredGrid3 velocity({ 8, 8, 8 }, { 0.125, 0.125, 0.125 });
+    velocity.Fill(Vector3D{ 1.0, 1.0, 1.0 });
+
+    auto collider = std::make_shared<RigidBodyCollider3>(
+        std::make_shared<Sphere3>(Vector3D{ 0.5, 0.5, 0.5 }, 0.3));
+    collider->linearVelocity = Vector3D{ -1.0, 0.0, 0.0 };
+
+    GridFractionalBoundaryConditionSolver3 solver;
+    solver.SetClosedDomainBoundaryFlag(0);
+    solver.UpdateCollider(collider, velocity.Resolution(),
+                          velocity.GridSpacing(), velocity.Origin());
+    solver.ConstrainVelocity(&velocity);
+
+    EXPECT_LT(velocity.U(6, 3, 3), 1.0);
+    EXPECT_LT(velocity.V(3, 6, 3), 1.0);
+    EXPECT_LT(velocity.W(3, 3, 6), 1.0);
 }
