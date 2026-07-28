@@ -11,6 +11,22 @@ TEST(Octree, Constructors)
     EXPECT_EQ(octree.begin(), octree.end());
 }
 
+TEST(Octree, Clear)
+{
+    Octree<Vector3D> octree;
+
+    octree.Build(
+        { Vector3D(0.2, 0.7, 0.3) }, BoundingBox3D({ 0, 0, 0 }, { 1, 1, 1 }),
+        [](const Vector3D& point, const BoundingBox3D& box) {
+            return box.Contains(point);
+        },
+        3);
+    octree.Clear();
+
+    EXPECT_EQ(octree.begin(), octree.end());
+    EXPECT_EQ(0u, octree.GetNumberOfNodes());
+}
+
 TEST(Octree, Nearest)
 {
     Octree<Vector3D> octree;

@@ -11,6 +11,22 @@ TEST(Quadtree, Constructors)
     EXPECT_EQ(quadtree.begin(), quadtree.end());
 }
 
+TEST(Quadtree, Clear)
+{
+    Quadtree<Vector2D> quadtree;
+
+    quadtree.Build(
+        { Vector2D(0.2, 0.7) }, BoundingBox2D({ 0, 0 }, { 1, 1 }),
+        [](const Vector2D& point, const BoundingBox2D& box) {
+            return box.Contains(point);
+        },
+        3);
+    quadtree.Clear();
+
+    EXPECT_EQ(quadtree.begin(), quadtree.end());
+    EXPECT_EQ(0u, quadtree.GetNumberOfNodes());
+}
+
 TEST(Quadtree, Nearest)
 {
     Quadtree<Vector2D> quadtree;
