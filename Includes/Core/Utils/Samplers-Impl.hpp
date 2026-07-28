@@ -47,7 +47,7 @@ Vector3<T> UniformSampleCone(T u1, T u2, const Vector3<T>& axis, T angle)
     T z = r * std::sin(phi);
     auto ts = axis.Tangentials();
 
-    return std::get<0>(ts) * x + axis * y + std::get<1>(ts) * z;
+    return Vector3<T>(std::get<0>(ts) * x + axis * y + std::get<1>(ts) * z);
 }
 
 template <typename T>

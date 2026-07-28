@@ -37,9 +37,6 @@
 #include <future>
 #include <vector>
 
-#undef max
-#undef min
-
 namespace CubbyFlow
 {
 namespace Internal
@@ -133,7 +130,7 @@ void Merge(RandomIterator a, size_t size, RandomIterator2 temp,
     }
 
     // Copy sorted temp array into main array, a
-    ParallelFor(ZERO_SIZE, size, [&](size_t i) { a[i] = temp[i]; });
+    ParallelFor(ZERO_SIZE, size, [&a, &temp](size_t i) { a[i] = temp[i]; });
 }
 
 template <typename RandomIterator, typename RandomIterator2,
@@ -156,13 +153,16 @@ void ParallelMergeSort(RandomIterator a, size_t size, RandomIterator2 temp,
             ParallelMergeSort(begin, k2, temp, numThreads, compareFunction);
         };
 
-        pool.emplace_back(Internal::Async(
-            [=]() { launchRange(a, size / 2, temp, numThreads / 2); }));
+        pool.emplace_back(
+            Internal::Async([launchRange, a, size, temp, numThreads]() {
+                launchRange(a, size / 2, temp, numThreads / 2);
+            }));
 
-        pool.emplace_back(Internal::Async([=]() {
-            launchRange(a + size / 2, size - size / 2, temp + size / 2,
-                        numThreads - numThreads / 2);
-        }));
+        pool.emplace_back(
+            Internal::Async([launchRange, a, size, temp, numThreads]() {
+                launchRange(a + size / 2, size - size / 2, temp + size / 2,
+                            numThreads - numThreads / 2);
+            }));
 
         // Wait for jobs to finish
         for (auto& f : pool)
@@ -227,7 +227,7 @@ void ParallelFor(IndexType beginIndex, IndexType endIndex,
         IndexType n = endIndex - beginIndex + 1;
         IndexType slice = static_cast<IndexType>(
             std::round(n / static_cast<double>(numThreads)));
-        slice = std::max(slice, IndexType(1));
+        slice = (std::max)(slice, IndexType(1));
 
         // [Helper] Inner loop
         auto launchRange = [&function](IndexType k1, IndexType k2) {
@@ -241,13 +241,13 @@ void ParallelFor(IndexType beginIndex, IndexType endIndex,
         std::vector<std::thread> pool;
         pool.reserve(numThreads);
         IndexType i1 = beginIndex;
-        IndexType i2 = std::min(beginIndex + slice, endIndex);
+        IndexType i2 = (std::min)(beginIndex + slice, endIndex);
 
         for (unsigned int i = 0; i + 1 < numThreads && i1 < endIndex; ++i)
         {
             pool.emplace_back(launchRange, i1, i2);
             i1 = i2;
-            i2 = std::min(i2 + slice, endIndex);
+            i2 = (std::min)(i2 + slice, endIndex);
         }
 
         if (i1 < endIndex)
@@ -321,25 +321,26 @@ void ParallelRangeFor(IndexType beginIndex, IndexType endIndex,
         IndexType n = endIndex - beginIndex + 1;
         IndexType slice = static_cast<IndexType>(
             std::round(n / static_cast<double>(numThreads)));
-        slice = std::max(slice, IndexType(1));
+        slice = (std::max)(slice, IndexType(1));
 
         // Create pool and launch jobs
         std::vector<CubbyFlow::Internal::future<void>> pool;
         pool.reserve(numThreads);
         IndexType i1 = beginIndex;
-        IndexType i2 = std::min(beginIndex + slice, endIndex);
+        IndexType i2 = (std::min)(beginIndex + slice, endIndex);
 
         for (unsigned int i = 0; i + 1 < numThreads && i1 < endIndex; ++i)
         {
-            pool.emplace_back(Internal::Async([=]() { function(i1, i2); }));
+            pool.emplace_back(
+                Internal::Async([function, i1, i2]() { function(i1, i2); }));
             i1 = i2;
-            i2 = std::min(i2 + slice, endIndex);
+            i2 = (std::min)(i2 + slice, endIndex);
         }
 
         if (i1 < endIndex)
         {
-            pool.emplace_back(
-                Internal::Async([=]() { function(i1, endIndex); }));
+            pool.emplace_back(Internal::Async(
+                [function, i1, endIndex]() { function(i1, endIndex); }));
         }
 
         // Wait for jobs to finish
@@ -365,7 +366,7 @@ void ParallelFor(IndexType beginIndexX, IndexType endIndexX,
 {
     ParallelFor(
         beginIndexY, endIndexY,
-        [&](IndexType j) {
+        [&beginIndexX, &endIndexX, &function](IndexType j) {
             for (IndexType i = beginIndexX; i < endIndexX; ++i)
             {
                 function(i, j);
@@ -381,7 +382,8 @@ void ParallelRangeFor(IndexType beginIndexX, IndexType endIndexX,
 {
     ParallelRangeFor(
         beginIndexY, endIndexY,
-        [&](IndexType jBegin, IndexType jEnd) {
+        [&function, &beginIndexX, &endIndexX](IndexType jBegin,
+                                              IndexType jEnd) {
             function(beginIndexX, endIndexX, jBegin, jEnd);
         },
         policy);
@@ -395,7 +397,8 @@ void ParallelFor(IndexType beginIndexX, IndexType endIndexX,
 {
     ParallelFor(
         beginIndexZ, endIndexZ,
-        [&](IndexType k) {
+        [&beginIndexY, &endIndexY, &beginIndexX, &endIndexX,
+         &function](IndexType k) {
             for (IndexType j = beginIndexY; j < endIndexY; ++j)
             {
                 for (IndexType i = beginIndexX; i < endIndexX; ++i)
@@ -415,7 +418,8 @@ void ParallelRangeFor(IndexType beginIndexX, IndexType endIndexX,
 {
     ParallelRangeFor(
         beginIndexZ, endIndexZ,
-        [&](IndexType kBegin, IndexType kEnd) {
+        [&function, &beginIndexX, &endIndexX, &beginIndexY, &endIndexY](
+            IndexType kBegin, IndexType kEnd) {
             function(beginIndexX, endIndexX, beginIndexY, endIndexY, kBegin,
                      kEnd);
         },
@@ -453,13 +457,14 @@ Value ParallelReduce(IndexType beginIndex, IndexType endIndex,
         IndexType n = endIndex - beginIndex + 1;
         IndexType slice = static_cast<IndexType>(
             std::round(n / static_cast<double>(numThreads)));
-        slice = std::max(slice, IndexType(1));
+        slice = (std::max)(slice, IndexType(1));
 
         // Results
         std::vector<Value> results(numThreads, identity);
 
         // [Helper] Inner loop
-        auto launchRange = [&](IndexType k1, IndexType k2, unsigned int tid) {
+        auto launchRange = [&results, &function, &identity](
+                               IndexType k1, IndexType k2, unsigned int tid) {
             results[tid] = function(k1, k2, identity);
         };
 
@@ -468,22 +473,26 @@ Value ParallelReduce(IndexType beginIndex, IndexType endIndex,
         pool.reserve(numThreads);
 
         IndexType i1 = beginIndex;
-        IndexType i2 = std::min(beginIndex + slice, endIndex);
+        IndexType i2 = (std::min)(beginIndex + slice, endIndex);
         unsigned int threadID = 0;
 
         for (; threadID + 1 < numThreads && i1 < endIndex; ++threadID)
         {
             pool.emplace_back(
-                Internal::Async([=]() { launchRange(i1, i2, threadID); }));
+                Internal::Async([launchRange, i1, i2, threadID]() {
+                    launchRange(i1, i2, threadID);
+                }));
 
             i1 = i2;
-            i2 = std::min(i2 + slice, endIndex);
+            i2 = (std::min)(i2 + slice, endIndex);
         }
 
         if (i1 < endIndex)
         {
-            pool.emplace_back(Internal::Async(
-                [=]() { launchRange(i1, endIndex, threadID); }));
+            pool.emplace_back(
+                Internal::Async([launchRange, i1, endIndex, threadID]() {
+                    launchRange(i1, endIndex, threadID);
+                }));
         }
 
         // Wait for jobs to finish
