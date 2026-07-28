@@ -25,12 +25,13 @@ void TriangleMeshToSDF(const TriangleMesh3& mesh, ScalarGrid3* sdf)
 
     const GridDataPositionFunc<3> pos = sdf->DataPosition();
     mesh.UpdateQueryEngine();
-    sdf->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        const Vector3D p = pos(i, j, k);
-        const double d = mesh.ClosestDistance(p);
-        const double sd = mesh.IsInside(p) ? -d : d;
+    sdf->ParallelForEachDataPointIndex(
+        [&pos, &mesh, &sdf](size_t i, size_t j, size_t k) {
+            const Vector3D p = pos(i, j, k);
+            const double d = mesh.ClosestDistance(p);
+            const double sd = mesh.IsInside(p) ? -d : d;
 
-        (*sdf)(i, j, k) = sd;
-    });
+            (*sdf)(i, j, k) = sd;
+        });
 }
 }  // namespace CubbyFlow

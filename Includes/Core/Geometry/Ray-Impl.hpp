@@ -41,12 +41,7 @@ Ray<T, N>::Ray(Ray&& other) noexcept
 }
 
 template <typename T, size_t N>
-Ray<T, N>& Ray<T, N>::operator=(const Ray& other)
-{
-    origin = other.origin;
-    direction = other.direction;
-    return *this;
-}
+Ray<T, N>& Ray<T, N>::operator=(const Ray& other) = default;
 
 template <typename T, size_t N>
 Ray<T, N>& Ray<T, N>::operator=(Ray&& other) noexcept

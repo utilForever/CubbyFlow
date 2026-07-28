@@ -79,14 +79,14 @@ void ArrayView<T, N>::Set(Array<T, N>& other)
 template <typename T, size_t N>
 void ArrayView<T, N>::Set(const ArrayView& other)
 {
-    Base::SetPtrAndSize(const_cast<T*>(other.data()), other.Size());
+    Base::SetPtrAndSize(other.m_ptr, other.Size());
 }
 
 template <typename T, size_t N>
 void ArrayView<T, N>::Fill(const T& val)
 {
     ForEachIndex(Vector<size_t, N>{}, m_size,
-                 [&](auto... idx) { this->At(idx...) = val; });
+                 [this, &val](auto... idx) { this->At(idx...) = val; });
 }
 
 template <typename T, size_t N>

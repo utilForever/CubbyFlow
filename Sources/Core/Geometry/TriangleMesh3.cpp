@@ -813,14 +813,15 @@ void TriangleMesh3::BuildWindingNumbers() const
         m_wnAreaWeightedNormalSums.Resize(numNodes);
         m_wnAreaWeightedAvgPositions.Resize(numNodes);
 
-        const auto visitorFunc = [&](size_t nodeIndex,
-                                     const WindingNumberGatherData& data) {
+        const auto visitorFunc = [this](size_t nodeIndex,
+                                        const WindingNumberGatherData& data) {
             m_wnAreaWeightedNormalSums[nodeIndex] = data.areaWeightedNormalSums;
             m_wnAreaWeightedAvgPositions[nodeIndex] =
                 data.areaWeightedPositionSums / data.areaSums;
         };
 
-        const auto leafFunc = [&](size_t nodeIndex) -> WindingNumberGatherData {
+        const auto leafFunc =
+            [this](size_t nodeIndex) -> WindingNumberGatherData {
             WindingNumberGatherData result;
 
             const auto iter = m_bvh.ItemOfNode(nodeIndex);
@@ -904,7 +905,7 @@ double TriangleMesh3::GetFastWindingNumber(const Vector3D& q,
     {
         if (m_bvh.IsLeaf(rootNodeIndex))
         {
-            // Case: q is nearby; use direct sum for tree¡¯s elements
+            // Case: q is nearby; use direct sum for tree's elements
             const auto iter = m_bvh.ItemOfNode(rootNodeIndex);
             return GetWindingNumber(q, *iter) * INV_FOUR_PI_DOUBLE;
         }

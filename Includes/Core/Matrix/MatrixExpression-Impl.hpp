@@ -495,12 +495,11 @@ MatrixExpression<T, Rows, Cols, D>::Tangentials() const
 
     using V = Matrix<T, 3, 1>;
 
-    V a =
-        ((std::fabs(Eval(1, 0)) > 0 || std::fabs(Eval(2, 0)) > 0) ? V(1, 0, 0)
+    V a(((std::fabs(Eval(1, 0)) > 0 || std::fabs(Eval(2, 0)) > 0) ? V(1, 0, 0)
                                                                   : V(0, 1, 0))
             .Cross(*this)
-            .Normalized();
-    V b = this->Cross(a);
+            .Normalized());
+    V b(this->Cross(a));
 
     return std::make_tuple(a, b);
 }

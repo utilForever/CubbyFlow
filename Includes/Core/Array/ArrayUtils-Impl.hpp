@@ -19,7 +19,7 @@ template <typename T, size_t N>
 void Fill(ArrayView<T, N> a, const Vector<size_t, N>& begin,
           const Vector<size_t, N>& end, const T& val)
 {
-    ForEachIndex(begin, end, [&](auto... idx) { a(idx...) = val; });
+    ForEachIndex(begin, end, [&a, &val](auto... idx) { a(idx...) = val; });
 }
 
 template <typename T, size_t N>
@@ -38,7 +38,8 @@ template <typename T, typename U, size_t N>
 void Copy(ArrayView<T, N> src, const Vector<size_t, N>& begin,
           const Vector<size_t, N>& end, ArrayView<U, N> dst)
 {
-    ForEachIndex(begin, end, [&](auto... idx) { dst(idx...) = src(idx...); });
+    ForEachIndex(begin, end,
+                 [&dst, &src](auto... idx) { dst(idx...) = src(idx...); });
 }
 
 template <typename T, typename U, size_t N>
@@ -65,14 +66,16 @@ void ExtrapolateToRegion(ArrayView2<T> input, ArrayView2<char> valid,
     Array2<char> valid0(size);
     Array2<char> valid1(size);
 
-    ParallelForEachIndex(valid0.Size(), [&](size_t i, size_t j) {
-        valid0(i, j) = valid(i, j);
-        output(i, j) = input(i, j);
-    });
+    ParallelForEachIndex(
+        valid0.Size(), [&valid0, &valid, &output, &input](size_t i, size_t j) {
+            valid0(i, j) = valid(i, j);
+            output(i, j) = input(i, j);
+        });
 
     for (unsigned int iter = 0; iter < numberOfIterations; ++iter)
     {
-        ForEachIndex(valid0.Size(), [&](size_t i, size_t j) {
+        ForEachIndex(valid0.Size(), [&valid0, &size, &output, &valid1](
+                                        size_t i, size_t j) {
             if (!valid0(i, j))
             {
                 T sum = T{};
@@ -132,14 +135,16 @@ void ExtrapolateToRegion(ArrayView3<T> input, ArrayView3<char> valid,
     Array3<char> valid0(size);
     Array3<char> valid1(size);
 
-    ParallelForEachIndex(valid0.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(valid0.Size(), [&valid0, &valid, &output, &input](
+                                            size_t i, size_t j, size_t k) {
         valid0(i, j, k) = valid(i, j, k);
         output(i, j, k) = input(i, j, k);
     });
 
     for (unsigned int iter = 0; iter < numberOfIterations; ++iter)
     {
-        ForEachIndex(valid0.Size(), [&](size_t i, size_t j, size_t k) {
+        ForEachIndex(valid0.Size(), [&valid0, &size, &output, &valid1](
+                                        size_t i, size_t j, size_t k) {
             if (!valid0(i, j, k))
             {
                 T sum = T{};

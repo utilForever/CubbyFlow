@@ -101,7 +101,7 @@ void KdTree<T, K>::ForEachNearbyPoint(
         {
             // get node children pointers for sphere
             const Node* firstChild = node + 1;
-            const Node* secondChild = const_cast<Node*>(&m_nodes[node->child]);
+            const Node* secondChild = &m_nodes[node->child];
 
             // advance to next child node, possibly enqueue other child
             const size_t axis = node->flags;
@@ -165,7 +165,7 @@ bool KdTree<T, K>::HasNearbyPoint(const Point& origin, T radius) const
         {
             // get node children pointers for sphere
             const Node* firstChild = node + 1;
-            const Node* secondChild = const_cast<Node*>(&m_nodes[node->child]);
+            const Node* secondChild = &m_nodes[node->child];
 
             // advance to next child node, possibly enqueue other child
             const size_t axis = node->flags;
@@ -345,7 +345,7 @@ size_t KdTree<T, K>::Build(size_t nodeIndex, size_t* itemIndices, size_t nItems,
 
     // pick mid point
     std::nth_element(itemIndices, itemIndices + nItems / 2,
-                     itemIndices + nItems, [&](size_t a, size_t b) {
+                     itemIndices + nItems, [this, &axis](size_t a, size_t b) {
                          return m_points[a][axis] < m_points[b][axis];
                      });
     const size_t midPoint = nItems / 2;
