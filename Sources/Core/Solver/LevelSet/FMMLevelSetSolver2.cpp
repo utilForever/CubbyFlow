@@ -12,6 +12,8 @@
 #include <Core/Solver/LevelSet/FMMLevelSetSolver2.hpp>
 #include <Core/Utils/LevelSetUtils.hpp>
 
+#include <algorithm>
+#include <array>
 #include <queue>
 
 namespace CubbyFlow
@@ -24,22 +26,40 @@ double BoundarySign(const ArrayView2<double>& sdf, const Vector2UZ& size,
                     size_t i, size_t j)
 {
     const bool inside = IsInsideSDF(sdf(i, j));
+    const auto crossesBoundary = [&inside, &sdf](bool valid, size_t x,
+                                                 size_t y) {
+        return valid && inside != IsInsideSDF(sdf(x, y));
+    };
+    const std::array neighbors{
+        crossesBoundary(i > 0, i - 1, j),
+        crossesBoundary(i + 1 < size.x, i + 1, j),
+        crossesBoundary(j > 0, i, j - 1),
+        crossesBoundary(j + 1 < size.y, i, j + 1),
+    };
 
-    return ((i > 0 && inside != IsInsideSDF(sdf(i - 1, j))) ||
-            (i + 1 < size.x && inside != IsInsideSDF(sdf(i + 1, j))) ||
-            (j > 0 && inside != IsInsideSDF(sdf(i, j - 1))) ||
-            (j + 1 < size.y && inside != IsInsideSDF(sdf(i, j + 1))))
-               ? (inside ? -1.0 : 1.0)
-               : 0.0;
+    if (std::find(neighbors.begin(), neighbors.end(), true) == neighbors.end())
+    {
+        return 0.0;
+    }
+
+    return inside ? -1.0 : 1.0;
 }
 
 bool HasKnownNeighbor(const Array2<char>& markers, const Vector2UZ& size,
                       size_t i, size_t j)
 {
-    return (i > 0 && markers(i - 1, j) == KNOWN) ||
-           (i + 1 < size.x && markers(i + 1, j) == KNOWN) ||
-           (j > 0 && markers(i, j - 1) == KNOWN) ||
-           (j + 1 < size.y && markers(i, j + 1) == KNOWN);
+    const auto isKnown = [&markers](bool valid, size_t x, size_t y) {
+        return valid && markers(x, y) == KNOWN;
+    };
+    const std::array neighbors{
+        isKnown(i > 0, i - 1, j),
+        isKnown(i + 1 < size.x, i + 1, j),
+        isKnown(j > 0, i, j - 1),
+        isKnown(j + 1 < size.y, i, j + 1),
+    };
+
+    return std::find(neighbors.begin(), neighbors.end(), true) !=
+           neighbors.end();
 }
 
 // Find geometric solution near the boundary

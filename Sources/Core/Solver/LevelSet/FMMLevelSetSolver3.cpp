@@ -12,6 +12,8 @@
 #include <Core/Solver/LevelSet/FMMLevelSetSolver3.hpp>
 #include <Core/Utils/LevelSetUtils.hpp>
 
+#include <algorithm>
+#include <array>
 #include <queue>
 
 namespace CubbyFlow
@@ -24,26 +26,41 @@ double BoundarySign(const ArrayView3<double>& sdf, const Vector3UZ& size,
                     size_t i, size_t j, size_t k)
 {
     const bool inside = IsInsideSDF(sdf(i, j, k));
+    const auto crossesBoundary = [&inside, &sdf](bool valid, size_t x, size_t y,
+                                                 size_t z) {
+        return valid && inside != IsInsideSDF(sdf(x, y, z));
+    };
+    const std::array neighbors{
+        crossesBoundary(i > 0, i - 1, j, k),
+        crossesBoundary(i + 1 < size.x, i + 1, j, k),
+        crossesBoundary(j > 0, i, j - 1, k),
+        crossesBoundary(j + 1 < size.y, i, j + 1, k),
+        crossesBoundary(k > 0, i, j, k - 1),
+        crossesBoundary(k + 1 < size.z, i, j, k + 1),
+    };
 
-    return ((i > 0 && inside != IsInsideSDF(sdf(i - 1, j, k))) ||
-            (i + 1 < size.x && inside != IsInsideSDF(sdf(i + 1, j, k))) ||
-            (j > 0 && inside != IsInsideSDF(sdf(i, j - 1, k))) ||
-            (j + 1 < size.y && inside != IsInsideSDF(sdf(i, j + 1, k))) ||
-            (k > 0 && inside != IsInsideSDF(sdf(i, j, k - 1))) ||
-            (k + 1 < size.z && inside != IsInsideSDF(sdf(i, j, k + 1))))
-               ? (inside ? -1.0 : 1.0)
-               : 0.0;
+    if (std::find(neighbors.begin(), neighbors.end(), true) == neighbors.end())
+    {
+        return 0.0;
+    }
+
+    return inside ? -1.0 : 1.0;
 }
 
 bool HasKnownNeighbor(const Array3<char>& markers, const Vector3UZ& size,
                       size_t i, size_t j, size_t k)
 {
-    return (i > 0 && markers(i - 1, j, k) == KNOWN) ||
-           (i + 1 < size.x && markers(i + 1, j, k) == KNOWN) ||
-           (j > 0 && markers(i, j - 1, k) == KNOWN) ||
-           (j + 1 < size.y && markers(i, j + 1, k) == KNOWN) ||
-           (k > 0 && markers(i, j, k - 1) == KNOWN) ||
-           (k + 1 < size.z && markers(i, j, k + 1) == KNOWN);
+    const auto isKnown = [&markers](bool valid, size_t x, size_t y, size_t z) {
+        return valid && markers(x, y, z) == KNOWN;
+    };
+    const std::array neighbors{
+        isKnown(i > 0, i - 1, j, k), isKnown(i + 1 < size.x, i + 1, j, k),
+        isKnown(j > 0, i, j - 1, k), isKnown(j + 1 < size.y, i, j + 1, k),
+        isKnown(k > 0, i, j, k - 1), isKnown(k + 1 < size.z, i, j, k + 1),
+    };
+
+    return std::find(neighbors.begin(), neighbors.end(), true) !=
+           neighbors.end();
 }
 
 // Find geometric solution near the boundary
