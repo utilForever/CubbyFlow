@@ -4,6 +4,7 @@
 #include <Core/Geometry/Sphere.hpp>
 #include <Core/Grid/CellCenteredScalarGrid.hpp>
 #include <Core/Grid/CellCenteredVectorGrid.hpp>
+#include <Core/Grid/FaceCenteredGrid.hpp>
 #include <Core/Utils/LevelSetUtils.hpp>
 
 using namespace CubbyFlow;
@@ -54,6 +55,27 @@ TEST(VolumeGridEmitter3, Velocity)
                 EXPECT_NEAR(answer.y, acttual.y, 1e-6);
             }
         });
+}
+
+TEST(VolumeGridEmitter3, FaceCenteredVelocity)
+{
+    auto sphere = Sphere3::Builder().WithRadius(1.0).MakeShared();
+    auto emitter =
+        VolumeGridEmitter3::Builder().WithSourceRegion(sphere).MakeShared();
+    auto grid =
+        FaceCenteredGrid3::Builder().WithResolution({ 2, 2, 2 }).MakeShared();
+
+    emitter->AddTarget(grid, [](double, const Vector3D&, const Vector3D&) {
+        return Vector3D{ 1.0, 2.0, 3.0 };
+    });
+    emitter->Update(0.0, 0.01);
+
+    grid->ForEachUIndex(
+        [&grid](const Vector3UZ& idx) { EXPECT_DOUBLE_EQ(1.0, grid->U(idx)); });
+    grid->ForEachVIndex(
+        [&grid](const Vector3UZ& idx) { EXPECT_DOUBLE_EQ(2.0, grid->V(idx)); });
+    grid->ForEachWIndex(
+        [&grid](const Vector3UZ& idx) { EXPECT_DOUBLE_EQ(3.0, grid->W(idx)); });
 }
 
 TEST(VolumeGridEmitter3, SignedDistance)
