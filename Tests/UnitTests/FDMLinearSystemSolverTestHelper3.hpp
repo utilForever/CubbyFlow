@@ -4,6 +4,8 @@
 #include <Core/Array/ArrayView.hpp>
 #include <Core/Solver/FDM/FDMLinearSystemSolver3.hpp>
 
+#include <vector>
+
 namespace CubbyFlow
 {
 class FDMLinearSystemSolverTestHelper3
@@ -73,73 +75,101 @@ class FDMLinearSystemSolverTestHelper3
     }
 
  private:
+    struct CompressedRow
+    {
+        explicit CompressedRow(size_t centerIndex) : columns{ centerIndex }
+        {
+        }
+
+        void AddNeighbor(size_t index)
+        {
+            values[0] += 1.0;
+            values.push_back(-1.0);
+            columns.push_back(index);
+        }
+
+        double rhs = 0.0;
+        std::vector<double> values{ 0.0 };
+        std::vector<size_t> columns;
+    };
+
+    static void AppendXNeighbors(const Vector3UZ& size,
+                                 const ArrayView3<size_t>& acc,
+                                 const Vector3UZ& index, CompressedRow* row)
+    {
+        if (index.x > 0)
+        {
+            row->AddNeighbor(acc.Index(index.x - 1, index.y, index.z));
+        }
+        if (index.x + 1 < size.x)
+        {
+            row->AddNeighbor(acc.Index(index.x + 1, index.y, index.z));
+        }
+    }
+
+    static void AppendYNeighbors(const Vector3UZ& size,
+                                 const ArrayView3<size_t>& acc,
+                                 const Vector3UZ& index, CompressedRow* row)
+    {
+        if (index.y > 0)
+        {
+            row->AddNeighbor(acc.Index(index.x, index.y - 1, index.z));
+        }
+        else
+        {
+            row->rhs += 1.0;
+        }
+
+        if (index.y + 1 < size.y)
+        {
+            row->AddNeighbor(acc.Index(index.x, index.y + 1, index.z));
+        }
+        else
+        {
+            row->rhs -= 1.0;
+        }
+    }
+
+    static void AppendZNeighbors(const Vector3UZ& size,
+                                 const ArrayView3<size_t>& acc,
+                                 const Vector3UZ& index, CompressedRow* row)
+    {
+        if (index.z > 0)
+        {
+            row->AddNeighbor(acc.Index(index.x, index.y, index.z - 1));
+        }
+        else
+        {
+            row->rhs += 1.0;
+        }
+
+        if (index.z + 1 < size.z)
+        {
+            row->AddNeighbor(acc.Index(index.x, index.y, index.z + 1));
+        }
+        else
+        {
+            row->rhs -= 1.0;
+        }
+    }
+
     static void BuildCompressedRow(FDMCompressedLinearSystem3* system,
                                    const Vector3UZ& size,
                                    const ArrayView3<size_t>& acc,
                                    Array3<size_t>* coordToIndex, size_t i,
                                    size_t j, size_t k)
     {
-        const size_t cIdx = acc.Index(i, j, k);
-        (*coordToIndex)[cIdx] = system->b.GetRows();
+        const Vector3UZ index{ i, j, k };
+        const size_t centerIndex = acc.Index(index);
+        (*coordToIndex)[centerIndex] = system->b.GetRows();
 
-        double bijk = 0.0;
-        std::vector<double> row(1, 0.0);
-        std::vector<size_t> colIdx(1, cIdx);
+        CompressedRow row(centerIndex);
+        AppendXNeighbors(size, acc, index, &row);
+        AppendYNeighbors(size, acc, index, &row);
+        AppendZNeighbors(size, acc, index, &row);
 
-        const auto addNeighbor = [&](size_t idx) {
-            row[0] += 1.0;
-            row.push_back(-1.0);
-            colIdx.push_back(idx);
-        };
-
-        if (i > 0)
-        {
-            addNeighbor(acc.Index(i - 1, j, k));
-        }
-
-        if (i + 1 < size.x)
-        {
-            addNeighbor(acc.Index(i + 1, j, k));
-        }
-
-        if (j > 0)
-        {
-            addNeighbor(acc.Index(i, j - 1, k));
-        }
-        else
-        {
-            bijk += 1.0;
-        }
-
-        if (j + 1 < size.y)
-        {
-            addNeighbor(acc.Index(i, j + 1, k));
-        }
-        else
-        {
-            bijk -= 1.0;
-        }
-
-        if (k > 0)
-        {
-            addNeighbor(acc.Index(i, j, k - 1));
-        }
-        else
-        {
-            bijk += 1.0;
-        }
-
-        if (k + 1 < size.z)
-        {
-            addNeighbor(acc.Index(i, j, k + 1));
-        }
-        else
-        {
-            bijk -= 1.0;
-        }
-
-        system->A.AddRow(row, colIdx);
-        system->b.AddElement(bijk);
+        system->A.AddRow(row.values, row.columns);
+        system->b.AddElement(row.rhs);
     }
 };
 }  // namespace CubbyFlow
