@@ -23,6 +23,96 @@ const double DEFAULT_TOLERANCE = 1e-6;
 
 namespace
 {
+void BuildSingleRow(size_t i, size_t j, const Vector2UZ& size,
+                    const Vector2D& invHSqr, const Array2<char>& markers,
+                    const FaceCenteredGrid2& input, FDMMatrixRow2* row,
+                    double* rhs)
+{
+    row->center = row->right = row->up = 0.0;
+    *rhs = 0.0;
+    if (markers(i, j) != FLUID)
+    {
+        row->center = 1.0;
+        return;
+    }
+
+    *rhs = input.DivergenceAtCellCenter(i, j);
+    const auto addNeighbor = [&](bool valid, size_t x, size_t y, double weight,
+                                 double* offDiagonal) {
+        if (!valid || markers(x, y) == BOUNDARY)
+        {
+            return;
+        }
+        row->center += weight;
+        if (offDiagonal != nullptr && markers(x, y) == FLUID)
+        {
+            *offDiagonal -= weight;
+        }
+    };
+    addNeighbor(i + 1 < size.x, i + 1, j, invHSqr.x, &row->right);
+    addNeighbor(i > 0, i - 1, j, invHSqr.x, nullptr);
+    addNeighbor(j + 1 < size.y, i, j + 1, invHSqr.y, &row->up);
+    addNeighbor(j > 0, i, j - 1, invHSqr.y, nullptr);
+}
+
+void BuildCompressedRow(size_t i, size_t j, const Vector2UZ& size,
+                        const Vector2D& invHSqr,
+                        const ConstArrayView2<char>& markers,
+                        const Array2<size_t>& coordToIndex, MatrixCSRD* A,
+                        VectorND* b, const FaceCenteredGrid2& input)
+{
+    const size_t center = markers.Index(i, j);
+    if (markers[center] != FLUID)
+    {
+        return;
+    }
+
+    b->AddElement(input.DivergenceAtCellCenter(i, j));
+    std::vector<double> row(1, 0.0);
+    std::vector<size_t> columns(1, coordToIndex[center]);
+    const auto addNeighbor = [&](bool valid, size_t x, size_t y,
+                                 double weight) {
+        if (!valid || markers(x, y) == BOUNDARY)
+        {
+            return;
+        }
+        row[0] += weight;
+        const size_t neighbor = markers.Index(x, y);
+        if (markers[neighbor] == FLUID)
+        {
+            row.push_back(-weight);
+            columns.push_back(coordToIndex[neighbor]);
+        }
+    };
+    addNeighbor(i + 1 < size.x, i + 1, j, invHSqr.x);
+    addNeighbor(i > 0, i - 1, j, invHSqr.x);
+    addNeighbor(j + 1 < size.y, i, j + 1, invHSqr.y);
+    addNeighbor(j > 0, i, j - 1, invHSqr.y);
+    A->AddRow(row, columns);
+}
+
+char CoarsenMarker(size_t i, size_t j, const Vector2UZ& size,
+                   const Array2<char>& finer)
+{
+    const std::array<size_t, 4> iIndices{ (i > 0) ? 2 * i - 1 : 2 * i, 2 * i,
+                                          2 * i + 1,
+                                          (i + 1 < size.x) ? 2 * i + 2
+                                                           : 2 * i + 1 };
+    const std::array<size_t, 4> jIndices{ (j > 0) ? 2 * j - 1 : 2 * j, 2 * j,
+                                          2 * j + 1,
+                                          (j + 1 < size.y) ? 2 * j + 2
+                                                           : 2 * j + 1 };
+    int counts[3] = { 0, 0, 0 };
+    for (size_t y : jIndices)
+    {
+        for (size_t x : iIndices)
+        {
+            ++counts[static_cast<int>(finer(x, y))];
+        }
+    }
+    return static_cast<char>(ArgMax3(counts[0], counts[1], counts[2]));
+}
+
 void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
                        const Array2<char>& markers,
                        const FaceCenteredGrid2& input)
@@ -33,48 +123,8 @@ void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
 
     ParallelForEachIndex(A->Size(), [&A, &b, &markers, &input, &size, &invHSqr](
                                         size_t i, size_t j) {
-        FDMMatrixRow2& row = (*A)(i, j);
-
-        // initialize
-        row.center = row.right = row.up = 0.0;
-        (*b)(i, j) = 0.0;
-
-        if (markers(i, j) == FLUID)
-        {
-            (*b)(i, j) = input.DivergenceAtCellCenter(i, j);
-
-            if (i + 1 < size.x && markers(i + 1, j) != BOUNDARY)
-            {
-                row.center += invHSqr.x;
-                if (markers(i + 1, j) == FLUID)
-                {
-                    row.right -= invHSqr.x;
-                }
-            }
-
-            if (i > 0 && markers(i - 1, j) != BOUNDARY)
-            {
-                row.center += invHSqr.x;
-            }
-
-            if (j + 1 < size.y && markers(i, j + 1) != BOUNDARY)
-            {
-                row.center += invHSqr.y;
-                if (markers(i, j + 1) == FLUID)
-                {
-                    row.up -= invHSqr.y;
-                }
-            }
-
-            if (j > 0 && markers(i, j - 1) != BOUNDARY)
-            {
-                row.center += invHSqr.y;
-            }
-        }
-        else
-        {
-            row.center = 1.0;
-        }
+        BuildSingleRow(i, j, size, invHSqr, markers, input, &(*A)(i, j),
+                       &(*b)(i, j));
     });
 }
 
@@ -104,66 +154,9 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
                  });
 
     ForEachIndex(markers.Size(), [&markerAcc, &b, &input, &coordToIndex, &size,
-                                  &markers, &invHSqr, &A](size_t i, size_t j) {
-        const size_t cIdx = markerAcc.Index(i, j);
-
-        if (markerAcc[cIdx] == FLUID)
-        {
-            b->AddElement(input.DivergenceAtCellCenter(i, j));
-
-            std::vector<double> row(1, 0.0);
-            std::vector<size_t> colIdx(1, coordToIndex[cIdx]);
-
-            if (i + 1 < size.x && markers(i + 1, j) != BOUNDARY)
-            {
-                row[0] += invHSqr.x;
-                const size_t rIdx = markerAcc.Index(i + 1, j);
-
-                if (markers[rIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.x);
-                    colIdx.push_back(coordToIndex[rIdx]);
-                }
-            }
-
-            if (i > 0 && markers(i - 1, j) != BOUNDARY)
-            {
-                row[0] += invHSqr.x;
-                const size_t lIdx = markerAcc.Index(i - 1, j);
-
-                if (markers[lIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.x);
-                    colIdx.push_back(coordToIndex[lIdx]);
-                }
-            }
-
-            if (j + 1 < size.y && markers(i, j + 1) != BOUNDARY)
-            {
-                row[0] += invHSqr.y;
-                const size_t uIdx = markerAcc.Index(i, j + 1);
-
-                if (markers[uIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.y);
-                    colIdx.push_back(coordToIndex[uIdx]);
-                }
-            }
-
-            if (j > 0 && markers(i, j - 1) != BOUNDARY)
-            {
-                row[0] += invHSqr.y;
-                const size_t dIdx = markerAcc.Index(i, j - 1);
-
-                if (markers[dIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.y);
-                    colIdx.push_back(coordToIndex[dIdx]);
-                }
-            }
-
-            A->AddRow(row, colIdx);
-        }
+                                  &invHSqr, &A](size_t i, size_t j) {
+        BuildCompressedRow(i, j, size, invHSqr, markerAcc, coordToIndex, A, b,
+                           input);
     });
 
     x->Resize(b->GetRows(), 0.0);
@@ -298,53 +291,18 @@ void GridSinglePhasePressureSolver2::BuildMarkers(
         Array2<char>& coarser = m_markers[l];
         const Vector2UZ n = coarser.Size();
 
-        ParallelRangeFor(
-            ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-            [&n, &finer, &coarser](size_t iBegin, size_t iEnd, size_t jBegin,
-                                   size_t jEnd) {
-                std::array<size_t, 4> jIndices{};
-
-                for (size_t j = jBegin; j < jEnd; ++j)
-                {
-                    jIndices[0] = (j > 0) ? 2 * j - 1 : 2 * j;
-                    jIndices[1] = 2 * j;
-                    jIndices[2] = 2 * j + 1;
-                    jIndices[3] = (j + 1 < n.y) ? 2 * j + 2 : 2 * j + 1;
-
-                    std::array<size_t, 4> iIndices{};
-                    for (size_t i = iBegin; i < iEnd; ++i)
-                    {
-                        iIndices[0] = (i > 0) ? 2 * i - 1 : 2 * i;
-                        iIndices[1] = 2 * i;
-                        iIndices[2] = 2 * i + 1;
-                        iIndices[3] = (i + 1 < n.x) ? 2 * i + 2 : 2 * i + 1;
-
-                        int cnt[3] = { 0, 0, 0 };
-                        for (size_t y = 0; y < 4; ++y)
-                        {
-                            for (size_t x = 0; x < 4; ++x)
-                            {
-                                const char f = finer(iIndices[x], jIndices[y]);
-                                if (f == BOUNDARY)
-                                {
-                                    ++cnt[static_cast<int>(BOUNDARY)];
-                                }
-                                else if (f == FLUID)
-                                {
-                                    ++cnt[static_cast<int>(FLUID)];
-                                }
-                                else
-                                {
-                                    ++cnt[static_cast<int>(AIR)];
-                                }
-                            }
-                        }
-
-                        coarser(i, j) =
-                            static_cast<char>(ArgMax3(cnt[0], cnt[1], cnt[2]));
-                    }
-                }
-            });
+        ParallelRangeFor(ZERO_SIZE, n.x, ZERO_SIZE, n.y,
+                         [&n, &finer, &coarser](size_t iBegin, size_t iEnd,
+                                                size_t jBegin, size_t jEnd) {
+                             for (size_t j = jBegin; j < jEnd; ++j)
+                             {
+                                 for (size_t i = iBegin; i < iEnd; ++i)
+                                 {
+                                     coarser(i, j) =
+                                         CoarsenMarker(i, j, n, finer);
+                                 }
+                             }
+                         });
     }
 }
 
