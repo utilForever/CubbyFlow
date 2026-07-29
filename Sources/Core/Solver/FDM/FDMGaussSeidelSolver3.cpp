@@ -12,6 +12,38 @@
 
 namespace CubbyFlow
 {
+namespace
+{
+void RelaxRange(const FDMMatrix3& A, const FDMVector3& b, double sorFactor,
+                FDMVector3* x, const Vector3UZ& size, size_t color,
+                size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
+                size_t kBegin, size_t kEnd)
+{
+    for (size_t k = kBegin; k < kEnd; ++k)
+    {
+        for (size_t j = jBegin; j < jEnd; ++j)
+        {
+            for (size_t i = (color + j + k) % 2 + iBegin; i < iEnd; i += 2)
+            {
+                const double r =
+                    ((i > 0) ? A(i - 1, j, k).right * (*x)(i - 1, j, k) : 0.0) +
+                    ((i + 1 < size.x) ? A(i, j, k).right * (*x)(i + 1, j, k)
+                                      : 0.0) +
+                    ((j > 0) ? A(i, j - 1, k).up * (*x)(i, j - 1, k) : 0.0) +
+                    ((j + 1 < size.y) ? A(i, j, k).up * (*x)(i, j + 1, k)
+                                      : 0.0) +
+                    ((k > 0) ? A(i, j, k - 1).front * (*x)(i, j, k - 1) : 0.0) +
+                    ((k + 1 < size.z) ? A(i, j, k).front * (*x)(i, j, k + 1)
+                                      : 0.0);
+                (*x)(i, j, k) =
+                    (1.0 - sorFactor) * (*x)(i, j, k) +
+                    sorFactor * (b(i, j, k) - r) / A(i, j, k).center;
+            }
+        }
+    }
+}
+}  // namespace
+
 FDMGaussSeidelSolver3::FDMGaussSeidelSolver3(unsigned int maxNumberOfIterations,
                                              unsigned int residualCheckInterval,
                                              double tolerance, double sorFactor,
@@ -188,85 +220,17 @@ void FDMGaussSeidelSolver3::RelaxRedBlack(const FDMMatrix3& A,
     Vector3UZ size = A.Size();
     FDMVector3& xRef = *x;
 
-    // Red update
-    ParallelRangeFor(
-        ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
-        [&A, &xRef, &size, &sorFactor, &b](size_t iBegin, size_t iEnd,
-                                           size_t jBegin, size_t jEnd,
-                                           size_t kBegin, size_t kEnd) {
-            for (size_t k = kBegin; k < kEnd; ++k)
-            {
-                for (size_t j = jBegin; j < jEnd; ++j)
-                {
-                    // i.e. (0, 0, 0)
-                    size_t i = (j + k) % 2 + iBegin;
-
-                    for (; i < iEnd; i += 2)
-                    {
-                        const double r =
-                            ((i > 0) ? A(i - 1, j, k).right * xRef(i - 1, j, k)
-                                     : 0.0) +
-                            ((i + 1 < size.x)
-                                 ? A(i, j, k).right * xRef(i + 1, j, k)
-                                 : 0.0) +
-                            ((j > 0) ? A(i, j - 1, k).up * xRef(i, j - 1, k)
-                                     : 0.0) +
-                            ((j + 1 < size.y)
-                                 ? A(i, j, k).up * xRef(i, j + 1, k)
-                                 : 0.0) +
-                            ((k > 0) ? A(i, j, k - 1).front * xRef(i, j, k - 1)
-                                     : 0.0) +
-                            ((k + 1 < size.z)
-                                 ? A(i, j, k).front * xRef(i, j, k + 1)
-                                 : 0.0);
-
-                        xRef(i, j, k) =
-                            (1.0 - sorFactor) * xRef(i, j, k) +
-                            sorFactor * (b(i, j, k) - r) / A(i, j, k).center;
-                    }
-                }
-            }
-        });
-
-    // Black update
-    ParallelRangeFor(
-        ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
-        [&A, &xRef, &size, &sorFactor, &b](size_t iBegin, size_t iEnd,
-                                           size_t jBegin, size_t jEnd,
-                                           size_t kBegin, size_t kEnd) {
-            for (size_t k = kBegin; k < kEnd; ++k)
-            {
-                for (size_t j = jBegin; j < jEnd; ++j)
-                {
-                    // i.e. (1, 1, 1)
-                    size_t i = 1 - (j + k) % 2 + iBegin;
-
-                    for (; i < iEnd; i += 2)
-                    {
-                        const double r =
-                            ((i > 0) ? A(i - 1, j, k).right * xRef(i - 1, j, k)
-                                     : 0.0) +
-                            ((i + 1 < size.x)
-                                 ? A(i, j, k).right * xRef(i + 1, j, k)
-                                 : 0.0) +
-                            ((j > 0) ? A(i, j - 1, k).up * xRef(i, j - 1, k)
-                                     : 0.0) +
-                            ((j + 1 < size.y)
-                                 ? A(i, j, k).up * xRef(i, j + 1, k)
-                                 : 0.0) +
-                            ((k > 0) ? A(i, j, k - 1).front * xRef(i, j, k - 1)
-                                     : 0.0) +
-                            ((k + 1 < size.z)
-                                 ? A(i, j, k).front * xRef(i, j, k + 1)
-                                 : 0.0);
-
-                        xRef(i, j, k) =
-                            (1.0 - sorFactor) * xRef(i, j, k) +
-                            sorFactor * (b(i, j, k) - r) / A(i, j, k).center;
-                    }
-                }
-            }
-        });
+    for (size_t color = 0; color < 2; ++color)
+    {
+        ParallelRangeFor(
+            ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
+            [&A, &xRef, &size, &sorFactor, &b, &color](
+                size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
+                size_t kBegin, size_t kEnd) {
+                RelaxRange(A, b, sorFactor, &xRef, size, color, iBegin, iEnd,
+                           jBegin, jEnd, kBegin, kEnd);
+            });
+    }
 }
 
 void FDMGaussSeidelSolver3::ClearUncompressedVectors()

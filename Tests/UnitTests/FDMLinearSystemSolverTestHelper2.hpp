@@ -54,60 +54,59 @@ class FDMLinearSystemSolverTestHelper2
         Array2<size_t> coordToIndex(size);
         const auto acc = coordToIndex.View();
 
-        ForEachIndex(coordToIndex.Size(),
-                     [&acc, &coordToIndex, &system, &size](size_t i, size_t j) {
-            const size_t cIdx = acc.Index(i, j);
-
-            coordToIndex[cIdx] = system->b.GetRows();
-            double bij = 0.0;
-
-            std::vector<double> row(1, 0.0);
-            std::vector<size_t> colIdx(1, cIdx);
-
-            if (i > 0)
-            {
-                const size_t lIdx = acc.Index(i - 1, j);
-                row[0] += 1.0;
-                row.push_back(-1.0);
-                colIdx.push_back(lIdx);
-            }
-            if (i < size.x - 1)
-            {
-                const size_t rIdx = acc.Index(i + 1, j);
-                row[0] += 1.0;
-                row.push_back(-1.0);
-                colIdx.push_back(rIdx);
-            }
-
-            if (j > 0)
-            {
-                const size_t dIdx = acc.Index(i, j - 1);
-                row[0] += 1.0;
-                row.push_back(-1.0);
-                colIdx.push_back(dIdx);
-            }
-            else
-            {
-                bij += 1.0;
-            }
-
-            if (j < size.y - 1)
-            {
-                const size_t uIdx = acc.Index(i, j + 1);
-                row[0] += 1.0;
-                row.push_back(-1.0);
-                colIdx.push_back(uIdx);
-            }
-            else
-            {
-                bij -= 1.0;
-            }
-
-            system->A.AddRow(row, colIdx);
-            system->b.AddElement(bij);
+        ForEachIndex(coordToIndex.Size(), [&acc, &coordToIndex, &system, &size](
+                                              size_t i, size_t j) {
+            BuildCompressedRow(system, size, acc, &coordToIndex, i, j);
         });
 
         system->x.Resize(system->b.GetRows(), 0.0);
+    }
+
+ private:
+    static void BuildCompressedRow(FDMCompressedLinearSystem2* system,
+                                   const Vector2UZ& size,
+                                   const ArrayView2<size_t>& acc,
+                                   Array2<size_t>* coordToIndex, size_t i,
+                                   size_t j)
+    {
+        const size_t cIdx = acc.Index(i, j);
+        (*coordToIndex)[cIdx] = system->b.GetRows();
+        double bij = 0.0;
+        std::vector<double> row(1, 0.0);
+        std::vector<size_t> colIdx(1, cIdx);
+
+        const auto addNeighbor = [&](size_t idx) {
+            row[0] += 1.0;
+            row.push_back(-1.0);
+            colIdx.push_back(idx);
+        };
+        if (i > 0)
+        {
+            addNeighbor(acc.Index(i - 1, j));
+        }
+        if (i + 1 < size.x)
+        {
+            addNeighbor(acc.Index(i + 1, j));
+        }
+        if (j > 0)
+        {
+            addNeighbor(acc.Index(i, j - 1));
+        }
+        else
+        {
+            bij += 1.0;
+        }
+        if (j + 1 < size.y)
+        {
+            addNeighbor(acc.Index(i, j + 1));
+        }
+        else
+        {
+            bij -= 1.0;
+        }
+
+        system->A.AddRow(row, colIdx);
+        system->b.AddElement(bij);
     }
 };
 }  // namespace CubbyFlow
