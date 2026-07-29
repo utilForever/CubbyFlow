@@ -20,6 +20,27 @@ static const char UNKNOWN = 0;
 static const char KNOWN = 1;
 static const char TRIAL = 2;
 
+double BoundarySign(const ArrayView2<double>& sdf, const Vector2UZ& size,
+                    size_t i, size_t j)
+{
+    const bool inside = IsInsideSDF(sdf(i, j));
+    return ((i > 0 && inside != IsInsideSDF(sdf(i - 1, j))) ||
+            (i + 1 < size.x && inside != IsInsideSDF(sdf(i + 1, j))) ||
+            (j > 0 && inside != IsInsideSDF(sdf(i, j - 1))) ||
+            (j + 1 < size.y && inside != IsInsideSDF(sdf(i, j + 1))))
+               ? (inside ? -1.0 : 1.0)
+               : 0.0;
+}
+
+bool HasKnownNeighbor(const Array2<char>& markers, const Vector2UZ& size,
+                      size_t i, size_t j)
+{
+    return (i > 0 && markers(i - 1, j) == KNOWN) ||
+           (i + 1 < size.x && markers(i + 1, j) == KNOWN) ||
+           (j > 0 && markers(i, j - 1) == KNOWN) ||
+           (j + 1 < size.y && markers(i, j + 1) == KNOWN);
+}
+
 // Find geometric solution near the boundary
 inline double SolveQuadNearBoundary(const Array2<char>& markers,
                                     ArrayView2<double> output,
@@ -214,23 +235,11 @@ void FMMLevelSetSolver2::Reinitialize(const ScalarGrid2& inputSDF,
     // Solve geometrically near the boundary
     ForEachIndex(markers.Size(), [&output, &size, &markers, &gridSpacing,
                                   &invGridSpacingSqr](size_t i, size_t j) {
-        if (!IsInsideSDF(output(i, j)) &&
-            ((i > 0 && IsInsideSDF(output(i - 1, j))) ||
-             (i + 1 < size.x && IsInsideSDF(output(i + 1, j))) ||
-             (j > 0 && IsInsideSDF(output(i, j - 1))) ||
-             (j + 1 < size.y && IsInsideSDF(output(i, j + 1)))))
+        const double sign = BoundarySign(output, size, i, j);
+        if (sign != 0.0)
         {
             output(i, j) = SolveQuadNearBoundary(markers, output, gridSpacing,
-                                                 invGridSpacingSqr, 1.0, i, j);
-        }
-        else if (IsInsideSDF(output(i, j)) &&
-                 ((i > 0 && !IsInsideSDF(output(i - 1, j))) ||
-                  (i + 1 < size.x && !IsInsideSDF(output(i + 1, j))) ||
-                  (j > 0 && !IsInsideSDF(output(i, j - 1))) ||
-                  (j + 1 < size.y && !IsInsideSDF(output(i, j + 1)))))
-        {
-            output(i, j) = SolveQuadNearBoundary(markers, output, gridSpacing,
-                                                 invGridSpacingSqr, -1.0, i, j);
+                                                 invGridSpacingSqr, sign, i, j);
         }
     });
 
@@ -460,37 +469,10 @@ void FMMLevelSetSolver2::Extrapolate(const ConstArrayView2<double>& input,
     std::priority_queue<Vector2UZ, std::vector<Vector2UZ>, decltype(compare)>
         trial(compare);
     ForEachIndex(markers.Size(), [&markers, &trial, &size](size_t i, size_t j) {
-        if (markers(i, j) == KNOWN)
-        {
-            return;
-        }
-
-        if (i > 0 && markers(i - 1, j) == KNOWN)
+        if (markers(i, j) != KNOWN && HasKnownNeighbor(markers, size, i, j))
         {
             trial.push(Vector2UZ{ i, j });
             markers(i, j) = TRIAL;
-            return;
-        }
-
-        if (i + 1 < size.x && markers(i + 1, j) == KNOWN)
-        {
-            trial.push(Vector2UZ{ i, j });
-            markers(i, j) = TRIAL;
-            return;
-        }
-
-        if (j > 0 && markers(i, j - 1) == KNOWN)
-        {
-            trial.push(Vector2UZ{ i, j });
-            markers(i, j) = TRIAL;
-            return;
-        }
-
-        if (j + 1 < size.y && markers(i, j + 1) == KNOWN)
-        {
-            trial.push(Vector2UZ{ i, j });
-            markers(i, j) = TRIAL;
-            return;
         }
     });
 
