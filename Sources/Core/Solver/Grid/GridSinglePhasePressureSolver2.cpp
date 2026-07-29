@@ -30,7 +30,7 @@ void BuildSingleRow(size_t i, size_t j, const Vector2UZ& size,
                     const FaceCenteredGrid2& input, FDMMatrixRow2* row,
                     double* rhs)
 {
-    row->center = row->right = row->up = 0.0;
+    *row = {};
     *rhs = 0.0;
 
     if (markers(i, j) != FLUID)
