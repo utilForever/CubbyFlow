@@ -388,8 +388,9 @@ void GridBackwardEulerDiffusionSolver3::BuildVectors(
     const auto valueAt = [&f](size_t x, size_t y, size_t z) {
         return f(x, y, z);
     };
-    const RHSData3 data{ size, c, m_markers,
-                         m_boundaryType == BoundaryType::Dirichlet, valueAt };
+    const RHSData3<decltype(valueAt)> data{
+        size, c, m_markers, m_boundaryType == BoundaryType::Dirichlet, valueAt
+    };
 
     // Build linear system
     ParallelForEachIndex(m_system.x.Size(),
@@ -410,8 +411,9 @@ void GridBackwardEulerDiffusionSolver3::BuildVectors(
     const auto valueAt = [&f, component](size_t x, size_t y, size_t z) {
         return f(x, y, z)[component];
     };
-    const RHSData3 data{ size, c, m_markers,
-                         m_boundaryType == BoundaryType::Dirichlet, valueAt };
+    const RHSData3<decltype(valueAt)> data{
+        size, c, m_markers, m_boundaryType == BoundaryType::Dirichlet, valueAt
+    };
 
     // Build linear system
     ParallelForEachIndex(m_system.x.Size(), [this, &f, component, &data](
