@@ -16,48 +16,79 @@ namespace CubbyFlow
 static const char FLUID = 1;
 static const char COLLIDER = 0;
 
-static void ConstrainVelocityAt(
-    size_t i, size_t j, size_t k, const Array3<char>& marker,
-    const Vector3UZ& size, const GridDataPositionFunc<3>& uPos,
-    const GridDataPositionFunc<3>& vPos, const GridDataPositionFunc<3>& wPos,
-    const Collider3& collider, ArrayView3<double>& u, ArrayView3<double>& v,
-    ArrayView3<double>& w)
+namespace
 {
-    if (marker(i, j, k) != COLLIDER)
+struct VelocityConstraintData3
+{
+    const Array3<char>& marker;
+    const Vector3UZ& size;
+    const GridDataPositionFunc<3>& uPos;
+    const GridDataPositionFunc<3>& vPos;
+    const GridDataPositionFunc<3>& wPos;
+    const Collider3& collider;
+    ArrayView3<double>& u;
+    ArrayView3<double>& v;
+    ArrayView3<double>& w;
+};
+
+void ConstrainU(size_t i, size_t j, size_t k,
+                const VelocityConstraintData3& data)
+{
+    if (i > 0 && data.marker(i - 1, j, k) == FLUID)
+    {
+        data.u(i, j, k) = data.collider.VelocityAt(data.uPos(i, j, k)).x;
+    }
+
+    if (i < data.size.x - 1 && data.marker(i + 1, j, k) == FLUID)
+    {
+        data.u(i + 1, j, k) =
+            data.collider.VelocityAt(data.uPos(i + 1, j, k)).x;
+    }
+}
+
+void ConstrainV(size_t i, size_t j, size_t k,
+                const VelocityConstraintData3& data)
+{
+    if (j > 0 && data.marker(i, j - 1, k) == FLUID)
+    {
+        data.v(i, j, k) = data.collider.VelocityAt(data.vPos(i, j, k)).y;
+    }
+
+    if (j < data.size.y - 1 && data.marker(i, j + 1, k) == FLUID)
+    {
+        data.v(i, j + 1, k) =
+            data.collider.VelocityAt(data.vPos(i, j + 1, k)).y;
+    }
+}
+
+void ConstrainW(size_t i, size_t j, size_t k,
+                const VelocityConstraintData3& data)
+{
+    if (k > 0 && data.marker(i, j, k - 1) == FLUID)
+    {
+        data.w(i, j, k) = data.collider.VelocityAt(data.wPos(i, j, k)).z;
+    }
+
+    if (k < data.size.z - 1 && data.marker(i, j, k + 1) == FLUID)
+    {
+        data.w(i, j, k + 1) =
+            data.collider.VelocityAt(data.wPos(i, j, k + 1)).z;
+    }
+}
+
+void ConstrainVelocityAt(size_t i, size_t j, size_t k,
+                         const VelocityConstraintData3& data)
+{
+    if (data.marker(i, j, k) != COLLIDER)
     {
         return;
     }
 
-    if (i > 0 && marker(i - 1, j, k) == FLUID)
-    {
-        u(i, j, k) = collider.VelocityAt(uPos(i, j, k)).x;
-    }
-
-    if (i < size.x - 1 && marker(i + 1, j, k) == FLUID)
-    {
-        u(i + 1, j, k) = collider.VelocityAt(uPos(i + 1, j, k)).x;
-    }
-
-    if (j > 0 && marker(i, j - 1, k) == FLUID)
-    {
-        v(i, j, k) = collider.VelocityAt(vPos(i, j, k)).y;
-    }
-
-    if (j < size.y - 1 && marker(i, j + 1, k) == FLUID)
-    {
-        v(i, j + 1, k) = collider.VelocityAt(vPos(i, j + 1, k)).y;
-    }
-
-    if (k > 0 && marker(i, j, k - 1) == FLUID)
-    {
-        w(i, j, k) = collider.VelocityAt(wPos(i, j, k)).z;
-    }
-
-    if (k < size.z - 1 && marker(i, j, k + 1) == FLUID)
-    {
-        w(i, j, k + 1) = collider.VelocityAt(wPos(i, j, k + 1)).z;
-    }
+    ConstrainU(i, j, k, data);
+    ConstrainV(i, j, k, data);
+    ConstrainW(i, j, k, data);
 }
+}  // namespace
 
 void GridBlockedBoundaryConditionSolver3::ConstrainVelocity(
     FaceCenteredGrid3* velocity, unsigned int extrapolationDepth)
@@ -73,11 +104,11 @@ void GridBlockedBoundaryConditionSolver3::ConstrainVelocity(
     GridDataPositionFunc<3> uPos = velocity->UPosition();
     GridDataPositionFunc<3> vPos = velocity->VPosition();
     GridDataPositionFunc<3> wPos = velocity->WPosition();
+    const VelocityConstraintData3 data{ m_marker,       size, uPos, vPos, wPos,
+                                        *GetCollider(), u,    v,    w };
 
-    ForEachIndex(m_marker.Size(), [this, &uPos, &u, &size, &vPos, &v, &wPos,
-                                   &w](size_t i, size_t j, size_t k) {
-        ConstrainVelocityAt(i, j, k, m_marker, size, uPos, vPos, wPos,
-                            *GetCollider(), u, v, w);
+    ForEachIndex(m_marker.Size(), [&data](size_t i, size_t j, size_t k) {
+        ConstrainVelocityAt(i, j, k, data);
     });
 }
 
