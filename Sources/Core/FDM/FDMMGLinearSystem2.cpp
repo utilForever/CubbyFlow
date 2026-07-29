@@ -20,6 +20,26 @@ namespace
 constexpr std::array<double, 4> RESTRICTION_KERNEL = { 0.125, 0.375, 0.375,
                                                        0.125 };
 
+struct InterpolationAxis
+{
+    std::array<size_t, 2> indices;
+    std::array<double, 2> weights;
+};
+
+InterpolationAxis GetInterpolationAxis(size_t index, size_t size)
+{
+    const size_t coarseIndex = index / 2;
+
+    if (index % 2 == 0)
+    {
+        return { { index > 1 ? coarseIndex - 1 : coarseIndex, coarseIndex },
+                 { 0.25, 0.75 } };
+    }
+
+    return { { coarseIndex, index + 1 < size ? coarseIndex + 1 : coarseIndex },
+             { 0.75, 0.25 } };
+}
+
 void RestrictRange(const FDMVector2& finer, FDMVector2* coarser,
                    const Vector2UZ& size, size_t iBegin, size_t iEnd,
                    size_t jBegin, size_t jEnd)
@@ -56,27 +76,15 @@ void RestrictRange(const FDMVector2& finer, FDMVector2* coarser,
 void CorrectPoint(const FDMVector2& coarser, FDMVector2* finer,
                   const Vector2UZ& size, size_t i, size_t j)
 {
-    const size_t ci = i / 2;
-    const size_t cj = j / 2;
-    const std::array<size_t, 2> iIndices = {
-        (i % 2 == 0 && i > 1) ? ci - 1 : ci,
-        (i % 2 == 0 || i + 1 >= size.x) ? ci : ci + 1
-    };
-    const std::array<size_t, 2> jIndices = {
-        (j % 2 == 0 && j > 1) ? cj - 1 : cj,
-        (j % 2 == 0 || j + 1 >= size.y) ? cj : cj + 1
-    };
-    const std::array<double, 2> iWeights =
-        (i % 2 == 0) ? std::array{ 0.25, 0.75 } : std::array{ 0.75, 0.25 };
-    const std::array<double, 2> jWeights =
-        (j % 2 == 0) ? std::array{ 0.25, 0.75 } : std::array{ 0.75, 0.25 };
+    const InterpolationAxis xAxis = GetInterpolationAxis(i, size.x);
+    const InterpolationAxis yAxis = GetInterpolationAxis(j, size.y);
 
     for (size_t y = 0; y < 2; ++y)
     {
         for (size_t x = 0; x < 2; ++x)
         {
-            (*finer)(i, j) +=
-                iWeights[x] * jWeights[y] * coarser(iIndices[x], jIndices[y]);
+            (*finer)(i, j) += xAxis.weights[x] * yAxis.weights[y] *
+                              coarser(xAxis.indices[x], yAxis.indices[y]);
         }
     }
 }
