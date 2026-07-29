@@ -16,6 +16,8 @@
 #include <Core/Solver/LevelSet/FMMLevelSetSolver2.hpp>
 #include <Core/Utils/Logging.hpp>
 
+#include <utility>
+
 namespace CubbyFlow
 {
 inline double P(double distance)
@@ -50,6 +52,53 @@ inline double W(const Vector2D& r, const Matrix2x2D& g, double gDet)
 {
     static const double sigma = 4.0 / PI_DOUBLE;
     return sigma * gDet * P((g * r).Length());
+}
+
+inline std::pair<Vector2D, size_t> ComputeMean(
+    const Vector2D& x, double r, const PointKdTreeSearcher2& searcher)
+{
+    Vector2D mean;
+    double weightSum = 0.0;
+    size_t numNeighbors = 0;
+    searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector2D& neighbor) {
+        const double weight = Wij((x - neighbor).Length(), r);
+        weightSum += weight;
+        mean += weight * neighbor;
+        ++numNeighbors;
+    });
+
+    assert(weightSum > 0.0);
+    return { mean / weightSum, numNeighbors };
+}
+
+inline Matrix2x2D ComputeAnisotropy(const Vector2D& x, const Vector2D& mean,
+                                    double r, double h, double invH,
+                                    const PointKdTreeSearcher2& searcher)
+{
+    auto covariance = Matrix2x2D::MakeScaleMatrix(h * h, h * h);
+    double weightSum = 0.0;
+    searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector2D& neighbor) {
+        const double weight = Wij((mean - neighbor).Length(), r);
+        weightSum += weight;
+        covariance += weight * Vvt(neighbor - mean);
+    });
+    covariance /= weightSum;
+
+    Matrix2x2D u;
+    Vector2D singularValues;
+    Matrix2x2D w;
+    SVD(covariance, u, singularValues, w);
+
+    singularValues.x = std::fabs(singularValues.x);
+    singularValues.y = std::fabs(singularValues.y);
+    const double minSingularValue = singularValues.Max() / 4.0;
+    singularValues.x = std::max(singularValues.x, minSingularValue);
+    singularValues.y = std::max(singularValues.y, minSingularValue);
+
+    const Matrix2x2D invSigma =
+        Matrix2x2D::MakeScaleMatrix(1.0 / singularValues);
+    const double scale = std::sqrt(singularValues.x * singularValues.y);
+    return invH * scale * (w * invSigma * u.Transposed());
 }
 
 AnisotropicPointsToImplicit2::AnisotropicPointsToImplicit2(
@@ -107,80 +156,18 @@ void AnisotropicPointsToImplicit2::Convert(
     std::vector<Matrix2x2D> gs(points.Length());
     Array1<Vector2D> xMeans{ points.Length() };
 
-    ParallelFor(
-        ZERO_SIZE, points.Length(),
-        [&points, &meanNeighborSearcher, &r, &xMeans, this, &invH, &gs,
-         &h](size_t i) {
-            const Vector2D& x = points[i];
-
-            // Compute xMean
-            Vector2D xMean;
-            double wSum = 0.0;
-            size_t numNeighbors = 0;
-            const auto getXMean = [&x, &r, &wSum, &xMean, &numNeighbors](
-                                      size_t, const Vector2D& xj) {
-                const double wj = Wij((x - xj).Length(), r);
-                wSum += wj;
-                xMean += wj * xj;
-                ++numNeighbors;
-            };
-            meanNeighborSearcher->ForEachNearbyPoint(x, r, getXMean);
-
-            assert(wSum > 0.0);
-            xMean /= wSum;
-
-            xMeans[i] = Lerp(x, xMean, m_positionSmoothingFactor);
-
-            if (numNeighbors < m_minNumNeighbors)
-            {
-                const Matrix2x2D g = Matrix2x2D::MakeScaleMatrix(invH, invH);
-                gs[i] = g;
-            }
-            else
-            {
-                // Compute covariance matrix
-                // We start with small scale matrix (h*h) in order to
-                // prevent zero covariance matrix when points are all
-                // perfectly lined up.
-                auto cov = Matrix2x2D::MakeScaleMatrix(h * h, h * h);
-                wSum = 0.0;
-                const auto getCov = [&xMean, &r, &wSum, &cov](
-                                        size_t, const Vector2D& xj) {
-                    const double wj = Wij((xMean - xj).Length(), r);
-                    wSum += wj;
-                    cov += wj * Vvt(xj - xMean);
-                };
-                meanNeighborSearcher->ForEachNearbyPoint(x, r, getCov);
-
-                cov /= wSum;
-
-                // SVD
-                Matrix2x2D u;
-                Vector2D v;
-                Matrix2x2D w;
-                SVD(cov, u, v, w);
-
-                // Take off the sign
-                v.x = std::fabs(v.x);
-                v.y = std::fabs(v.y);
-
-                // Constrain Sigma
-                const double maxSingularVal = v.Max();
-                const double kr = 4.0;
-                v.x = std::max(v.x, maxSingularVal / kr);
-                v.y = std::max(v.y, maxSingularVal / kr);
-
-                const Matrix2x2D invSigma =
-                    Matrix2x2D::MakeScaleMatrix(1.0 / v);
-
-                // Compute G
-                // Area preservation
-                const double scale = std::sqrt(v.x * v.y);
-                const Matrix2x2D g =
-                    invH * scale * (w * invSigma * u.Transposed());
-                gs[i] = g;
-            }
-        });
+    ParallelFor(ZERO_SIZE, points.Length(),
+                [&points, &meanNeighborSearcher, &r, &xMeans, this, &invH, &gs,
+                 &h](size_t i) {
+                    const Vector2D& x = points[i];
+                    const auto [xMean, numNeighbors] =
+                        ComputeMean(x, r, *meanNeighborSearcher);
+                    xMeans[i] = Lerp(x, xMean, m_positionSmoothingFactor);
+                    gs[i] = numNeighbors < m_minNumNeighbors
+                                ? Matrix2x2D::MakeScaleMatrix(invH, invH)
+                                : ComputeAnisotropy(x, xMean, r, h, invH,
+                                                    *meanNeighborSearcher);
+                });
 
     CUBBYFLOW_INFO << "Computed G and means.";
 

@@ -21,6 +21,12 @@ namespace CubbyFlow
 {
 static const size_t DEFAULT_HASH_GRID_RESOLUTION = 64;
 
+static Vector3D Jitter(const Vector3D& point, double maxDistance, double u1,
+                       double u2)
+{
+    return point + maxDistance * UniformSampleSphere(u1, u2);
+}
+
 VolumeParticleEmitter3::VolumeParticleEmitter3(
     ImplicitSurface3Ptr implicitSurface, BoundingBox3D maxRegion,
     double spacing, const Vector3D& initialVel, const Vector3D& linearVel,
@@ -102,25 +108,20 @@ void VolumeParticleEmitter3::Emit(const ParticleSystemData3Ptr& particles,
             region, m_spacing,
             [this, &maxJitterDist, &newPositions,
              &numNewParticles](const Vector3D& point) {
-                const Vector3D randomDir =
-                    UniformSampleSphere(Random(), Random());
-                const Vector3D offset = maxJitterDist * randomDir;
-                const Vector3D candidate = point + offset;
+                const Vector3D candidate =
+                    Jitter(point, maxJitterDist, Random(), Random());
 
-                if (m_implicitSurface->SignedDistance(candidate) <= 0.0)
+                if (m_implicitSurface->SignedDistance(candidate) > 0.0)
                 {
-                    if (m_numberOfEmittedParticles < m_maxNumberOfParticles)
-                    {
-                        newPositions->Append(candidate);
-                        ++m_numberOfEmittedParticles;
-                        ++numNewParticles;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return true;
                 }
-
+                if (m_numberOfEmittedParticles >= m_maxNumberOfParticles)
+                {
+                    return false;
+                }
+                newPositions->Append(candidate);
+                ++m_numberOfEmittedParticles;
+                ++numNewParticles;
                 return true;
             });
     }
@@ -142,28 +143,22 @@ void VolumeParticleEmitter3::Emit(const ParticleSystemData3Ptr& particles,
             region, m_spacing,
             [this, &maxJitterDist, &neighborSearcher, &newPositions,
              &numNewParticles](const Vector3D& point) {
-                const Vector3D randomDir =
-                    UniformSampleSphere(Random(), Random());
-                const Vector3D offset = maxJitterDist * randomDir;
-                const Vector3D candidate = point + offset;
+                const Vector3D candidate =
+                    Jitter(point, maxJitterDist, Random(), Random());
 
-                if (m_implicitSurface->IsInside(candidate) &&
-                    (!m_allowOverlapping &&
-                     !neighborSearcher.HasNearbyPoint(candidate, m_spacing)))
+                if (!m_implicitSurface->IsInside(candidate) ||
+                    neighborSearcher.HasNearbyPoint(candidate, m_spacing))
                 {
-                    if (m_numberOfEmittedParticles < m_maxNumberOfParticles)
-                    {
-                        newPositions->Append(candidate);
-                        neighborSearcher.Add(candidate);
-                        ++m_numberOfEmittedParticles;
-                        ++numNewParticles;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return true;
                 }
-
+                if (m_numberOfEmittedParticles >= m_maxNumberOfParticles)
+                {
+                    return false;
+                }
+                newPositions->Append(candidate);
+                neighborSearcher.Add(candidate);
+                ++m_numberOfEmittedParticles;
+                ++numNewParticles;
                 return true;
             });
     }

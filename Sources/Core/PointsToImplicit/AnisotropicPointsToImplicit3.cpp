@@ -16,6 +16,8 @@
 #include <Core/Solver/LevelSet/FMMLevelSetSolver3.hpp>
 #include <Core/Utils/Logging.hpp>
 
+#include <utility>
+
 namespace CubbyFlow
 {
 inline double P(double distance)
@@ -51,6 +53,56 @@ inline double W(const Vector3D& r, const Matrix3x3D& g, double gDet)
 {
     static const double sigma = 315.0 / (64 * PI_DOUBLE);
     return sigma * gDet * P((g * r).Length());
+}
+
+inline std::pair<Vector3D, size_t> ComputeMean(
+    const Vector3D& x, double r, const PointKdTreeSearcher3& searcher)
+{
+    Vector3D mean;
+    double weightSum = 0.0;
+    size_t numNeighbors = 0;
+    searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector3D& neighbor) {
+        const double weight = Wij((x - neighbor).Length(), r);
+        weightSum += weight;
+        mean += weight * neighbor;
+        ++numNeighbors;
+    });
+
+    assert(weightSum > 0.0);
+    return { mean / weightSum, numNeighbors };
+}
+
+inline Matrix3x3D ComputeAnisotropy(const Vector3D& x, const Vector3D& mean,
+                                    double r, double h, double invH,
+                                    const PointKdTreeSearcher3& searcher)
+{
+    auto covariance = Matrix3x3D::MakeScaleMatrix(h * h, h * h, h * h);
+    double weightSum = 0.0;
+    searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector3D& neighbor) {
+        const double weight = Wij((mean - neighbor).Length(), r);
+        weightSum += weight;
+        covariance += weight * Vvt(neighbor - mean);
+    });
+    covariance /= weightSum;
+
+    Matrix3x3D u;
+    Vector3D singularValues;
+    Matrix3x3D w;
+    SVD(covariance, u, singularValues, w);
+
+    singularValues.x = std::fabs(singularValues.x);
+    singularValues.y = std::fabs(singularValues.y);
+    singularValues.z = std::fabs(singularValues.z);
+    const double minSingularValue = singularValues.Max() / 4.0;
+    singularValues.x = std::max(singularValues.x, minSingularValue);
+    singularValues.y = std::max(singularValues.y, minSingularValue);
+    singularValues.z = std::max(singularValues.z, minSingularValue);
+
+    const Matrix3x3D invSigma =
+        Matrix3x3D::MakeScaleMatrix(1.0 / singularValues);
+    const double scale = std::pow(
+        singularValues.x * singularValues.y * singularValues.z, 1.0 / 3.0);
+    return invH * scale * (w * invSigma * u.Transposed());
 }
 
 AnisotropicPointsToImplicit3::AnisotropicPointsToImplicit3(
@@ -108,84 +160,18 @@ void AnisotropicPointsToImplicit3::Convert(
     std::vector<Matrix3x3D> gs(points.Length());
     Array1<Vector3D> xMeans{ points.Length() };
 
-    ParallelFor(
-        ZERO_SIZE, points.Length(),
-        [&points, &meanNeighborSearcher, &r, &xMeans, this, &invH, &gs,
-         &h](size_t i) {
-            const Vector3D& x = points[i];
-
-            // Compute xMean
-            Vector3D xMean;
-            double wSum = 0.0;
-            size_t numNeighbors = 0;
-            const auto getXMean = [&x, &r, &wSum, &xMean, &numNeighbors](
-                                      size_t, const Vector3D& xj) {
-                const double wj = Wij((x - xj).Length(), r);
-                wSum += wj;
-                xMean += wj * xj;
-                ++numNeighbors;
-            };
-            meanNeighborSearcher->ForEachNearbyPoint(x, r, getXMean);
-
-            assert(wSum > 0.0);
-            xMean /= wSum;
-
-            xMeans[i] = Lerp(x, xMean, m_positionSmoothingFactor);
-
-            if (numNeighbors < m_minNumNeighbors)
-            {
-                const Matrix3x3D g =
-                    Matrix3x3D::MakeScaleMatrix(invH, invH, invH);
-                gs[i] = g;
-            }
-            else
-            {
-                // Compute covariance matrix
-                // We start with small scale matrix (h*h) in order to
-                // prevent zero covariance matrix when points are all
-                // perfectly lined up.
-                Matrix3x3D cov =
-                    Matrix3x3D::MakeScaleMatrix(h * h, h * h, h * h);
-                wSum = 0.0;
-                const auto getCov = [&xMean, &r, &wSum, &cov](
-                                        size_t, const Vector3D& xj) {
-                    const double wj = Wij((xMean - xj).Length(), r);
-                    wSum += wj;
-                    cov += wj * Vvt(xj - xMean);
-                };
-                meanNeighborSearcher->ForEachNearbyPoint(x, r, getCov);
-
-                cov /= wSum;
-
-                // SVD
-                Matrix3x3D u;
-                Vector3D v;
-                Matrix3x3D w;
-                SVD(cov, u, v, w);
-
-                // Take off the sign
-                v.x = std::fabs(v.x);
-                v.y = std::fabs(v.y);
-                v.z = std::fabs(v.z);
-
-                // Constrain Sigma
-                const double maxSingularVal = v.Max();
-                const double kr = 4.0;
-                v.x = std::max(v.x, maxSingularVal / kr);
-                v.y = std::max(v.y, maxSingularVal / kr);
-                v.z = std::max(v.z, maxSingularVal / kr);
-
-                const Matrix3x3D invSigma =
-                    Matrix3x3D::MakeScaleMatrix(1.0 / v);
-
-                // Compute G
-                // Volume preservation
-                const double scale = std::pow(v.x * v.y * v.z, 1.0 / 3.0);
-                const Matrix3x3D g =
-                    invH * scale * (w * invSigma * u.Transposed());
-                gs[i] = g;
-            }
-        });
+    ParallelFor(ZERO_SIZE, points.Length(),
+                [&points, &meanNeighborSearcher, &r, &xMeans, this, &invH, &gs,
+                 &h](size_t i) {
+                    const Vector3D& x = points[i];
+                    const auto [xMean, numNeighbors] =
+                        ComputeMean(x, r, *meanNeighborSearcher);
+                    xMeans[i] = Lerp(x, xMean, m_positionSmoothingFactor);
+                    gs[i] = numNeighbors < m_minNumNeighbors
+                                ? Matrix3x3D::MakeScaleMatrix(invH, invH, invH)
+                                : ComputeAnisotropy(x, xMean, r, h, invH,
+                                                    *meanNeighborSearcher);
+                });
 
     CUBBYFLOW_INFO << "Computed G and means.";
 
