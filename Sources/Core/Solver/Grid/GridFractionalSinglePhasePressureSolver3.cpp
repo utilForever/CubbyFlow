@@ -195,113 +195,165 @@ struct PressureRow3
 };
 
 template <typename BoundaryVelocityFunc>
+struct PressureRowData3
+{
+    const Vector3UZ& size;
+    const Vector3D& invH;
+    const Vector3D& invHSqr;
+    const Array3<double>& fluidSDF;
+    const Array3<double>& uWeights;
+    const Array3<double>& vWeights;
+    const Array3<double>& wWeights;
+    const GridDataPositionFunc<3>& uPos;
+    const GridDataPositionFunc<3>& vPos;
+    const GridDataPositionFunc<3>& wPos;
+    const BoundaryVelocityFunc& boundaryVel;
+    const FaceCenteredGrid3& input;
+};
+
+void AddCoefficient(double centerPhi, double neighborPhi, double term,
+                    size_t direction, PressureRow3* row)
+{
+    if (IsInsideSDF(neighborPhi))
+    {
+        row->center += term;
+        row->offDiagonal[direction] = -term;
+        row->coupled[direction] = true;
+    }
+    else
+    {
+        const double theta =
+            std::max(FractionInsideSDF(centerPhi, neighborPhi), 0.01);
+        row->center += term / theta;
+    }
+}
+
+template <typename BoundaryVelocityFunc>
+void AddXTerms(size_t i, size_t j, size_t k, double centerPhi,
+               const PressureRowData3<BoundaryVelocityFunc>& data,
+               PressureRow3* row)
+{
+    if (i + 1 < data.size.x)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i + 1, j, k),
+                       data.uWeights(i + 1, j, k) * data.invHSqr.x, 0, row);
+        row->rhs += data.uWeights(i + 1, j, k) * data.input.U(i + 1, j, k) *
+                    data.invH.x;
+    }
+    else
+    {
+        row->rhs += data.input.U(i + 1, j, k) * data.invH.x;
+    }
+
+    if (i > 0)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i - 1, j, k),
+                       data.uWeights(i, j, k) * data.invHSqr.x, 1, row);
+        row->rhs -=
+            data.uWeights(i, j, k) * data.input.U(i, j, k) * data.invH.x;
+    }
+    else
+    {
+        row->rhs -= data.input.U(i, j, k) * data.invH.x;
+    }
+}
+
+template <typename BoundaryVelocityFunc>
+void AddYTerms(size_t i, size_t j, size_t k, double centerPhi,
+               const PressureRowData3<BoundaryVelocityFunc>& data,
+               PressureRow3* row)
+{
+    if (j + 1 < data.size.y)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i, j + 1, k),
+                       data.vWeights(i, j + 1, k) * data.invHSqr.y, 2, row);
+        row->rhs += data.vWeights(i, j + 1, k) * data.input.V(i, j + 1, k) *
+                    data.invH.y;
+    }
+    else
+    {
+        row->rhs += data.input.V(i, j + 1, k) * data.invH.y;
+    }
+
+    if (j > 0)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i, j - 1, k),
+                       data.vWeights(i, j, k) * data.invHSqr.y, 3, row);
+        row->rhs -=
+            data.vWeights(i, j, k) * data.input.V(i, j, k) * data.invH.y;
+    }
+    else
+    {
+        row->rhs -= data.input.V(i, j, k) * data.invH.y;
+    }
+}
+
+template <typename BoundaryVelocityFunc>
+void AddZTerms(size_t i, size_t j, size_t k, double centerPhi,
+               const PressureRowData3<BoundaryVelocityFunc>& data,
+               PressureRow3* row)
+{
+    if (k + 1 < data.size.z)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i, j, k + 1),
+                       data.wWeights(i, j, k + 1) * data.invHSqr.z, 4, row);
+        row->rhs += data.wWeights(i, j, k + 1) * data.input.W(i, j, k + 1) *
+                    data.invH.z;
+    }
+    else
+    {
+        row->rhs += data.input.W(i, j, k + 1) * data.invH.z;
+    }
+
+    if (k > 0)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i, j, k - 1),
+                       data.wWeights(i, j, k) * data.invHSqr.z, 5, row);
+        row->rhs -=
+            data.wWeights(i, j, k) * data.input.W(i, j, k) * data.invH.z;
+    }
+    else
+    {
+        row->rhs -= data.input.W(i, j, k) * data.invH.z;
+    }
+}
+
+template <typename BoundaryVelocityFunc>
+void AddBoundaryVelocity(size_t i, size_t j, size_t k,
+                         const PressureRowData3<BoundaryVelocityFunc>& data,
+                         PressureRow3* row)
+{
+    row->rhs += (1.0 - data.uWeights(i + 1, j, k)) *
+                    data.boundaryVel(data.uPos(i + 1, j, k)).x * data.invH.x -
+                (1.0 - data.uWeights(i, j, k)) *
+                    data.boundaryVel(data.uPos(i, j, k)).x * data.invH.x +
+                (1.0 - data.vWeights(i, j + 1, k)) *
+                    data.boundaryVel(data.vPos(i, j + 1, k)).y * data.invH.y -
+                (1.0 - data.vWeights(i, j, k)) *
+                    data.boundaryVel(data.vPos(i, j, k)).y * data.invH.y +
+                (1.0 - data.wWeights(i, j, k + 1)) *
+                    data.boundaryVel(data.wPos(i, j, k + 1)).z * data.invH.z -
+                (1.0 - data.wWeights(i, j, k)) *
+                    data.boundaryVel(data.wPos(i, j, k)).z * data.invH.z;
+}
+
+template <typename BoundaryVelocityFunc>
 PressureRow3 BuildPressureRow(
-    size_t i, size_t j, size_t k, const Vector3UZ& size, const Vector3D& invH,
-    const Vector3D& invHSqr, const Array3<double>& fluidSDF,
-    const Array3<double>& uWeights, const Array3<double>& vWeights,
-    const Array3<double>& wWeights, const GridDataPositionFunc<3>& uPos,
-    const GridDataPositionFunc<3>& vPos, const GridDataPositionFunc<3>& wPos,
-    const BoundaryVelocityFunc& boundaryVel, const FaceCenteredGrid3& input)
+    size_t i, size_t j, size_t k,
+    const PressureRowData3<BoundaryVelocityFunc>& data)
 {
     PressureRow3 row;
-    const double centerPhi = fluidSDF(i, j, k);
-
+    const double centerPhi = data.fluidSDF(i, j, k);
     if (!IsInsideSDF(centerPhi))
     {
         row.center = 1.0;
         return row;
     }
 
-    const auto addCoefficient = [&](double neighborPhi, double term,
-                                    size_t direction) {
-        if (IsInsideSDF(neighborPhi))
-        {
-            row.center += term;
-            row.offDiagonal[direction] = -term;
-            row.coupled[direction] = true;
-        }
-        else
-        {
-            const double theta =
-                std::max(FractionInsideSDF(centerPhi, neighborPhi), 0.01);
-            row.center += term / theta;
-        }
-    };
-
-    if (i + 1 < size.x)
-    {
-        addCoefficient(fluidSDF(i + 1, j, k), uWeights(i + 1, j, k) * invHSqr.x,
-                       0);
-        row.rhs += uWeights(i + 1, j, k) * input.U(i + 1, j, k) * invH.x;
-    }
-    else
-    {
-        row.rhs += input.U(i + 1, j, k) * invH.x;
-    }
-
-    if (i > 0)
-    {
-        addCoefficient(fluidSDF(i - 1, j, k), uWeights(i, j, k) * invHSqr.x, 1);
-        row.rhs -= uWeights(i, j, k) * input.U(i, j, k) * invH.x;
-    }
-    else
-    {
-        row.rhs -= input.U(i, j, k) * invH.x;
-    }
-
-    if (j + 1 < size.y)
-    {
-        addCoefficient(fluidSDF(i, j + 1, k), vWeights(i, j + 1, k) * invHSqr.y,
-                       2);
-        row.rhs += vWeights(i, j + 1, k) * input.V(i, j + 1, k) * invH.y;
-    }
-    else
-    {
-        row.rhs += input.V(i, j + 1, k) * invH.y;
-    }
-
-    if (j > 0)
-    {
-        addCoefficient(fluidSDF(i, j - 1, k), vWeights(i, j, k) * invHSqr.y, 3);
-        row.rhs -= vWeights(i, j, k) * input.V(i, j, k) * invH.y;
-    }
-    else
-    {
-        row.rhs -= input.V(i, j, k) * invH.y;
-    }
-
-    if (k + 1 < size.z)
-    {
-        addCoefficient(fluidSDF(i, j, k + 1), wWeights(i, j, k + 1) * invHSqr.z,
-                       4);
-        row.rhs += wWeights(i, j, k + 1) * input.W(i, j, k + 1) * invH.z;
-    }
-    else
-    {
-        row.rhs += input.W(i, j, k + 1) * invH.z;
-    }
-
-    if (k > 0)
-    {
-        addCoefficient(fluidSDF(i, j, k - 1), wWeights(i, j, k) * invHSqr.z, 5);
-        row.rhs -= wWeights(i, j, k) * input.W(i, j, k) * invH.z;
-    }
-    else
-    {
-        row.rhs -= input.W(i, j, k) * invH.z;
-    }
-
-    row.rhs +=
-        (1.0 - uWeights(i + 1, j, k)) * boundaryVel(uPos(i + 1, j, k)).x *
-            invH.x -
-        (1.0 - uWeights(i, j, k)) * boundaryVel(uPos(i, j, k)).x * invH.x +
-        (1.0 - vWeights(i, j + 1, k)) * boundaryVel(vPos(i, j + 1, k)).y *
-            invH.y -
-        (1.0 - vWeights(i, j, k)) * boundaryVel(vPos(i, j, k)).y * invH.y +
-        (1.0 - wWeights(i, j, k + 1)) * boundaryVel(wPos(i, j, k + 1)).z *
-            invH.z -
-        (1.0 - wWeights(i, j, k)) * boundaryVel(wPos(i, j, k)).z * invH.z;
-
+    AddXTerms(i, j, k, centerPhi, data, &row);
+    AddYTerms(i, j, k, centerPhi, data, &row);
+    AddZTerms(i, j, k, centerPhi, data, &row);
+    AddBoundaryVelocity(i, j, k, data, &row);
     if (row.center < std::numeric_limits<double>::epsilon())
     {
         row.center = 1.0;
@@ -326,16 +378,18 @@ void AppendCompressedRow(
         return;
     }
 
-    const PressureRow3 data = BuildPressureRow(
-        i, j, k, size, invH, invHSqr, fluidSDF, uWeights, vWeights, wWeights,
-        uPos, vPos, wPos, boundaryVel, input);
-    std::vector<double> row{ data.center };
+    const PressureRowData3<BoundaryVelocityFunc> rowData{
+        size,     invH, invHSqr, fluidSDF, uWeights,    vWeights,
+        wWeights, uPos, vPos,    wPos,     boundaryVel, input
+    };
+    const PressureRow3 pressureRow = BuildPressureRow(i, j, k, rowData);
+    std::vector<double> row{ pressureRow.center };
     std::vector<size_t> columns{ coordToIndex(i, j, k) };
 
     const auto addColumn = [&](size_t direction, size_t x, size_t y, size_t z) {
-        if (data.coupled[direction])
+        if (pressureRow.coupled[direction])
         {
-            row.push_back(data.offDiagonal[direction]);
+            row.push_back(pressureRow.offDiagonal[direction]);
             columns.push_back(coordToIndex(x, y, z));
         }
     };
@@ -347,7 +401,7 @@ void AppendCompressedRow(
     addColumn(4, i, j, k + 1);
     addColumn(5, i, j, k - 1);
     A->AddRow(row, columns);
-    b->AddElement(data.rhs);
+    b->AddElement(pressureRow.rhs);
 }
 
 template <typename BoundaryVelocityFunc>
@@ -366,15 +420,15 @@ void BuildSingleSystem(FDMMatrix3* A, FDMVector3* b,
 
     const Vector3D invH = 1.0 / input.GridSpacing();
     const Vector3D invHSqr = ElemMul(invH, invH);
+    const PressureRowData3<BoundaryVelocityFunc> rowData{
+        size,     invH, invHSqr, fluidSDF, uWeights,    vWeights,
+        wWeights, uPos, vPos,    wPos,     boundaryVel, input
+    };
 
     // Build linear system
     ParallelForEachIndex(
-        A->Size(), [&A, &b, &fluidSDF, &size, &uWeights, &invHSqr, &input,
-                    &invH, &vWeights, &wWeights, &boundaryVel, &uPos, &vPos,
-                    &wPos](size_t i, size_t j, size_t k) {
-            const PressureRow3 data = BuildPressureRow(
-                i, j, k, size, invH, invHSqr, fluidSDF, uWeights, vWeights,
-                wWeights, uPos, vPos, wPos, boundaryVel, input);
+        A->Size(), [&A, &b, &rowData](size_t i, size_t j, size_t k) {
+            const PressureRow3 data = BuildPressureRow(i, j, k, rowData);
             FDMMatrixRow3& row = (*A)(i, j, k);
             row.center = data.center;
             row.right = data.offDiagonal[0];
