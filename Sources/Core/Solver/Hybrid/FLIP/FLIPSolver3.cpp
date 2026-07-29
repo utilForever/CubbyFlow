@@ -50,11 +50,11 @@ void FLIPSolver3::TransferFromParticlesToGrids()
     m_wDelta.Resize(w.Size());
 
     vel->ParallelForEachUIndex(
-        [&](const Vector3UZ& idx) { m_uDelta(idx) = u(idx); });
+        [this, &u](const Vector3UZ& idx) { m_uDelta(idx) = u(idx); });
     vel->ParallelForEachVIndex(
-        [&](const Vector3UZ& idx) { m_vDelta(idx) = v(idx); });
+        [this, &v](const Vector3UZ& idx) { m_vDelta(idx) = v(idx); });
     vel->ParallelForEachWIndex(
-        [&](const Vector3UZ& idx) { m_wDelta(idx) = w(idx); });
+        [this, &w](const Vector3UZ& idx) { m_wDelta(idx) = w(idx); });
 }
 
 void FLIPSolver3::TransferFromGridsToParticles()
@@ -68,15 +68,15 @@ void FLIPSolver3::TransferFromGridsToParticles()
         GetParticleSystemData()->NumberOfParticles();
 
     // Compute delta
-    flow->ParallelForEachUIndex([&](const Vector3UZ& idx) {
+    flow->ParallelForEachUIndex([this, &flow](const Vector3UZ& idx) {
         m_uDelta(idx) = flow->U(idx) - m_uDelta(idx);
     });
 
-    flow->ParallelForEachVIndex([&](const Vector3UZ& idx) {
+    flow->ParallelForEachVIndex([this, &flow](const Vector3UZ& idx) {
         m_vDelta(idx) = flow->V(idx) - m_vDelta(idx);
     });
 
-    flow->ParallelForEachWIndex([&](const Vector3UZ& idx) {
+    flow->ParallelForEachWIndex([this, &flow](const Vector3UZ& idx) {
         m_wDelta(idx) = flow->W(idx) - m_wDelta(idx);
     });
 
@@ -99,17 +99,18 @@ void FLIPSolver3::TransferFromGridsToParticles()
     };
 
     // Transfer delta to the particles
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        Vector3D flipVel = velocities[i] + sampler(positions[i]);
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&velocities, &sampler, &positions, this, &flow](size_t i) {
+                    Vector3D flipVel = velocities[i] + sampler(positions[i]);
 
-        if (m_picBlendingFactor > 0.0)
-        {
-            const Vector3D picVel = flow->Sample(positions[i]);
-            flipVel = Lerp(flipVel, picVel, m_picBlendingFactor);
-        }
+                    if (m_picBlendingFactor > 0.0)
+                    {
+                        const Vector3D picVel = flow->Sample(positions[i]);
+                        flipVel = Lerp(flipVel, picVel, m_picBlendingFactor);
+                    }
 
-        velocities[i] = flipVel;
-    });
+                    velocities[i] = flipVel;
+                });
 }
 
 FLIPSolver3::Builder FLIPSolver3::GetBuilder()

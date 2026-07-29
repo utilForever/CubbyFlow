@@ -37,12 +37,7 @@ Surface<N>::Surface(Surface&& other) noexcept
 }
 
 template <size_t N>
-Surface<N>& Surface<N>::operator=(const Surface& other)
-{
-    transform = other.transform;
-    isNormalFlipped = other.isNormalFlipped;
-    return *this;
-}
+Surface<N>& Surface<N>::operator=(const Surface& other) = default;
 
 template <size_t N>
 Surface<N>& Surface<N>::operator=(Surface&& other) noexcept

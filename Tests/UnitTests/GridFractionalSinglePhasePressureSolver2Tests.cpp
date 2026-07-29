@@ -33,7 +33,7 @@ TEST(GridFractionalSinglePhasePressureSolver2, SolveFreeSurface)
         }
     }
 
-    fluidSDF.Fill([&](const Vector2D& x) { return x.y - 2.0; });
+    fluidSDF.Fill([](const Vector2D& x) { return x.y - 2.0; });
 
     GridFractionalSinglePhasePressureSolver2 solver;
     solver.Solve(vel, 1.0, &vel,
@@ -93,7 +93,7 @@ TEST(GridFractionalSinglePhasePressureSolver2, SolveFreeSurfaceCompressed)
         }
     }
 
-    fluidSDF.Fill([&](const Vector2D& x) { return x.y - 2.0; });
+    fluidSDF.Fill([](const Vector2D& x) { return x.y - 2.0; });
 
     GridFractionalSinglePhasePressureSolver2 solver;
     solver.Solve(vel, 1.0, &vel,
@@ -153,7 +153,7 @@ TEST(GridFractionalSinglePhasePressureSolver2, SolveFreeSurfaceMG)
         }
     }
 
-    fluidSDF.Fill([&](const Vector2D& x) { return x.y - 16.0; });
+    fluidSDF.Fill([](const Vector2D& x) { return x.y - 16.0; });
 
     GridFractionalSinglePhasePressureSolver2 solver;
     solver.SetLinearSystemSolver(

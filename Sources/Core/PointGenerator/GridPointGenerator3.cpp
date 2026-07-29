@@ -20,24 +20,22 @@ void GridPointGenerator3::ForEachPoint(
     const double boxWidth = boundingBox.Width();
     const double boxHeight = boundingBox.Height();
     const double boxDepth = boundingBox.Depth();
-    bool shouldQuit = false;
 
-    for (int k = 0; k * spacing <= boxDepth && !shouldQuit; ++k)
+    for (int k = 0; k * spacing <= boxDepth; ++k)
     {
         position.z = k * spacing + boundingBox.lowerCorner.z;
 
-        for (int j = 0; j * spacing <= boxHeight && !shouldQuit; ++j)
+        for (int j = 0; j * spacing <= boxHeight; ++j)
         {
             position.y = j * spacing + boundingBox.lowerCorner.y;
 
-            for (int i = 0; i * spacing <= boxWidth && !shouldQuit; ++i)
+            for (int i = 0; i * spacing <= boxWidth; ++i)
             {
                 position.x = i * spacing + boundingBox.lowerCorner.x;
 
                 if (!callback(position))
                 {
-                    shouldQuit = true;
-                    break;
+                    return;
                 }
             }
         }

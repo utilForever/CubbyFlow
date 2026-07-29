@@ -24,19 +24,11 @@
 
 namespace CubbyFlow
 {
-std::unordered_map<std::string, ScalarGridBuilder2Ptr> sScalarGrid2Builders;
-std::unordered_map<std::string, ScalarGridBuilder3Ptr> sScalarGrid3Builders;
-
-std::unordered_map<std::string, VectorGridBuilder2Ptr> sVectorGrid2Builders;
-std::unordered_map<std::string, VectorGridBuilder3Ptr> sVectorGrid3Builders;
-
-std::unordered_map<std::string, PointNeighborSearcherBuilder2Ptr>
-    sPointNeighborSearcher2Builders;
-std::unordered_map<std::string, PointNeighborSearcherBuilder3Ptr>
-    sPointNeighborSearcher3Builders;
+namespace
+{
 
 #define REGISTER_BUILDER(map, ClassName) \
-    map.emplace(#ClassName, std::make_shared<ClassName::Builder>());
+    map.emplace(#ClassName, std::make_shared<ClassName::Builder>())
 
 #define REGISTER_SCALAR_GRID2_BUILDER(ClassName) \
     REGISTER_BUILDER(sScalarGrid2Builders, ClassName)
@@ -58,43 +50,57 @@ class Registry
  public:
     Registry()
     {
-        REGISTER_SCALAR_GRID2_BUILDER(CellCenteredScalarGrid2)
-        REGISTER_SCALAR_GRID3_BUILDER(CellCenteredScalarGrid3)
+        REGISTER_SCALAR_GRID2_BUILDER(CellCenteredScalarGrid2);
+        REGISTER_SCALAR_GRID3_BUILDER(CellCenteredScalarGrid3);
 
-        REGISTER_VECTOR_GRID2_BUILDER(CellCenteredVectorGrid2)
-        REGISTER_VECTOR_GRID3_BUILDER(CellCenteredVectorGrid3)
+        REGISTER_VECTOR_GRID2_BUILDER(CellCenteredVectorGrid2);
+        REGISTER_VECTOR_GRID3_BUILDER(CellCenteredVectorGrid3);
 
-        REGISTER_VECTOR_GRID2_BUILDER(FaceCenteredGrid2)
-        REGISTER_VECTOR_GRID3_BUILDER(FaceCenteredGrid3)
+        REGISTER_VECTOR_GRID2_BUILDER(FaceCenteredGrid2);
+        REGISTER_VECTOR_GRID3_BUILDER(FaceCenteredGrid3);
 
-        REGISTER_SCALAR_GRID2_BUILDER(VertexCenteredScalarGrid2)
-        REGISTER_SCALAR_GRID3_BUILDER(VertexCenteredScalarGrid3)
+        REGISTER_SCALAR_GRID2_BUILDER(VertexCenteredScalarGrid2);
+        REGISTER_SCALAR_GRID3_BUILDER(VertexCenteredScalarGrid3);
 
-        REGISTER_VECTOR_GRID2_BUILDER(VertexCenteredVectorGrid2)
-        REGISTER_VECTOR_GRID3_BUILDER(VertexCenteredVectorGrid3)
+        REGISTER_VECTOR_GRID2_BUILDER(VertexCenteredVectorGrid2);
+        REGISTER_VECTOR_GRID3_BUILDER(VertexCenteredVectorGrid3);
 
-        REGISTER_POINT_NEIGHBOR_SEARCHER2_BUILDER(PointHashGridSearcher2)
-        REGISTER_POINT_NEIGHBOR_SEARCHER3_BUILDER(PointHashGridSearcher3)
+        REGISTER_POINT_NEIGHBOR_SEARCHER2_BUILDER(PointHashGridSearcher2);
+        REGISTER_POINT_NEIGHBOR_SEARCHER3_BUILDER(PointHashGridSearcher3);
 
         REGISTER_POINT_NEIGHBOR_SEARCHER2_BUILDER(
-            PointParallelHashGridSearcher2)
+            PointParallelHashGridSearcher2);
         REGISTER_POINT_NEIGHBOR_SEARCHER3_BUILDER(
-            PointParallelHashGridSearcher3)
+            PointParallelHashGridSearcher3);
 
-        REGISTER_POINT_NEIGHBOR_SEARCHER2_BUILDER(PointSimpleListSearcher2)
-        REGISTER_POINT_NEIGHBOR_SEARCHER3_BUILDER(PointSimpleListSearcher3)
+        REGISTER_POINT_NEIGHBOR_SEARCHER2_BUILDER(PointSimpleListSearcher2);
+        REGISTER_POINT_NEIGHBOR_SEARCHER3_BUILDER(PointSimpleListSearcher3);
 
-        REGISTER_POINT_NEIGHBOR_SEARCHER2_BUILDER(PointKdTreeSearcher2)
-        REGISTER_POINT_NEIGHBOR_SEARCHER3_BUILDER(PointKdTreeSearcher3)
+        REGISTER_POINT_NEIGHBOR_SEARCHER2_BUILDER(PointKdTreeSearcher2);
+        REGISTER_POINT_NEIGHBOR_SEARCHER3_BUILDER(PointKdTreeSearcher3);
     }
+
+    std::unordered_map<std::string, ScalarGridBuilder2Ptr> sScalarGrid2Builders;
+    std::unordered_map<std::string, ScalarGridBuilder3Ptr> sScalarGrid3Builders;
+    std::unordered_map<std::string, VectorGridBuilder2Ptr> sVectorGrid2Builders;
+    std::unordered_map<std::string, VectorGridBuilder3Ptr> sVectorGrid3Builders;
+    std::unordered_map<std::string, PointNeighborSearcherBuilder2Ptr>
+        sPointNeighborSearcher2Builders;
+    std::unordered_map<std::string, PointNeighborSearcherBuilder3Ptr>
+        sPointNeighborSearcher3Builders;
 };
 
-static Registry sRegistry;
+const Registry& GetRegistry()
+{
+    static const Registry registry;
+    return registry;
+}
+}  // namespace
 
 ScalarGrid2Ptr Factory::BuildScalarGrid2(const std::string& name)
 {
-    const auto result = sScalarGrid2Builders.find(name);
-    if (result != sScalarGrid2Builders.end())
+    const auto& builders = GetRegistry().sScalarGrid2Builders;
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0 }, { 1, 1 }, { 0, 0 }, 0.0);
@@ -105,8 +111,8 @@ ScalarGrid2Ptr Factory::BuildScalarGrid2(const std::string& name)
 
 ScalarGrid3Ptr Factory::BuildScalarGrid3(const std::string& name)
 {
-    const auto result = sScalarGrid3Builders.find(name);
-    if (result != sScalarGrid3Builders.end())
+    const auto& builders = GetRegistry().sScalarGrid3Builders;
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0, 0 }, { 1, 1, 1 }, { 0, 0, 0 }, 0.0);
@@ -117,8 +123,8 @@ ScalarGrid3Ptr Factory::BuildScalarGrid3(const std::string& name)
 
 VectorGrid2Ptr Factory::BuildVectorGrid2(const std::string& name)
 {
-    const auto result = sVectorGrid2Builders.find(name);
-    if (result != sVectorGrid2Builders.end())
+    const auto& builders = GetRegistry().sVectorGrid2Builders;
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0 }, { 1, 1 }, { 0, 0 }, { 0, 0 });
@@ -129,8 +135,8 @@ VectorGrid2Ptr Factory::BuildVectorGrid2(const std::string& name)
 
 VectorGrid3Ptr Factory::BuildVectorGrid3(const std::string& name)
 {
-    const auto result = sVectorGrid3Builders.find(name);
-    if (result != sVectorGrid3Builders.end())
+    const auto& builders = GetRegistry().sVectorGrid3Builders;
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->Build({ 0, 0, 0 }, { 1, 1, 1 }, { 0, 0, 0 },
@@ -143,8 +149,8 @@ VectorGrid3Ptr Factory::BuildVectorGrid3(const std::string& name)
 PointNeighborSearcher2Ptr Factory::BuildPointNeighborSearcher2(
     const std::string& name)
 {
-    const auto result = sPointNeighborSearcher2Builders.find(name);
-    if (result != sPointNeighborSearcher2Builders.end())
+    const auto& builders = GetRegistry().sPointNeighborSearcher2Builders;
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->BuildPointNeighborSearcher();
@@ -156,8 +162,8 @@ PointNeighborSearcher2Ptr Factory::BuildPointNeighborSearcher2(
 PointNeighborSearcher3Ptr Factory::BuildPointNeighborSearcher3(
     const std::string& name)
 {
-    const auto result = sPointNeighborSearcher3Builders.find(name);
-    if (result != sPointNeighborSearcher3Builders.end())
+    const auto& builders = GetRegistry().sPointNeighborSearcher3Builders;
+    if (const auto result = builders.find(name); result != builders.end())
     {
         const auto builder = result->second;
         return builder->BuildPointNeighborSearcher();

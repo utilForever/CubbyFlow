@@ -28,7 +28,7 @@ TEST(CustomImplicitSurface3, ClosestPoint)
                       .MakeShared();
     SurfaceToImplicit3 refSurf(sphere);
     CustomImplicitSurface3 cis1(
-        [&](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox3D({ 0, 0, 0 }, { 1, 1, 1 }), 1e-3);
 
     for (size_t i = 0; i < GetNumberOfSamplePoints3(); ++i)
@@ -52,7 +52,7 @@ TEST(CustomImplicitSurface3, ClosestNormal)
                       .MakeShared();
     SurfaceToImplicit3 refSurf(sphere);
     CustomImplicitSurface3 cis1(
-        [&](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox3D({ 0, 0, 0 }, { 1, 1, 1 }), 1e-3);
 
     for (size_t i = 0; i < GetNumberOfSamplePoints3(); ++i)
@@ -73,7 +73,7 @@ TEST(CustomImplicitSurface3, Intersects)
                       .MakeShared();
     SurfaceToImplicit3 refSurf(sphere);
     CustomImplicitSurface3 cis1(
-        [&](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox3D({ 0, 0, 0 }, { 1, 1, 1 }), 1e-3);
 
     for (size_t i = 0; i < GetNumberOfSamplePoints3(); ++i)
@@ -95,7 +95,7 @@ TEST(CustomImplicitSurface3, ClosestIntersection)
                       .MakeShared();
     SurfaceToImplicit3 refSurf{ sphere };
     CustomImplicitSurface3 cis1{
-        [&](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
+        [&refSurf](const Vector3D& pt) { return refSurf.SignedDistance(pt); },
         BoundingBox3D{ { 0, 0, 0 }, { 1, 1, 1 } }, 1e-3, 1e-3
     };
 

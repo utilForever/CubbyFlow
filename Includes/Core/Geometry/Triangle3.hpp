@@ -27,8 +27,14 @@ class Triangle3 final : public Surface3
     class Builder;
 
     //! Constructs an empty triangle.
-    Triangle3(const Transform3& _transform = Transform3{},
-              bool _isNormalFlipped = false);
+    Triangle3() : Triangle3(Transform3{})
+    {
+        // Do nothing
+    }
+
+    //! Constructs an empty triangle with a transform.
+    explicit Triangle3(const Transform3& _transform,
+                       bool _isNormalFlipped = false);
 
     //! Constructs a triangle with given \p points, \p normals, and \p uvs.
     Triangle3(std::array<Vector3D, 3> points, std::array<Vector3D, 3> normals,

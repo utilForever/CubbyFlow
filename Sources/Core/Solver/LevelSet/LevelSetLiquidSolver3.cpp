@@ -70,9 +70,10 @@ double LevelSetLiquidSolver3::ComputeVolume() const
     const double h = gridSpacing.Max();
 
     double volume = 0.0;
-    sdf->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        volume += 1.0 - SmearedHeavisideSDF((*sdf)(i, j, k) / h);
-    });
+    sdf->ForEachDataPointIndex(
+        [&volume, &sdf, &h](size_t i, size_t j, size_t k) {
+            volume += 1.0 - SmearedHeavisideSDF((*sdf)(i, j, k) / h);
+        });
     volume *= cellVolume;
 
     return volume;
@@ -166,7 +167,8 @@ void LevelSetLiquidSolver3::ExtrapolateVelocityToAir(double currentCFL)
     Array3<char> vMarker{ v.Size() };
     Array3<char> wMarker{ w.Size() };
 
-    ParallelForEachIndex(uMarker.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(uMarker.Size(), [&sdf, &uPos, &uMarker, &u](
+                                             size_t i, size_t j, size_t k) {
         if (IsInsideSDF(sdf->Sample(uPos(i, j, k))))
         {
             uMarker(i, j, k) = 1;
@@ -178,7 +180,8 @@ void LevelSetLiquidSolver3::ExtrapolateVelocityToAir(double currentCFL)
         }
     });
 
-    ParallelForEachIndex(vMarker.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(vMarker.Size(), [&sdf, &vPos, &vMarker, &v](
+                                             size_t i, size_t j, size_t k) {
         if (IsInsideSDF(sdf->Sample(vPos(i, j, k))))
         {
             vMarker(i, j, k) = 1;
@@ -190,7 +193,8 @@ void LevelSetLiquidSolver3::ExtrapolateVelocityToAir(double currentCFL)
         }
     });
 
-    ParallelForEachIndex(wMarker.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(wMarker.Size(), [&sdf, &wPos, &wMarker, &w](
+                                             size_t i, size_t j, size_t k) {
         if (IsInsideSDF(sdf->Sample(wPos(i, j, k))))
         {
             wMarker(i, j, k) = 1;
@@ -224,10 +228,11 @@ void LevelSetLiquidSolver3::AddVolume(double volDiff)
 
     double volume0 = 0.0;
     double volume1 = 0.0;
-    sdf->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        volume0 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j, k) / h);
-        volume1 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j, k) / h + 1.0);
-    });
+    sdf->ForEachDataPointIndex(
+        [&volume0, &sdf, &h, &volume1](size_t i, size_t j, size_t k) {
+            volume0 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j, k) / h);
+            volume1 += 1.0 - SmearedHeavisideSDF((*sdf)(i, j, k) / h + 1.0);
+        });
     volume0 *= cellVolume;
     volume1 *= cellVolume;
 
@@ -238,7 +243,9 @@ void LevelSetLiquidSolver3::AddVolume(double volDiff)
         double dist = volDiff / dVdh;
 
         sdf->ParallelForEachDataPointIndex(
-            [&](size_t i, size_t j, size_t k) { (*sdf)(i, j, k) += dist; });
+            [&sdf, &dist](size_t i, size_t j, size_t k) {
+                (*sdf)(i, j, k) += dist;
+            });
     }
 }
 

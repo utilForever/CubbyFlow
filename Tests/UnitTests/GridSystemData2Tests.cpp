@@ -95,7 +95,7 @@ TEST(GridSystemData2, Serialize)
     EXPECT_EQ(scalar0->Origin(), scalar0_2->Origin());
     EXPECT_EQ(scalar0->DataSize(), scalar0_2->DataSize());
     EXPECT_EQ(scalar0->DataOrigin(), scalar0_2->DataOrigin());
-    scalar0->ForEachDataPointIndex([&](size_t i, size_t j) {
+    scalar0->ForEachDataPointIndex([&scalar0, &scalar0_2](size_t i, size_t j) {
         EXPECT_EQ((*scalar0)(i, j), (*scalar0_2)(i, j));
     });
 
@@ -110,9 +110,10 @@ TEST(GridSystemData2, Serialize)
     EXPECT_EQ(vector0->Origin(), vector0_2->Origin());
     EXPECT_EQ(cell_vector0->DataSize(), cell_vector0_2->DataSize());
     EXPECT_EQ(cell_vector0->DataOrigin(), cell_vector0_2->DataOrigin());
-    cell_vector0->ForEachDataPointIndex([&](size_t i, size_t j) {
-        EXPECT_EQ((*cell_vector0)(i, j), (*cell_vector0_2)(i, j));
-    });
+    cell_vector0->ForEachDataPointIndex(
+        [&cell_vector0, &cell_vector0_2](size_t i, size_t j) {
+            EXPECT_EQ((*cell_vector0)(i, j), (*cell_vector0_2)(i, j));
+        });
 
     auto scalar1_2 = grids2.AdvectableScalarDataAt(scalarIdx1);
     EXPECT_TRUE(std::dynamic_pointer_cast<VertexCenteredScalarGrid2>(
@@ -122,7 +123,7 @@ TEST(GridSystemData2, Serialize)
     EXPECT_EQ(scalar1->Origin(), scalar1_2->Origin());
     EXPECT_EQ(scalar1->DataSize(), scalar1_2->DataSize());
     EXPECT_EQ(scalar1->DataOrigin(), scalar1_2->DataOrigin());
-    scalar1->ForEachDataPointIndex([&](size_t i, size_t j) {
+    scalar1->ForEachDataPointIndex([&scalar1, &scalar1_2](size_t i, size_t j) {
         EXPECT_EQ((*scalar1)(i, j), (*scalar1_2)(i, j));
     });
 
@@ -137,9 +138,10 @@ TEST(GridSystemData2, Serialize)
     EXPECT_EQ(vector1->Origin(), vector1_2->Origin());
     EXPECT_EQ(vert_vector1->DataSize(), vert_vector1_2->DataSize());
     EXPECT_EQ(vert_vector1->DataOrigin(), vert_vector1_2->DataOrigin());
-    vert_vector1->ForEachDataPointIndex([&](size_t i, size_t j) {
-        EXPECT_EQ((*vert_vector1)(i, j), (*vert_vector1_2)(i, j));
-    });
+    vert_vector1->ForEachDataPointIndex(
+        [&vert_vector1, &vert_vector1_2](size_t i, size_t j) {
+            EXPECT_EQ((*vert_vector1)(i, j), (*vert_vector1_2)(i, j));
+        });
 
     auto velocity = grids.Velocity();
     auto velocity2 = grids2.Velocity();
@@ -150,10 +152,10 @@ TEST(GridSystemData2, Serialize)
     EXPECT_EQ(velocity->VSize(), velocity2->VSize());
     EXPECT_EQ(velocity->UOrigin(), velocity2->UOrigin());
     EXPECT_EQ(velocity->VOrigin(), velocity2->VOrigin());
-    velocity->ForEachUIndex([&](const Vector2UZ& idx) {
+    velocity->ForEachUIndex([&velocity, &velocity2](const Vector2UZ& idx) {
         EXPECT_EQ(velocity->U(idx), velocity2->U(idx));
     });
-    velocity->ForEachVIndex([&](const Vector2UZ& idx) {
+    velocity->ForEachVIndex([&velocity, &velocity2](const Vector2UZ& idx) {
         EXPECT_EQ(velocity->V(idx), velocity2->V(idx));
     });
 }

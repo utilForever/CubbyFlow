@@ -47,9 +47,9 @@ void FLIPSolver2::TransferFromParticlesToGrids()
     m_vDelta.Resize(v.Size());
 
     vel->ParallelForEachUIndex(
-        [&](const Vector2UZ& idx) { m_uDelta(idx) = u(idx); });
+        [this, &u](const Vector2UZ& idx) { m_uDelta(idx) = u(idx); });
     vel->ParallelForEachVIndex(
-        [&](const Vector2UZ& idx) { m_vDelta(idx) = v(idx); });
+        [this, &v](const Vector2UZ& idx) { m_vDelta(idx) = v(idx); });
 }
 
 void FLIPSolver2::TransferFromGridsToParticles()
@@ -63,11 +63,11 @@ void FLIPSolver2::TransferFromGridsToParticles()
         GetParticleSystemData()->NumberOfParticles();
 
     // Compute delta
-    flow->ParallelForEachUIndex([&](const Vector2UZ& idx) {
+    flow->ParallelForEachUIndex([this, &flow](const Vector2UZ& idx) {
         m_uDelta(idx) = flow->U(idx) - m_uDelta(idx);
     });
 
-    flow->ParallelForEachVIndex([&](const Vector2UZ& idx) {
+    flow->ParallelForEachVIndex([this, &flow](const Vector2UZ& idx) {
         m_vDelta(idx) = flow->V(idx) - m_vDelta(idx);
     });
 
@@ -86,17 +86,18 @@ void FLIPSolver2::TransferFromGridsToParticles()
     };
 
     // Transfer delta to the particles
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        Vector2D flipVel = velocities[i] + sampler(positions[i]);
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&velocities, &sampler, &positions, this, &flow](size_t i) {
+                    Vector2D flipVel = velocities[i] + sampler(positions[i]);
 
-        if (m_picBlendingFactor > 0.0)
-        {
-            const Vector2D picVel = flow->Sample(positions[i]);
-            flipVel = Lerp(flipVel, picVel, m_picBlendingFactor);
-        }
+                    if (m_picBlendingFactor > 0.0)
+                    {
+                        const Vector2D picVel = flow->Sample(positions[i]);
+                        flipVel = Lerp(flipVel, picVel, m_picBlendingFactor);
+                    }
 
-        velocities[i] = flipVel;
-    });
+                    velocities[i] = flipVel;
+                });
 }
 
 FLIPSolver2::Builder FLIPSolver2::GetBuilder()

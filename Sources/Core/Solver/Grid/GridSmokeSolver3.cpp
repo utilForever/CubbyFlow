@@ -145,13 +145,15 @@ void GridSmokeSolver3::ComputeDiffusion(double timeIntervalInSeconds)
     }
 
     ScalarGrid3Ptr den = GetSmokeDensity();
-    den->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        (*den)(i, j, k) *= 1.0 - m_smokeDecayFactor;
-    });
+    den->ParallelForEachDataPointIndex(
+        [&den, this](size_t i, size_t j, size_t k) {
+            (*den)(i, j, k) *= 1.0 - m_smokeDecayFactor;
+        });
     ScalarGrid3Ptr temp = GetTemperature();
-    temp->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        (*temp)(i, j, k) *= 1.0 - m_temperatureDecayFactor;
-    });
+    temp->ParallelForEachDataPointIndex(
+        [&temp, this](size_t i, size_t j, size_t k) {
+            (*temp)(i, j, k) *= 1.0 - m_temperatureDecayFactor;
+        });
 }
 
 void GridSmokeSolver3::ComputeBuoyancyForce(double timeIntervalInSeconds)
@@ -174,8 +176,9 @@ void GridSmokeSolver3::ComputeBuoyancyForce(double timeIntervalInSeconds)
         ScalarGrid3Ptr temp = GetTemperature();
 
         double tAmb = 0.0;
-        temp->ForEachCellIndex(
-            [&](size_t i, size_t j, size_t k) { tAmb += (*temp)(i, j, k); });
+        temp->ForEachCellIndex([&tAmb, &temp](size_t i, size_t j, size_t k) {
+            tAmb += (*temp)(i, j, k);
+        });
 
         tAmb /= static_cast<double>(
             temp->Resolution().x * temp->Resolution().y * temp->Resolution().z);
@@ -189,7 +192,9 @@ void GridSmokeSolver3::ComputeBuoyancyForce(double timeIntervalInSeconds)
 
         if (std::abs(up.x) > std::numeric_limits<double>::epsilon())
         {
-            vel->ParallelForEachUIndex([&](const Vector3UZ& idx) {
+            vel->ParallelForEachUIndex([&uPos, this, &den, &temp, &tAmb, &u,
+                                        &timeIntervalInSeconds,
+                                        &up](const Vector3UZ& idx) {
                 const Vector3D pt = uPos(idx);
                 const double fBuoy =
                     m_buoyancySmokeDensityFactor * den->Sample(pt) +
@@ -200,7 +205,9 @@ void GridSmokeSolver3::ComputeBuoyancyForce(double timeIntervalInSeconds)
 
         if (std::abs(up.y) > std::numeric_limits<double>::epsilon())
         {
-            vel->ParallelForEachVIndex([&](const Vector3UZ& idx) {
+            vel->ParallelForEachVIndex([&vPos, this, &den, &temp, &tAmb, &v,
+                                        &timeIntervalInSeconds,
+                                        &up](const Vector3UZ& idx) {
                 const Vector3D pt = vPos(idx);
                 const double fBuoy =
                     m_buoyancySmokeDensityFactor * den->Sample(pt) +
@@ -211,7 +218,9 @@ void GridSmokeSolver3::ComputeBuoyancyForce(double timeIntervalInSeconds)
 
         if (std::abs(up.z) > std::numeric_limits<double>::epsilon())
         {
-            vel->ParallelForEachWIndex([&](const Vector3UZ& idx) {
+            vel->ParallelForEachWIndex([&wPos, this, &den, &temp, &tAmb, &w,
+                                        &timeIntervalInSeconds,
+                                        &up](const Vector3UZ& idx) {
                 const Vector3D pt = wPos(idx);
                 const double fBuoy =
                     m_buoyancySmokeDensityFactor * den->Sample(pt) +

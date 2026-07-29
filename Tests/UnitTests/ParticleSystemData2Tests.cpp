@@ -158,7 +158,7 @@ TEST(ParticleSystemData2, BuildNeighborSearcher)
     std::vector<size_t> found;
     neighborSearcher->ForEachNearbyPoint(
         searchOrigin, radius,
-        [&](size_t i, const Vector2D&) { found.push_back(i); });
+        [&found](size_t i, const Vector2D&) { found.push_back(i); });
 
     for (size_t ii = 0; ii < positions.Length(); ++ii)
     {

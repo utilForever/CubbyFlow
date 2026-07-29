@@ -44,7 +44,8 @@ CUBBYFLOW_BEGIN_TEST_F(GridFluidSolver2, ApplyBoundaryConditionWithPressure)
     Array2<double> div(64, 32);
     Array2<double> pressure(64, 32);
 
-    ForEachIndex(dataU.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(dataU.Size(), [&data, &dataU, &dataV, &div, &pressure, &ppe](
+                                   size_t i, size_t j) {
         Vector2D vel = data->Velocity()->ValueAtCellCenter(i, j);
         dataU(i, j) = vel.x;
         dataV(i, j) = vel.y;
@@ -91,7 +92,8 @@ CUBBYFLOW_BEGIN_TEST_F(GridFluidSolver2,
     Array2<double> div(64, 32);
     Array2<double> pressure(64, 32);
 
-    ForEachIndex(dataU.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(dataU.Size(), [&data, &dataU, &dataV, &div, &pressure, &ppe](
+                                   size_t i, size_t j) {
         Vector2D vel = data->Velocity()->ValueAtCellCenter(i, j);
         dataU(i, j) = vel.x;
         dataV(i, j) = vel.y;
@@ -141,7 +143,8 @@ CUBBYFLOW_BEGIN_TEST_F(GridFluidSolver2, ApplyBoundaryConditionWithPressureOpen)
     Array2<double> div(64, 32);
     Array2<double> pressure(64, 32);
 
-    ForEachIndex(dataU.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(dataU.Size(), [&data, &dataU, &dataV, &div, &pressure, &ppe](
+                                   size_t i, size_t j) {
         Vector2D vel = data->Velocity()->ValueAtCellCenter(i, j);
         dataU(i, j) = vel.x;
         dataV(i, j) = vel.y;

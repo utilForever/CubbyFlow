@@ -22,13 +22,13 @@ class FDMMGSolver3 : public FDMLinearSystemSolver3
 {
  public:
     //! Constructs the solver with given parameters.
-    FDMMGSolver3(size_t maxNumberOfLevels,
-                 unsigned int numberOfRestrictionIter = 5,
-                 unsigned int numberOfCorrectionIter = 5,
-                 unsigned int numberOfCoarsestIter = 20,
-                 unsigned int numberOfFinalIter = 20,
-                 double maxTolerance = 1e-9, double sorFactor = 1.5,
-                 bool useRedBlackOrdering = false);
+    explicit FDMMGSolver3(size_t maxNumberOfLevels,
+                          unsigned int numberOfRestrictionIter = 5,
+                          unsigned int numberOfCorrectionIter = 5,
+                          unsigned int numberOfCoarsestIter = 20,
+                          unsigned int numberOfFinalIter = 20,
+                          double maxTolerance = 1e-9, double sorFactor = 1.5,
+                          bool useRedBlackOrdering = false);
 
     //! Returns the Multigrid parameters.
     [[nodiscard]] const MGParameters<FDMBLAS3>& GetParams() const;

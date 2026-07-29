@@ -48,7 +48,7 @@ TEST(ArrayView2, ForEachIndex)
                          { 5.f, 6.f, 7.f, 8.f },
                          { 9.f, 10.f, 11.f, 12.f } });
 
-    ForEachIndex(arr1.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(arr1.Size(), [&arr1](size_t i, size_t j) {
         size_t idx = i + (4 * j) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), arr1(i, j));
     });
@@ -60,7 +60,7 @@ TEST(ArrayView2, ParallelForEachIndex)
                          { 5.f, 6.f, 7.f, 8.f },
                          { 9.f, 10.f, 11.f, 12.f } });
 
-    ParallelForEachIndex(arr1.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(arr1.Size(), [&arr1](size_t i, size_t j) {
         size_t idx = i + (4 * j) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), arr1(i, j));
     });
@@ -106,7 +106,7 @@ TEST(ConstArrayView2, ForEach)
     auto acc = arr1.View();
 
     size_t i = 0;
-    std::for_each(acc.begin(), acc.end(), [&](float val) {
+    std::for_each(acc.begin(), acc.end(), [&acc, &i](float val) {
         EXPECT_FLOAT_EQ(acc[i], val);
         ++i;
     });
@@ -119,7 +119,7 @@ TEST(ConstArrayView2, ForEachIndex)
                          { 9.f, 10.f, 11.f, 12.f } });
     auto acc = arr1.View();
 
-    ForEachIndex(acc.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(acc.Size(), [&acc](size_t i, size_t j) {
         size_t idx = i + (4 * j) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), acc(i, j));
     });
@@ -132,7 +132,7 @@ TEST(ConstArrayView2, ParallelForEachIndex)
                          { 9.f, 10.f, 11.f, 12.f } });
     auto acc = arr1.View();
 
-    ParallelForEachIndex(acc.Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(acc.Size(), [&acc](size_t i, size_t j) {
         size_t idx = i + (4 * j) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), acc(i, j));
     });

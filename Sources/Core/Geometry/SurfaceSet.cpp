@@ -303,7 +303,7 @@ double SurfaceSet<N>::ClosestDistanceLocal(
 template <size_t N>
 bool SurfaceSet<N>::IsInsideLocal(const Vector<double, N>& otherPoint) const
 {
-    return std::ranges::any_of(m_surfaces, [&](const auto& surface) {
+    return std::ranges::any_of(m_surfaces, [&otherPoint](const auto& surface) {
         return surface->IsInside(otherPoint);
     });
 }

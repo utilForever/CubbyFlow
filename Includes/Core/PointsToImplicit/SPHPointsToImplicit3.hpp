@@ -1,4 +1,4 @@
-﻿// This code is based on Jet framework.
+// This code is based on Jet framework.
 // Copyright (c) 2018 Doyub Kim
 // CubbyFlow is voxel-based fluid simulation engine for computer games.
 // Copyright (c) 2020 CubbyFlow Team
@@ -26,9 +26,16 @@ namespace CubbyFlow
 class SPHPointsToImplicit3 final : public PointsToImplicit3
 {
  public:
+    //! Constructs the converter with default parameters.
+    SPHPointsToImplicit3() : SPHPointsToImplicit3(1.0)
+    {
+        // Do nothing
+    }
+
     //! Constructs the converter with given kernel radius and cut-off density.
-    SPHPointsToImplicit3(double kernelRadius = 1.0, double cutOffDensity = 0.5,
-                         bool isOutputSDF = true);
+    explicit SPHPointsToImplicit3(double kernelRadius,
+                                  double cutOffDensity = 0.5,
+                                  bool isOutputSDF = true);
 
     //! Converts the given points to implicit surface scalar field.
     void Convert(const ConstArrayView1<Vector3D>& points,

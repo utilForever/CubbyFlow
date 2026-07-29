@@ -15,6 +15,37 @@
 
 namespace CubbyFlow
 {
+double ReinitializedValue(double value, double sign, double dtau,
+                          const std::array<double, 2>& dx,
+                          const std::array<double, 2>& dy,
+                          const std::array<double, 2>& dz)
+{
+    const double positiveGradient =
+        std::sqrt(Square(std::max(dx[0], 0.0)) + Square(std::min(dx[1], 0.0)) +
+                  Square(std::max(dy[0], 0.0)) + Square(std::min(dy[1], 0.0)) +
+                  Square(std::max(dz[0], 0.0)) + Square(std::min(dz[1], 0.0)));
+    const double negativeGradient =
+        std::sqrt(Square(std::min(dx[0], 0.0)) + Square(std::max(dx[1], 0.0)) +
+                  Square(std::min(dy[0], 0.0)) + Square(std::max(dy[1], 0.0)) +
+                  Square(std::min(dz[0], 0.0)) + Square(std::max(dz[1], 0.0)));
+
+    return value - dtau * std::max(sign, 0.0) * (positiveGradient - 1.0) -
+           dtau * std::min(sign, 0.0) * (negativeGradient - 1.0);
+}
+
+double ExtrapolatedValue(double value, double dtau, const Vector3D& gradient,
+                         const std::array<double, 2>& dx,
+                         const std::array<double, 2>& dy,
+                         const std::array<double, 2>& dz)
+{
+    return value - dtau * (std::max(gradient.x, 0.0) * dx[0] +
+                           std::min(gradient.x, 0.0) * dx[1] +
+                           std::max(gradient.y, 0.0) * dy[0] +
+                           std::min(gradient.y, 0.0) * dy[1] +
+                           std::max(gradient.z, 0.0) * dz[0] +
+                           std::min(gradient.z, 0.0) * dz[1]);
+}
+
 void IterativeLevelSetSolver3::Reinitialize(const ScalarGrid3& inputSDF,
                                             double maxDistance,
                                             ScalarGrid3* outputSDF)
@@ -45,34 +76,17 @@ void IterativeLevelSetSolver3::Reinitialize(const ScalarGrid3& inputSDF,
 
     for (unsigned int n = 0; n < numberOfIterations; ++n)
     {
-        inputSDF.ParallelForEachDataPointIndex([&](size_t i, size_t j,
-                                                   size_t k) {
-            const double s = Sign(outputAcc, gridSpacing, i, j, k);
+        inputSDF.ParallelForEachDataPointIndex(
+            [&outputAcc, &gridSpacing, this, &dtau, &tempAcc](
+                size_t i, size_t j, size_t k) {
+                const double s = Sign(outputAcc, gridSpacing, i, j, k);
 
-            std::array<double, 2> dx{}, dy{}, dz{};
+                std::array<double, 2> dx{}, dy{}, dz{};
 
-            GetDerivatives(outputAcc, gridSpacing, i, j, k, &dx, &dy, &dz);
-
-            // Explicit Euler step
-            const double val = outputAcc(i, j, k) -
-                               dtau * std::max(s, 0.0) *
-                                   (std::sqrt(Square(std::max(dx[0], 0.0)) +
-                                              Square(std::min(dx[1], 0.0)) +
-                                              Square(std::max(dy[0], 0.0)) +
-                                              Square(std::min(dy[1], 0.0)) +
-                                              Square(std::max(dz[0], 0.0)) +
-                                              Square(std::min(dz[1], 0.0))) -
-                                    1.0) -
-                               dtau * std::min(s, 0.0) *
-                                   (std::sqrt(Square(std::min(dx[0], 0.0)) +
-                                              Square(std::max(dx[1], 0.0)) +
-                                              Square(std::min(dy[0], 0.0)) +
-                                              Square(std::max(dy[1], 0.0)) +
-                                              Square(std::min(dz[0], 0.0)) +
-                                              Square(std::max(dz[1], 0.0))) -
-                                    1.0);
-            tempAcc(i, j, k) = val;
-        });
+                GetDerivatives(outputAcc, gridSpacing, i, j, k, &dx, &dy, &dz);
+                tempAcc(i, j, k) =
+                    ReinitializedValue(outputAcc(i, j, k), s, dtau, dx, dy, dz);
+            });
 
         std::swap(tempAcc, outputAcc);
     }
@@ -95,9 +109,10 @@ void IterativeLevelSetSolver3::Extrapolate(const ScalarGrid3& input,
 
     Array3<double> sdfGrid{ input.DataSize() };
     GridDataPositionFunc<3> pos = input.DataPosition();
-    ParallelForEachIndex(sdfGrid.Size(), [&](size_t i, size_t j, size_t k) {
-        sdfGrid(i, j, k) = sdf.Sample(pos(i, j, k));
-    });
+    ParallelForEachIndex(sdfGrid.Size(),
+                         [&sdfGrid, &sdf, &pos](size_t i, size_t j, size_t k) {
+                             sdfGrid(i, j, k) = sdf.Sample(pos(i, j, k));
+                         });
 
     Extrapolate(input.DataView(), sdfGrid.View(), input.GridSpacing(),
                 maxDistance, output->DataView());
@@ -117,9 +132,10 @@ void IterativeLevelSetSolver3::Extrapolate(const CollocatedVectorGrid3& input,
 
     Array3<double> sdfGrid{ input.DataSize() };
     GridDataPositionFunc<3> pos = input.DataPosition();
-    ParallelForEachIndex(sdfGrid.Size(), [&](size_t i, size_t j, size_t k) {
-        sdfGrid(i, j, k) = sdf.Sample(pos(i, j, k));
-    });
+    ParallelForEachIndex(sdfGrid.Size(),
+                         [&sdfGrid, &sdf, &pos](size_t i, size_t j, size_t k) {
+                             sdfGrid(i, j, k) = sdf.Sample(pos(i, j, k));
+                         });
 
     const Vector3D gridSpacing = input.GridSpacing();
 
@@ -130,21 +146,23 @@ void IterativeLevelSetSolver3::Extrapolate(const CollocatedVectorGrid3& input,
     Array3<double> w{ input.DataSize() };
     Array3<double> w0{ input.DataSize() };
 
-    input.ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        u(i, j, k) = input(i, j, k).x;
-        v(i, j, k) = input(i, j, k).y;
-        w(i, j, k) = input(i, j, k).z;
-    });
+    input.ParallelForEachDataPointIndex(
+        [&u, &input, &v, &w](size_t i, size_t j, size_t k) {
+            u(i, j, k) = input(i, j, k).x;
+            v(i, j, k) = input(i, j, k).y;
+            w(i, j, k) = input(i, j, k).z;
+        });
 
     Extrapolate(u, sdfGrid.View(), gridSpacing, maxDistance, u0);
     Extrapolate(v, sdfGrid.View(), gridSpacing, maxDistance, v0);
     Extrapolate(w, sdfGrid.View(), gridSpacing, maxDistance, w0);
 
-    output->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        (*output)(i, j, k).x = u(i, j, k);
-        (*output)(i, j, k).y = v(i, j, k);
-        (*output)(i, j, k).z = w(i, j, k);
-    });
+    output->ParallelForEachDataPointIndex(
+        [&output, &u, &v, &w](size_t i, size_t j, size_t k) {
+            (*output)(i, j, k).x = u(i, j, k);
+            (*output)(i, j, k).y = v(i, j, k);
+            (*output)(i, j, k).z = w(i, j, k);
+        });
 }
 
 void IterativeLevelSetSolver3::Extrapolate(const FaceCenteredGrid3& input,
@@ -164,24 +182,27 @@ void IterativeLevelSetSolver3::Extrapolate(const FaceCenteredGrid3& input,
     const ConstArrayView3<double> u = input.UView();
     auto uPos = input.UPosition();
     Array3<double> sdfAtU{ u.Size() };
-    input.ParallelForEachUIndex(
-        [&](const Vector3UZ& idx) { sdfAtU(idx) = sdf.Sample(uPos(idx)); });
+    input.ParallelForEachUIndex([&sdfAtU, &sdf, &uPos](const Vector3UZ& idx) {
+        sdfAtU(idx) = sdf.Sample(uPos(idx));
+    });
 
     Extrapolate(u, sdfAtU, gridSpacing, maxDistance, output->UView());
 
     const ConstArrayView3<double> v = input.VView();
     auto vPos = input.VPosition();
     Array3<double> sdfAtV{ v.Size() };
-    input.ParallelForEachVIndex(
-        [&](const Vector3UZ& idx) { sdfAtV(idx) = sdf.Sample(vPos(idx)); });
+    input.ParallelForEachVIndex([&sdfAtV, &sdf, &vPos](const Vector3UZ& idx) {
+        sdfAtV(idx) = sdf.Sample(vPos(idx));
+    });
 
     Extrapolate(v, sdfAtV, gridSpacing, maxDistance, output->VView());
 
     const ConstArrayView3<double> w = input.WView();
     auto wPos = input.WPosition();
     Array3<double> sdfAtW{ w.Size() };
-    input.ParallelForEachWIndex(
-        [&](const Vector3UZ& idx) { sdfAtW(idx) = sdf.Sample(wPos(idx)); });
+    input.ParallelForEachWIndex([&sdfAtW, &sdf, &wPos](const Vector3UZ& idx) {
+        sdfAtW(idx) = sdf.Sample(wPos(idx));
+    });
 
     Extrapolate(w, sdfAtW, gridSpacing, maxDistance, output->WView());
 }
@@ -207,30 +228,25 @@ void IterativeLevelSetSolver3::Extrapolate(const ConstArrayView3<double>& input,
 
     for (unsigned int n = 0; n < numberOfIterations; ++n)
     {
-        ParallelFor(
-            ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
-            [&](size_t i, size_t j, size_t k) {
-                if (sdf(i, j, k) >= 0)
-                {
-                    std::array<double, 2> dx{}, dy{}, dz{};
-                    const Vector3D grad = Gradient3(sdf, gridSpacing, i, j, k);
+        ParallelFor(ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
+                    [&sdf, &gridSpacing, this, &outputAcc, &tempAcc, &dtau](
+                        size_t i, size_t j, size_t k) {
+                        if (sdf(i, j, k) >= 0)
+                        {
+                            std::array<double, 2> dx{}, dy{}, dz{};
+                            const Vector3D grad =
+                                Gradient3(sdf, gridSpacing, i, j, k);
 
-                    GetDerivatives(outputAcc, gridSpacing, i, j, k, &dx, &dy,
-                                   &dz);
-
-                    tempAcc(i, j, k) = outputAcc(i, j, k) -
-                                       dtau * (std::max(grad.x, 0.0) * dx[0] +
-                                               std::min(grad.x, 0.0) * dx[1] +
-                                               std::max(grad.y, 0.0) * dy[0] +
-                                               std::min(grad.y, 0.0) * dy[1] +
-                                               std::max(grad.z, 0.0) * dz[0] +
-                                               std::min(grad.z, 0.0) * dz[1]);
-                }
-                else
-                {
-                    tempAcc(i, j, k) = outputAcc(i, j, k);
-                }
-            });
+                            GetDerivatives(outputAcc, gridSpacing, i, j, k, &dx,
+                                           &dy, &dz);
+                            tempAcc(i, j, k) = ExtrapolatedValue(
+                                outputAcc(i, j, k), dtau, grad, dx, dy, dz);
+                        }
+                        else
+                        {
+                            tempAcc(i, j, k) = outputAcc(i, j, k);
+                        }
+                    });
 
         std::swap(tempAcc, outputAcc);
     }

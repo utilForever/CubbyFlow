@@ -30,6 +30,12 @@ namespace CubbyFlow
 class AnisotropicPointsToImplicit3 final : public PointsToImplicit3
 {
  public:
+    //! Constructs the converter with default parameters.
+    AnisotropicPointsToImplicit3() : AnisotropicPointsToImplicit3(1.0)
+    {
+        // Do nothing
+    }
+
     //!
     //! \brief Constructs the converter with given parameters.
     //!
@@ -40,11 +46,11 @@ class AnisotropicPointsToImplicit3 final : public PointsToImplicit3
     //! kernel.
     //! \param isOutputSDF True if the output should be signed-distance field.
     //!
-    AnisotropicPointsToImplicit3(double kernelRadius = 1.0,
-                                 double cutOffDensity = 0.5,
-                                 double positionSmoothingFactor = 0.5,
-                                 size_t minNumNeighbors = 25,
-                                 bool isOutputSDF = true);
+    explicit AnisotropicPointsToImplicit3(double kernelRadius,
+                                          double cutOffDensity = 0.5,
+                                          double positionSmoothingFactor = 0.5,
+                                          size_t minNumNeighbors = 25,
+                                          bool isOutputSDF = true);
 
     //! Converts the given points to implicit surface scalar field.
     void Convert(const ConstArrayView1<Vector3D>& points,

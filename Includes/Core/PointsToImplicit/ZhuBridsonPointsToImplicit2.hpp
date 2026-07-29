@@ -24,10 +24,16 @@ namespace CubbyFlow
 class ZhuBridsonPointsToImplicit2 final : public PointsToImplicit2
 {
  public:
+    //! Constructs the converter with default parameters.
+    ZhuBridsonPointsToImplicit2() : ZhuBridsonPointsToImplicit2(1.0)
+    {
+        // Do nothing
+    }
+
     //! Constructs the converter with given kernel radius and cut-off threshold.
-    ZhuBridsonPointsToImplicit2(double kernelRadius = 1.0,
-                                double cutOffThreshold = 0.25,
-                                bool isOutputSDF = true);
+    explicit ZhuBridsonPointsToImplicit2(double kernelRadius,
+                                         double cutOffThreshold = 0.25,
+                                         bool isOutputSDF = true);
 
     //! Converts the given points to implicit surface scalar field.
     void Convert(const ConstArrayView1<Vector2D>& points,

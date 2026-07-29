@@ -105,7 +105,7 @@ TEST(GridSinglePhasePressureSolver3, SolveSinglePhaseWithBoundary)
     }
 
     // Wall on the right-most column
-    boundarySDF.Fill([&](const Vector3D& x) { return -x.x + 2.0; });
+    boundarySDF.Fill([](const Vector3D& x) { return -x.x + 2.0; });
 
     GridSinglePhasePressureSolver3 solver;
     solver.Solve(vel, 1.0, &vel, boundarySDF);
@@ -189,7 +189,7 @@ TEST(GridSinglePhasePressureSolver3, SolveFreeSurface)
         }
     }
 
-    fluidSDF.Fill([&](const Vector3D& x) { return x.y - 2.0; });
+    fluidSDF.Fill([](const Vector3D& x) { return x.y - 2.0; });
 
     GridSinglePhasePressureSolver3 solver;
     solver.Solve(vel, 1.0, &vel,
@@ -268,7 +268,7 @@ TEST(GridSinglePhasePressureSolver3, SolveFreeSurfaceCompressed)
         }
     }
 
-    fluidSDF.Fill([&](const Vector3D& x) { return x.y - 2.0; });
+    fluidSDF.Fill([](const Vector3D& x) { return x.y - 2.0; });
 
     GridSinglePhasePressureSolver3 solver;
     solver.Solve(vel, 1.0, &vel,
@@ -349,8 +349,8 @@ TEST(GridSinglePhasePressureSolver3, SolveFreeSurfaceWithBoundary)
     }
 
     // Wall on the right-most column
-    boundarySDF.Fill([&](const Vector3D& x) { return -x.x + 2.0; });
-    fluidSDF.Fill([&](const Vector3D& x) { return x.y - 2.0; });
+    boundarySDF.Fill([](const Vector3D& x) { return -x.x + 2.0; });
+    fluidSDF.Fill([](const Vector3D& x) { return x.y - 2.0; });
 
     GridSinglePhasePressureSolver3 solver;
     solver.Solve(vel, 1.0, &vel, boundarySDF, ConstantVectorField3({ 0, 0, 0 }),

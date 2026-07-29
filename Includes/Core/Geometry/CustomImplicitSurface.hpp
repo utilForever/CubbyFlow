@@ -33,7 +33,7 @@ class CustomImplicitSurface final : public ImplicitSurface<N>
     //! \param _transform Local-to-world transform.
     //! \param _isNormalFlipped True if normal is flipped.
     //!
-    CustomImplicitSurface(
+    explicit CustomImplicitSurface(
         std::function<double(const Vector<double, N>&)> func,
         const BoundingBox<double, N>& domain = BoundingBox<double, N>{},
         double resolution = 1e-3, double rayMarchingResolution = 1e-6,

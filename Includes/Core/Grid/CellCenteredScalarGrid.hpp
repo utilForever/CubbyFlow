@@ -41,7 +41,7 @@ class CellCenteredScalarGrid final : public ScalarGrid<N>
 
     //! Constructs a grid with given resolution, grid spacing, origin and
     //! initial value.
-    CellCenteredScalarGrid(
+    explicit CellCenteredScalarGrid(
         const Vector<size_t, N>& resolution,
         const Vector<double, N>& gridSpacing =
             Vector<double, N>::MakeConstant(1.0),

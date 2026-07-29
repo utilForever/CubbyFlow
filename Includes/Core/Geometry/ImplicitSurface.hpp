@@ -24,8 +24,8 @@ class ImplicitSurface : public Surface<N>
     using Surface<N>::isNormalFlipped;
 
     //! Constructs an implicit surface with normal direction.
-    ImplicitSurface(const Transform<N>& _transform = Transform<N>{},
-                    bool _isNormalFlipped = false);
+    explicit ImplicitSurface(const Transform<N>& _transform = Transform<N>{},
+                             bool _isNormalFlipped = false);
 
     //! Default virtual destructor.
     ~ImplicitSurface() override = default;

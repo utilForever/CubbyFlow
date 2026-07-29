@@ -4,6 +4,7 @@
 #include <Core/Geometry/Sphere.hpp>
 #include <Core/Grid/CellCenteredScalarGrid.hpp>
 #include <Core/Grid/CellCenteredVectorGrid.hpp>
+#include <Core/Grid/FaceCenteredGrid.hpp>
 #include <Core/Utils/LevelSetUtils.hpp>
 
 using namespace CubbyFlow;
@@ -40,7 +41,7 @@ TEST(VolumeGridEmitter2, Velocity)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<2> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j) {
+    grid->ForEachDataPointIndex([&pos, &emitter, &grid](size_t i, size_t j) {
         Vector2D gx = pos(i, j);
         double sdf = emitter->GetSourceRegion()->SignedDistance(gx);
 
@@ -53,6 +54,25 @@ TEST(VolumeGridEmitter2, Velocity)
             EXPECT_NEAR(answer.y, acttual.y, 1e-6);
         }
     });
+}
+
+TEST(VolumeGridEmitter2, FaceCenteredVelocity)
+{
+    auto sphere = Sphere2::Builder().WithRadius(1.0).MakeShared();
+    auto emitter =
+        VolumeGridEmitter2::Builder().WithSourceRegion(sphere).MakeShared();
+    auto grid =
+        FaceCenteredGrid2::Builder().WithResolution({ 2, 2 }).MakeShared();
+
+    emitter->AddTarget(grid, [](double, const Vector2D&, const Vector2D&) {
+        return Vector2D{ 1.0, 2.0 };
+    });
+    emitter->Update(0.0, 0.01);
+
+    grid->ForEachUIndex(
+        [&grid](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(1.0, grid->U(idx)); });
+    grid->ForEachVIndex(
+        [&grid](const Vector2UZ& idx) { EXPECT_DOUBLE_EQ(2.0, grid->V(idx)); });
 }
 
 TEST(VolumeGridEmitter2, SignedDistance)
@@ -77,7 +97,7 @@ TEST(VolumeGridEmitter2, SignedDistance)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<2> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j) {
+    grid->ForEachDataPointIndex([&pos, &sphere, &grid](size_t i, size_t j) {
         Vector2D gx = pos(i, j);
         double answer = (sphere->center - gx).Length() - 0.15;
         double acttual = (*grid)(i, j);
@@ -107,7 +127,7 @@ TEST(VolumeGridEmitter2, StepFunction)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<2> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j) {
+    grid->ForEachDataPointIndex([&pos, &sphere, &grid](size_t i, size_t j) {
         Vector2D gx = pos(i, j);
         double answer = (sphere->center - gx).Length() - 0.15;
         answer = 4.0 * (1.0 - SmearedHeavisideSDF(answer * 16.0)) + 3.0;

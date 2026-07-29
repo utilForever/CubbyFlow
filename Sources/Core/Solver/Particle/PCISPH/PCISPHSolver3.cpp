@@ -18,6 +18,48 @@ namespace CubbyFlow
 // Heuristically chosen
 const double DEFAULT_TIME_STEP_LIMIT_SCALE = 5.0;
 
+namespace
+{
+struct PressureUpdateData3
+{
+    const Array1<Vector3D>& positions;
+    const Array1<Array1<size_t>>& neighborLists;
+    const SPHStdKernel3& kernel;
+    double mass;
+    double targetDensity;
+    double delta;
+    double negativeScale;
+    ArrayView1<double>& pressures;
+    Array1<double>& densities;
+    Array1<double>& densityErrors;
+};
+
+void UpdatePressureFromDensityError(size_t i, const PressureUpdateData3& data)
+{
+    double weightSum = data.kernel(0.0);
+
+    for (size_t j : data.neighborLists[i])
+    {
+        weightSum +=
+            data.kernel(data.positions[j].DistanceTo(data.positions[i]));
+    }
+
+    const double density = data.mass * weightSum;
+    double densityError = density - data.targetDensity;
+    double pressure = data.delta * densityError;
+
+    if (pressure < 0.0)
+    {
+        pressure *= data.negativeScale;
+        densityError *= data.negativeScale;
+    }
+
+    data.pressures[i] += pressure;
+    data.densities[i] = density;
+    data.densityErrors[i] = densityError;
+}
+}  // namespace
+
 PCISPHSolver3::PCISPHSolver3()
 {
     SetTimeStepLimitScale(DEFAULT_TIME_STEP_LIMIT_SCALE);
@@ -70,7 +112,7 @@ void PCISPHSolver3::AccumulatePressureForce(double timeIntervalInSeconds)
     SPHStdKernel3 kernel{ particles->KernelRadius() };
 
     // Initialize buffers
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
+    ParallelFor(ZERO_SIZE, numberOfParticles, [&p, this, &ds, &d](size_t i) {
         p[i] = 0.0;
         m_pressureForces[i] = Vector3D{};
         m_densityErrors[i] = 0.0;
@@ -84,42 +126,32 @@ void PCISPHSolver3::AccumulatePressureForce(double timeIntervalInSeconds)
     for (unsigned int k = 0; k < m_maxNumberOfIterations; ++k)
     {
         // Predict velocity and position
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            m_tempVelocities[i] = v[i] + timeIntervalInSeconds / mass *
-                                             (f[i] + m_pressureForces[i]);
-            m_tempPositions[i] =
-                x[i] + timeIntervalInSeconds * m_tempVelocities[i];
-        });
+        ParallelFor(
+            ZERO_SIZE, numberOfParticles,
+            [this, &v, &timeIntervalInSeconds, &mass, &f, &x](size_t i) {
+                m_tempVelocities[i] = v[i] + timeIntervalInSeconds / mass *
+                                                 (f[i] + m_pressureForces[i]);
+                m_tempPositions[i] =
+                    x[i] + timeIntervalInSeconds * m_tempVelocities[i];
+            });
 
         // Resolve collisions
         ResolveCollision(m_tempPositions, m_tempVelocities);
 
         // Compute pressure from density error
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            double weightSum = 0.0;
-            const auto& neighbors = particles->NeighborLists()[i];
-
-            for (size_t j : neighbors)
-            {
-                const double dist =
-                    m_tempPositions[j].DistanceTo(m_tempPositions[i]);
-                weightSum += kernel(dist);
-            }
-            weightSum += kernel(0);
-
-            const double density = mass * weightSum;
-            double densityError = (density - targetDensity);
-            double pressure = delta * densityError;
-
-            if (pressure < 0.0)
-            {
-                pressure *= GetNegativePressureScale();
-                densityError *= GetNegativePressureScale();
-            }
-
-            p[i] += pressure;
-            ds[i] = density;
-            m_densityErrors[i] = densityError;
+        const double negativeScale = GetNegativePressureScale();
+        const PressureUpdateData3 update{ m_tempPositions,
+                                          particles->NeighborLists(),
+                                          kernel,
+                                          mass,
+                                          targetDensity,
+                                          delta,
+                                          negativeScale,
+                                          p,
+                                          ds,
+                                          m_densityErrors };
+        ParallelFor(ZERO_SIZE, numberOfParticles, [&update](size_t i) {
+            UpdatePressureFromDensityError(i, update);
         });
 
         // Compute pressure gradient force

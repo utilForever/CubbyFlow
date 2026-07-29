@@ -196,7 +196,7 @@ TEST(Array3, ForEach)
                            { 21.f, 22.f, 23.f, 24.f } } });
 
     size_t i = 0;
-    std::for_each(arr1.begin(), arr1.end(), [&](float val) {
+    std::for_each(arr1.begin(), arr1.end(), [&arr1, &i](float val) {
         EXPECT_FLOAT_EQ(arr1[i], val);
         ++i;
     });
@@ -211,7 +211,7 @@ TEST(Array3, ForEachIndex)
                            { 17.f, 18.f, 19.f, 20.f },
                            { 21.f, 22.f, 23.f, 24.f } } });
 
-    ForEachIndex(arr1.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(arr1.Size(), [&arr1](size_t i, size_t j, size_t k) {
         size_t idx = i + (4 * (j + 3 * k)) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), arr1(i, j, k));
     });
@@ -226,7 +226,7 @@ TEST(Array3, ParallelForEachIndex)
                            { 17.f, 18.f, 19.f, 20.f },
                            { 21.f, 22.f, 23.f, 24.f } } });
 
-    ParallelForEachIndex(arr1.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(arr1.Size(), [&arr1](size_t i, size_t j, size_t k) {
         size_t idx = i + (4 * (j + 3 * k)) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), arr1(i, j, k));
     });

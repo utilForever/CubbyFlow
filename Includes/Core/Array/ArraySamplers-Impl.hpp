@@ -194,7 +194,8 @@ NearestArraySampler<T, N>::NearestArraySampler(const NearestArraySampler& other)
 }
 
 template <typename T, size_t N>
-NearestArraySampler<T, N>::NearestArraySampler(NearestArraySampler&& other) noexcept
+NearestArraySampler<T, N>::NearestArraySampler(
+    NearestArraySampler&& other) noexcept
     : m_view(std::move(other.m_view)),
       m_gridSpacing(std::move(other.m_gridSpacing)),
       m_invGridSpacing(std::move(other.m_invGridSpacing)),
@@ -205,15 +206,7 @@ NearestArraySampler<T, N>::NearestArraySampler(NearestArraySampler&& other) noex
 
 template <typename T, size_t N>
 NearestArraySampler<T, N>& NearestArraySampler<T, N>::operator=(
-    const NearestArraySampler& other)
-{
-    m_view = other.m_view;
-    m_gridSpacing = other.m_gridSpacing;
-    m_invGridSpacing = other.m_invGridSpacing;
-    m_gridOrigin = other.m_gridOrigin;
-
-    return *this;
-}
+    const NearestArraySampler& other) = default;
 
 template <typename T, size_t N>
 NearestArraySampler<T, N>& NearestArraySampler<T, N>::operator=(
@@ -284,7 +277,8 @@ LinearArraySampler<T, N>::LinearArraySampler(const LinearArraySampler& other)
 }
 
 template <typename T, size_t N>
-LinearArraySampler<T, N>::LinearArraySampler(LinearArraySampler&& other) noexcept
+LinearArraySampler<T, N>::LinearArraySampler(
+    LinearArraySampler&& other) noexcept
     : m_view(std::move(other.m_view)),
       m_gridSpacing(std::move(other.m_gridSpacing)),
       m_invGridSpacing(std::move(other.m_invGridSpacing)),
@@ -295,15 +289,7 @@ LinearArraySampler<T, N>::LinearArraySampler(LinearArraySampler&& other) noexcep
 
 template <typename T, size_t N>
 LinearArraySampler<T, N>& LinearArraySampler<T, N>::operator=(
-    const LinearArraySampler& other)
-{
-    m_view = other.m_view;
-    m_gridSpacing = other.m_gridSpacing;
-    m_invGridSpacing = other.m_invGridSpacing;
-    m_gridOrigin = other.m_gridOrigin;
-
-    return *this;
-}
+    const LinearArraySampler& other) = default;
 
 template <typename T, size_t N>
 LinearArraySampler<T, N>& LinearArraySampler<T, N>::operator=(
@@ -412,7 +398,8 @@ CubicArraySampler<T, N, CIOp>::CubicArraySampler(const CubicArraySampler& other)
 }
 
 template <typename T, size_t N, typename CIOp>
-CubicArraySampler<T, N, CIOp>::CubicArraySampler(CubicArraySampler&& other) noexcept
+CubicArraySampler<T, N, CIOp>::CubicArraySampler(
+    CubicArraySampler&& other) noexcept
     : m_view(std::move(other.m_view)),
       m_gridSpacing(std::move(other.m_gridSpacing)),
       m_invGridSpacing(std::move(other.m_invGridSpacing)),
@@ -423,15 +410,7 @@ CubicArraySampler<T, N, CIOp>::CubicArraySampler(CubicArraySampler&& other) noex
 
 template <typename T, size_t N, typename CIOp>
 CubicArraySampler<T, N, CIOp>& CubicArraySampler<T, N, CIOp>::operator=(
-    const CubicArraySampler& other)
-{
-    m_view = other.m_view;
-    m_gridSpacing = other.m_gridSpacing;
-    m_invGridSpacing = other.m_invGridSpacing;
-    m_gridOrigin = other.m_gridOrigin;
-
-    return *this;
-}
+    const CubicArraySampler& other) = default;
 
 template <typename T, size_t N, typename CIOp>
 CubicArraySampler<T, N, CIOp>& CubicArraySampler<T, N, CIOp>::operator=(

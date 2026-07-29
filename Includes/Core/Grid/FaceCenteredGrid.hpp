@@ -49,7 +49,7 @@ class FaceCenteredGrid final : public VectorGrid<N>
     FaceCenteredGrid();
 
     //! Resizes the grid using given parameters.
-    FaceCenteredGrid(
+    explicit FaceCenteredGrid(
         const Vector<size_t, N>& resolution,
         const Vector<double, N>& gridSpacing =
             Vector<double, N>::MakeConstant(1.0),

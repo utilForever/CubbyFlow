@@ -15,7 +15,7 @@ TEST(PointSimpleListSearcher2, ForEachNearByPoint)
     searcher.Build(points);
 
     searcher.ForEachNearbyPoint(Vector2D(0, 0), std::sqrt(15.0),
-                                [&](size_t i, const Vector2D& pt) {
+                                [&points](size_t i, const Vector2D& pt) {
                                     EXPECT_TRUE(i == 0 || i == 2);
                                     if (i == 0)
                                     {

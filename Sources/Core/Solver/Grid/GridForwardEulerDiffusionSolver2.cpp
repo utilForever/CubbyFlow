@@ -66,18 +66,20 @@ void GridForwardEulerDiffusionSolver2::Solve(const ScalarGrid2& source,
 
     BuildMarkers(source.Resolution(), pos, boundarySDF, fluidSDF);
 
-    source.ParallelForEachDataPointIndex([&](size_t i, size_t j) {
-        if (m_markers(i, j) == FLUID)
-        {
-            (*dest)(i, j) =
-                source(i, j) + diffusionCoefficient * timeIntervalInSeconds *
-                                   Laplacian(src, m_markers, h, i, j);
-        }
-        else
-        {
-            (*dest)(i, j) = source(i, j);
-        }
-    });
+    source.ParallelForEachDataPointIndex(
+        [this, &dest, &source, &diffusionCoefficient, &timeIntervalInSeconds,
+         &src, &h](size_t i, size_t j) {
+            if (m_markers(i, j) == FLUID)
+            {
+                (*dest)(i, j) = source(i, j) +
+                                diffusionCoefficient * timeIntervalInSeconds *
+                                    Laplacian(src, m_markers, h, i, j);
+            }
+            else
+            {
+                (*dest)(i, j) = source(i, j);
+            }
+        });
 }
 
 void GridForwardEulerDiffusionSolver2::Solve(
@@ -91,18 +93,20 @@ void GridForwardEulerDiffusionSolver2::Solve(
 
     BuildMarkers(source.Resolution(), pos, boundarySDF, fluidSDF);
 
-    source.ParallelForEachDataPointIndex([&](const Vector2UZ& idx) {
-        if (m_markers(idx) == FLUID)
-        {
-            (*dest)(idx) =
-                src(idx) + diffusionCoefficient * timeIntervalInSeconds *
-                               Laplacian(src, m_markers, h, idx.x, idx.y);
-        }
-        else
-        {
-            (*dest)(idx) = src(idx);
-        }
-    });
+    source.ParallelForEachDataPointIndex(
+        [this, &dest, &src, &diffusionCoefficient, &timeIntervalInSeconds,
+         &h](const Vector2UZ& idx) {
+            if (m_markers(idx) == FLUID)
+            {
+                (*dest)(idx) =
+                    src(idx) + diffusionCoefficient * timeIntervalInSeconds *
+                                   Laplacian(src, m_markers, h, idx.x, idx.y);
+            }
+            else
+            {
+                (*dest)(idx) = src(idx);
+            }
+        });
 }
 
 void GridForwardEulerDiffusionSolver2::Solve(const FaceCenteredGrid2& source,
@@ -122,7 +126,9 @@ void GridForwardEulerDiffusionSolver2::Solve(const FaceCenteredGrid2& source,
 
     BuildMarkers(source.USize(), uPos, boundarySDF, fluidSDF);
 
-    source.ParallelForEachUIndex([&](const Vector2UZ& idx) {
+    source.ParallelForEachUIndex([this, &u, &uSrc, &diffusionCoefficient,
+                                  &timeIntervalInSeconds,
+                                  &h](const Vector2UZ& idx) {
         if (m_markers(idx) == FLUID)
         {
             u(idx) =
@@ -137,7 +143,9 @@ void GridForwardEulerDiffusionSolver2::Solve(const FaceCenteredGrid2& source,
 
     BuildMarkers(source.VSize(), vPos, boundarySDF, fluidSDF);
 
-    source.ParallelForEachVIndex([&](const Vector2UZ& idx) {
+    source.ParallelForEachVIndex([this, &v, &vSrc, &diffusionCoefficient,
+                                  &timeIntervalInSeconds,
+                                  &h](const Vector2UZ& idx) {
         if (m_markers(idx) == FLUID)
         {
             v(idx) =
@@ -151,13 +159,15 @@ void GridForwardEulerDiffusionSolver2::Solve(const FaceCenteredGrid2& source,
     });
 }
 
+template <typename PositionFunc>
 void GridForwardEulerDiffusionSolver2::BuildMarkers(
-    const Vector2UZ& size, const std::function<Vector2D(const Vector2UZ&)>& pos,
+    const Vector2UZ& size, const PositionFunc& pos,
     const ScalarField2& boundarySDF, const ScalarField2& fluidSDF)
 {
     m_markers.Resize(size);
 
-    ForEachIndex(m_markers.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(m_markers.Size(), [&boundarySDF, &pos, this, &fluidSDF](
+                                       size_t i, size_t j) {
         if (IsInsideSDF(boundarySDF.Sample(pos(Vector2UZ{ i, j }))))
         {
             m_markers(i, j) = BOUNDARY;

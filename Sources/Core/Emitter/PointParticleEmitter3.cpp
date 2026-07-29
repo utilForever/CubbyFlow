@@ -88,7 +88,8 @@ void PointParticleEmitter3::OnUpdate(double currentTimeInSeconds,
         newPositions.Append(candidatePositions);
         newVelocities.Append(candidateVelocities);
 
-        particles->AddParticles(newPositions, newVelocities);
+        particles->AddParticles(ConstArrayView1<Vector3D>(newPositions),
+                                ConstArrayView1<Vector3D>(newVelocities));
 
         m_numberOfEmittedParticles += newPositions.Length();
     }
@@ -104,7 +105,7 @@ void PointParticleEmitter3::Emit(Array1<Vector3D>* newPositions,
             Random(), Random(), m_direction, m_spreadAngleInRadians);
 
         newPositions->Append(m_origin);
-        newVelocities->Append(m_speed * newDirection);
+        newVelocities->Append(Vector3D(m_speed * newDirection));
     }
 }
 

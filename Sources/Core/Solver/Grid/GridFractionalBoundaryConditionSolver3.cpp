@@ -17,6 +17,27 @@
 
 namespace CubbyFlow
 {
+static Vector3D ProjectVelocityToCollider(const Vector3D& point,
+                                          const FaceCenteredGrid3& velocity,
+                                          const ScalarField3& colliderSDF,
+                                          const Collider3& collider)
+{
+    const Vector3D colliderVelocity = collider.VelocityAt(point);
+    const Vector3D gradient = colliderSDF.Gradient(point);
+
+    if (gradient.LengthSquared() == 0.0)
+    {
+        return colliderVelocity;
+    }
+
+    const Vector3D relativeVelocity = velocity.Sample(point) - colliderVelocity;
+    const Vector3D normal = gradient.Normalized();
+
+    return ProjectAndApplyFriction(relativeVelocity, normal,
+                                   collider.GetFrictionCoefficient()) +
+           colliderVelocity;
+}
+
 void GridFractionalBoundaryConditionSolver3::ConstrainVelocity(
     FaceCenteredGrid3* velocity, unsigned int extrapolationDepth)
 {
@@ -45,68 +66,71 @@ void GridFractionalBoundaryConditionSolver3::ConstrainVelocity(
     Vector3D h = velocity->GridSpacing();
 
     // Assign collider's velocity first and initialize markers
-    velocity->ParallelForEachUIndex([&](const Vector3UZ& idx) {
-        const Vector3D pt = uPos(idx);
-        const double phi0 =
-            m_colliderSDF->Sample(pt - Vector3D{ 0.5 * h.x, 0.0, 0.0 });
-        const double phi1 =
-            m_colliderSDF->Sample(pt + Vector3D{ 0.5 * h.x, 0.0, 0.0 });
-        double frac = FractionInsideSDF(phi0, phi1);
-        frac = 1.0 - std::clamp(frac, 0.0, 1.0);
+    velocity->ParallelForEachUIndex(
+        [&uPos, this, &h, &uMarker, &u](const Vector3UZ& idx) {
+            const Vector3D pt = uPos(idx);
+            const double phi0 =
+                m_colliderSDF->Sample(pt - Vector3D{ 0.5 * h.x, 0.0, 0.0 });
+            const double phi1 =
+                m_colliderSDF->Sample(pt + Vector3D{ 0.5 * h.x, 0.0, 0.0 });
+            double frac = FractionInsideSDF(phi0, phi1);
+            frac = 1.0 - std::clamp(frac, 0.0, 1.0);
 
-        if (frac > 0.0)
-        {
-            uMarker(idx) = 1;
-        }
-        else
-        {
-            const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-            u(idx) = colliderVel.x;
-            uMarker(idx) = 0;
-        }
-    });
+            if (frac > 0.0)
+            {
+                uMarker(idx) = 1;
+            }
+            else
+            {
+                const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
+                u(idx) = colliderVel.x;
+                uMarker(idx) = 0;
+            }
+        });
 
-    velocity->ParallelForEachVIndex([&](const Vector3UZ& idx) {
-        const Vector3D pt = vPos(idx);
-        const double phi0 =
-            m_colliderSDF->Sample(pt - Vector3D{ 0.0, 0.5 * h.y, 0.0 });
-        const double phi1 =
-            m_colliderSDF->Sample(pt + Vector3D{ 0.0, 0.5 * h.y, 0.0 });
-        double frac = FractionInsideSDF(phi0, phi1);
-        frac = 1.0 - std::clamp(frac, 0.0, 1.0);
+    velocity->ParallelForEachVIndex(
+        [&vPos, this, &h, &vMarker, &v](const Vector3UZ& idx) {
+            const Vector3D pt = vPos(idx);
+            const double phi0 =
+                m_colliderSDF->Sample(pt - Vector3D{ 0.0, 0.5 * h.y, 0.0 });
+            const double phi1 =
+                m_colliderSDF->Sample(pt + Vector3D{ 0.0, 0.5 * h.y, 0.0 });
+            double frac = FractionInsideSDF(phi0, phi1);
+            frac = 1.0 - std::clamp(frac, 0.0, 1.0);
 
-        if (frac > 0.0)
-        {
-            vMarker(idx) = 1;
-        }
-        else
-        {
-            const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-            v(idx) = colliderVel.y;
-            vMarker(idx) = 0;
-        }
-    });
+            if (frac > 0.0)
+            {
+                vMarker(idx) = 1;
+            }
+            else
+            {
+                const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
+                v(idx) = colliderVel.y;
+                vMarker(idx) = 0;
+            }
+        });
 
-    velocity->ParallelForEachWIndex([&](const Vector3UZ& idx) {
-        const Vector3D pt = wPos(idx);
-        const double phi0 =
-            m_colliderSDF->Sample(pt - Vector3D{ 0.0, 0.0, 0.5 * h.z });
-        const double phi1 =
-            m_colliderSDF->Sample(pt + Vector3D{ 0.0, 0.0, 0.5 * h.z });
-        double frac = FractionInsideSDF(phi0, phi1);
-        frac = 1.0 - std::clamp(frac, 0.0, 1.0);
+    velocity->ParallelForEachWIndex(
+        [&wPos, this, &h, &wMarker, &w](const Vector3UZ& idx) {
+            const Vector3D pt = wPos(idx);
+            const double phi0 =
+                m_colliderSDF->Sample(pt - Vector3D{ 0.0, 0.0, 0.5 * h.z });
+            const double phi1 =
+                m_colliderSDF->Sample(pt + Vector3D{ 0.0, 0.0, 0.5 * h.z });
+            double frac = FractionInsideSDF(phi0, phi1);
+            frac = 1.0 - std::clamp(frac, 0.0, 1.0);
 
-        if (frac > 0.0)
-        {
-            wMarker(idx) = 1;
-        }
-        else
-        {
-            const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-            w(idx) = colliderVel.z;
-            wMarker(idx) = 0;
-        }
-    });
+            if (frac > 0.0)
+            {
+                wMarker(idx) = 1;
+            }
+            else
+            {
+                const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
+                w(idx) = colliderVel.z;
+                wMarker(idx) = 0;
+            }
+        });
 
     // Free-slip: Extrapolate fluid velocity into the collider
     ExtrapolateToRegion(velocity->UView(), uMarker, extrapolationDepth, u);
@@ -115,104 +139,53 @@ void GridFractionalBoundaryConditionSolver3::ConstrainVelocity(
 
     // No-flux: project the extrapolated velocity to the collider's surface
     // normal
-    velocity->ParallelForEachUIndex([&](const Vector3UZ& idx) {
-        const Vector3D pt = uPos(idx);
-
-        if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-        {
-            const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-            const Vector3D vel = velocity->Sample(pt);
-            const Vector3D g = m_colliderSDF->Gradient(pt);
-
-            if (g.LengthSquared() > 0.0)
+    velocity->ParallelForEachUIndex(
+        [&uPos, this, &velocity, &uTemp, &u](const Vector3UZ& idx) {
+            const Vector3D pt = uPos(idx);
+            if (!IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
-                const Vector3D n = g.Normalized();
-                const Vector3D velr = vel - colliderVel;
-                const Vector3D velt = ProjectAndApplyFriction(
-                    velr, n, GetCollider()->GetFrictionCoefficient());
-                const Vector3D velp = velt + colliderVel;
-
-                uTemp(idx) = velp.x;
+                uTemp(idx) = u(idx);
+                return;
             }
-            else
+            uTemp(idx) = ProjectVelocityToCollider(
+                             pt, *velocity, *m_colliderSDF, *GetCollider())
+                             .x;
+        });
+
+    velocity->ParallelForEachVIndex(
+        [&vPos, this, &velocity, &vTemp, &v](const Vector3UZ& idx) {
+            const Vector3D pt = vPos(idx);
+            if (!IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
-                uTemp(idx) = colliderVel.x;
+                vTemp(idx) = v(idx);
+                return;
             }
-        }
-        else
-        {
-            uTemp(idx) = u(idx);
-        }
-    });
+            vTemp(idx) = ProjectVelocityToCollider(
+                             pt, *velocity, *m_colliderSDF, *GetCollider())
+                             .y;
+        });
 
-    velocity->ParallelForEachVIndex([&](const Vector3UZ& idx) {
-        const Vector3D pt = vPos(idx);
-
-        if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-        {
-            const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-            const Vector3D vel = velocity->Sample(pt);
-            const Vector3D g = m_colliderSDF->Gradient(pt);
-
-            if (g.LengthSquared() > 0.0)
+    velocity->ParallelForEachWIndex(
+        [&wPos, this, &velocity, &wTemp, &w](const Vector3UZ& idx) {
+            const Vector3D pt = wPos(idx);
+            if (!IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
-                const Vector3D n = g.Normalized();
-                const Vector3D velr = vel - colliderVel;
-                const Vector3D velt = ProjectAndApplyFriction(
-                    velr, n, GetCollider()->GetFrictionCoefficient());
-                const Vector3D velp = velt + colliderVel;
-
-                vTemp(idx) = velp.y;
+                wTemp(idx) = w(idx);
+                return;
             }
-            else
-            {
-                vTemp(idx) = colliderVel.y;
-            }
-        }
-        else
-        {
-            vTemp(idx) = v(idx);
-        }
-    });
-
-    velocity->ParallelForEachWIndex([&](const Vector3UZ& idx) {
-        const Vector3D pt = wPos(idx);
-
-        if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-        {
-            const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-            const Vector3D vel = velocity->Sample(pt);
-            const Vector3D g = m_colliderSDF->Gradient(pt);
-
-            if (g.LengthSquared() > 0.0)
-            {
-                const Vector3D n = g.Normalized();
-                const Vector3D velr = vel - colliderVel;
-                const Vector3D velt = ProjectAndApplyFriction(
-                    velr, n, GetCollider()->GetFrictionCoefficient());
-                const Vector3D velp = velt + colliderVel;
-
-                wTemp(idx) = velp.z;
-            }
-            else
-            {
-                wTemp(idx) = colliderVel.z;
-            }
-        }
-        else
-        {
-            wTemp(idx) = w(idx);
-        }
-    });
+            wTemp(idx) = ProjectVelocityToCollider(
+                             pt, *velocity, *m_colliderSDF, *GetCollider())
+                             .z;
+        });
 
     // Transfer results
-    ParallelForEachIndex(u.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(u.Size(), [&u, &uTemp](size_t i, size_t j, size_t k) {
         u(i, j, k) = uTemp(i, j, k);
     });
-    ParallelForEachIndex(v.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(v.Size(), [&v, &vTemp](size_t i, size_t j, size_t k) {
         v(i, j, k) = vTemp(i, j, k);
     });
-    ParallelForEachIndex(w.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(w.Size(), [&w, &wTemp](size_t i, size_t j, size_t k) {
         w(i, j, k) = wTemp(i, j, k);
     });
 
@@ -311,12 +284,12 @@ void GridFractionalBoundaryConditionSolver3::OnColliderUpdated(
             implicitSurface = std::make_shared<SurfaceToImplicit3>(surface);
         }
 
-        m_colliderSDF->Fill([&](const Vector3D& pt) {
+        m_colliderSDF->Fill([&implicitSurface](const Vector3D& pt) {
             return implicitSurface->SignedDistance(pt);
         });
 
         m_colliderVel = CustomVectorField3::Builder{}
-                            .WithFunction([&](const Vector3D& x) {
+                            .WithFunction([this](const Vector3D& x) {
                                 return GetCollider()->VelocityAt(x);
                             })
                             .WithDerivativeResolution(gridSpacing.x)

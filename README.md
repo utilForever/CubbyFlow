@@ -1,5 +1,3 @@
-<h1 align="center">CubbyFlow</h1>
-
 <p align="center">
   <img src="./Medias/Logos/Logo.png" width="400" alt="CubbyFlow logo" />
 </p>

@@ -18,6 +18,160 @@ const char FLUID = 0;
 const char AIR = 1;
 const char BOUNDARY = 2;
 
+namespace
+{
+struct MatrixRowData3
+{
+    const Vector3UZ& size;
+    const Vector3D& c;
+    const Array3<char>& markers;
+    bool isDirichlet;
+};
+
+bool AddsCenter(char marker, bool isDirichlet)
+{
+    return marker == FLUID || (isDirichlet && marker != AIR);
+}
+
+void AddXTerms(size_t i, size_t j, size_t k, const MatrixRowData3& data,
+               FDMMatrixRow3* row)
+{
+    if (i + 1 < data.size.x)
+    {
+        const char marker = data.markers(i + 1, j, k);
+
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.x;
+        }
+
+        if (marker == FLUID)
+        {
+            row->right -= data.c.x;
+        }
+    }
+
+    if (i > 0 && AddsCenter(data.markers(i - 1, j, k), data.isDirichlet))
+    {
+        row->center += data.c.x;
+    }
+}
+
+void AddYTerms(size_t i, size_t j, size_t k, const MatrixRowData3& data,
+               FDMMatrixRow3* row)
+{
+    if (j + 1 < data.size.y)
+    {
+        const char marker = data.markers(i, j + 1, k);
+
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.y;
+        }
+
+        if (marker == FLUID)
+        {
+            row->up -= data.c.y;
+        }
+    }
+
+    if (j > 0 && AddsCenter(data.markers(i, j - 1, k), data.isDirichlet))
+    {
+        row->center += data.c.y;
+    }
+}
+
+void AddZTerms(size_t i, size_t j, size_t k, const MatrixRowData3& data,
+               FDMMatrixRow3* row)
+{
+    if (k + 1 < data.size.z)
+    {
+        const char marker = data.markers(i, j, k + 1);
+
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.z;
+        }
+
+        if (marker == FLUID)
+        {
+            row->front -= data.c.z;
+        }
+    }
+
+    if (k > 0 && AddsCenter(data.markers(i, j, k - 1), data.isDirichlet))
+    {
+        row->center += data.c.z;
+    }
+}
+
+FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
+                             const MatrixRowData3& data)
+{
+    FDMMatrixRow3 row{};
+    row.center = 1.0;
+
+    if (data.markers(i, j, k) != FLUID)
+    {
+        return row;
+    }
+
+    AddXTerms(i, j, k, data, &row);
+    AddYTerms(i, j, k, data, &row);
+    AddZTerms(i, j, k, data, &row);
+
+    return row;
+}
+
+template <typename ValueAt>
+struct RHSData3
+{
+    const Vector3UZ& size;
+    const Vector3D& c;
+    const Array3<char>& markers;
+    bool isDirichlet;
+    const ValueAt& valueAt;
+};
+
+template <typename ValueAt>
+double BoundaryContribution(size_t i, size_t j, size_t k, bool isValid,
+                            double coefficient, const RHSData3<ValueAt>& data)
+{
+    if (!isValid || data.markers(i, j, k) != BOUNDARY)
+    {
+        return 0.0;
+    }
+
+    return coefficient * data.valueAt(i, j, k);
+}
+
+template <typename ValueAt>
+double BuildRHS(size_t i, size_t j, size_t k, const RHSData3<ValueAt>& data)
+{
+    double result = data.valueAt(i, j, k);
+
+    if (!data.isDirichlet || data.markers(i, j, k) != FLUID)
+    {
+        return result;
+    }
+
+    result +=
+        BoundaryContribution(i + 1, j, k, i + 1 < data.size.x, data.c.x, data);
+    result +=
+        BoundaryContribution(i > 0 ? i - 1 : i, j, k, i > 0, data.c.x, data);
+    result +=
+        BoundaryContribution(i, j + 1, k, j + 1 < data.size.y, data.c.y, data);
+    result +=
+        BoundaryContribution(i, j > 0 ? j - 1 : j, k, j > 0, data.c.y, data);
+    result +=
+        BoundaryContribution(i, j, k + 1, k + 1 < data.size.z, data.c.z, data);
+    result +=
+        BoundaryContribution(i, j, k > 0 ? k - 1 : k, k > 0, data.c.z, data);
+
+    return result;
+}
+}  // namespace
+
 GridBackwardEulerDiffusionSolver3::GridBackwardEulerDiffusionSolver3(
     BoundaryType boundaryType)
     : m_boundaryType(boundaryType)
@@ -48,9 +202,10 @@ void GridBackwardEulerDiffusionSolver3::Solve(const ScalarGrid3& source,
         m_systemSolver->Solve(&m_system);
 
         // Assign the solution
-        source.ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-            (*dest)(i, j, k) = m_system.x(i, j, k);
-        });
+        source.ParallelForEachDataPointIndex(
+            [&dest, this](size_t i, size_t j, size_t k) {
+                (*dest)(i, j, k) = m_system.x(i, j, k);
+            });
     }
 }
 
@@ -77,7 +232,9 @@ void GridBackwardEulerDiffusionSolver3::Solve(
 
         // Assign the solution
         source.ParallelForEachDataPointIndex(
-            [&](const Vector3UZ& idx) { (*dest)(idx).x = m_system.x(idx); });
+            [&dest, this](const Vector3UZ& idx) {
+                (*dest)(idx).x = m_system.x(idx);
+            });
     }
 
     // v
@@ -90,7 +247,9 @@ void GridBackwardEulerDiffusionSolver3::Solve(
 
         // Assign the solution
         source.ParallelForEachDataPointIndex(
-            [&](const Vector3UZ& idx) { (*dest)(idx).y = m_system.x(idx); });
+            [&dest, this](const Vector3UZ& idx) {
+                (*dest)(idx).y = m_system.x(idx);
+            });
     }
 
     // w
@@ -103,7 +262,9 @@ void GridBackwardEulerDiffusionSolver3::Solve(
 
         // Assign the solution
         source.ParallelForEachDataPointIndex(
-            [&](const Vector3UZ& idx) { (*dest)(idx).z = m_system.x(idx); });
+            [&dest, this](const Vector3UZ& idx) {
+                (*dest)(idx).z = m_system.x(idx);
+            });
     }
 }
 
@@ -130,8 +291,9 @@ void GridBackwardEulerDiffusionSolver3::Solve(const FaceCenteredGrid3& source,
         m_systemSolver->Solve(&m_system);
 
         // Assign the solution
-        source.ParallelForEachUIndex(
-            [&](const Vector3UZ& idx) { dest->U(idx) = m_system.x(idx); });
+        source.ParallelForEachUIndex([&dest, this](const Vector3UZ& idx) {
+            dest->U(idx) = m_system.x(idx);
+        });
     }
 
     // v
@@ -146,8 +308,9 @@ void GridBackwardEulerDiffusionSolver3::Solve(const FaceCenteredGrid3& source,
         m_systemSolver->Solve(&m_system);
 
         // Assign the solution
-        source.ParallelForEachVIndex(
-            [&](const Vector3UZ& idx) { dest->V(idx) = m_system.x(idx); });
+        source.ParallelForEachVIndex([&dest, this](const Vector3UZ& idx) {
+            dest->V(idx) = m_system.x(idx);
+        });
     }
 
     // w
@@ -162,8 +325,9 @@ void GridBackwardEulerDiffusionSolver3::Solve(const FaceCenteredGrid3& source,
         m_systemSolver->Solve(&m_system);
 
         // Assign the solution
-        source.ParallelForEachWIndex(
-            [&](const Vector3UZ& idx) { dest->W(idx) = m_system.x(idx); });
+        source.ParallelForEachWIndex([&dest, this](const Vector3UZ& idx) {
+            dest->W(idx) = m_system.x(idx);
+        });
     }
 }
 
@@ -173,27 +337,29 @@ void GridBackwardEulerDiffusionSolver3::SetLinearSystemSolver(
     m_systemSolver = Solver;
 }
 
+template <typename PositionFunc>
 void GridBackwardEulerDiffusionSolver3::BuildMarkers(
-    const Vector3UZ& size,
-    const std::function<Vector3D(size_t, size_t, size_t)>& pos,
+    const Vector3UZ& size, const PositionFunc& pos,
     const ScalarField3& boundarySDF, const ScalarField3& fluidSDF)
 {
     m_markers.Resize(size);
 
-    ParallelForEachIndex(m_markers.Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF(boundarySDF.Sample(pos(i, j, k))))
-        {
-            m_markers(i, j, k) = BOUNDARY;
-        }
-        else if (IsInsideSDF(fluidSDF.Sample(pos(i, j, k))))
-        {
-            m_markers(i, j, k) = FLUID;
-        }
-        else
-        {
-            m_markers(i, j, k) = AIR;
-        }
-    });
+    ParallelForEachIndex(
+        m_markers.Size(),
+        [&boundarySDF, &pos, this, &fluidSDF](size_t i, size_t j, size_t k) {
+            if (IsInsideSDF(boundarySDF.Sample(pos(i, j, k))))
+            {
+                m_markers(i, j, k) = BOUNDARY;
+            }
+            else if (IsInsideSDF(fluidSDF.Sample(pos(i, j, k))))
+            {
+                m_markers(i, j, k) = FLUID;
+            }
+            else
+            {
+                m_markers(i, j, k) = AIR;
+            }
+        });
 }
 
 void GridBackwardEulerDiffusionSolver3::BuildMatrix(const Vector3UZ& size,
@@ -202,78 +368,13 @@ void GridBackwardEulerDiffusionSolver3::BuildMatrix(const Vector3UZ& size,
     m_system.A.Resize(size);
 
     bool isBoundaryType = (m_boundaryType == BoundaryType::Dirichlet);
+    const MatrixRowData3 data{ size, c, m_markers, isBoundaryType };
 
     // Build linear system
-    ParallelForEachIndex(m_system.A.Size(), [&](size_t i, size_t j, size_t k) {
-        FDMMatrixRow3& row = m_system.A(i, j, k);
-
-        // Initialize
-        row.center = 1.0;
-        row.right = row.up = row.front = 0.0;
-
-        if (m_markers(i, j, k) == FLUID)
-        {
-            if (i + 1 < size.x)
-            {
-                if ((isBoundaryType && m_markers(i + 1, j, k) != AIR) ||
-                    m_markers(i + 1, j, k) == FLUID)
-                {
-                    row.center += c.x;
-                }
-
-                if (m_markers(i + 1, j, k) == FLUID)
-                {
-                    row.right -= c.x;
-                }
-            }
-
-            if (i > 0 && ((isBoundaryType && m_markers(i - 1, j, k) != AIR) ||
-                          m_markers(i - 1, j, k) == FLUID))
-            {
-                row.center += c.x;
-            }
-
-            if (j + 1 < size.y)
-            {
-                if ((isBoundaryType && m_markers(i, j + 1, k) != AIR) ||
-                    m_markers(i, j + 1, k) == FLUID)
-                {
-                    row.center += c.y;
-                }
-
-                if (m_markers(i, j + 1, k) == FLUID)
-                {
-                    row.up -= c.y;
-                }
-            }
-
-            if (j > 0 && ((isBoundaryType && m_markers(i, j - 1, k) != AIR) ||
-                          m_markers(i, j - 1, k) == FLUID))
-            {
-                row.center += c.y;
-            }
-
-            if (k + 1 < size.z)
-            {
-                if ((isBoundaryType && m_markers(i, j, k + 1) != AIR) ||
-                    m_markers(i, j, k + 1) == FLUID)
-                {
-                    row.center += c.z;
-                }
-
-                if (m_markers(i, j, k + 1) == FLUID)
-                {
-                    row.front -= c.z;
-                }
-            }
-
-            if (k > 0 && ((isBoundaryType && m_markers(i, j, k - 1) != AIR) ||
-                          m_markers(i, j, k - 1) == FLUID))
-            {
-                row.center += c.z;
-            }
-        }
-    });
+    ParallelForEachIndex(
+        m_system.A.Size(), [this, &data](size_t i, size_t j, size_t k) {
+            m_system.A(i, j, k) = BuildMatrixRow(i, j, k, data);
+        });
 }
 
 void GridBackwardEulerDiffusionSolver3::BuildVectors(
@@ -284,44 +385,19 @@ void GridBackwardEulerDiffusionSolver3::BuildVectors(
     m_system.x.Resize(size, 0.0);
     m_system.b.Resize(size, 0.0);
 
+    const auto valueAt = [&f](size_t x, size_t y, size_t z) {
+        return f(x, y, z);
+    };
+    const RHSData3<decltype(valueAt)> data{
+        size, c, m_markers, m_boundaryType == BoundaryType::Dirichlet, valueAt
+    };
+
     // Build linear system
-    ParallelForEachIndex(m_system.x.Size(), [&](size_t i, size_t j, size_t k) {
-        m_system.b(i, j, k) = m_system.x(i, j, k) = f(i, j, k);
-
-        if (m_boundaryType == BoundaryType::Dirichlet &&
-            m_markers(i, j, k) == FLUID)
-        {
-            if (i + 1 < size.x && m_markers(i + 1, j, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.x * f(i + 1, j, k);
-            }
-
-            if (i > 0 && m_markers(i - 1, j, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.x * f(i - 1, j, k);
-            }
-
-            if (j + 1 < size.y && m_markers(i, j + 1, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.y * f(i, j + 1, k);
-            }
-
-            if (j > 0 && m_markers(i, j - 1, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.y * f(i, j - 1, k);
-            }
-
-            if (k + 1 < size.z && m_markers(i, j, k + 1) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.z * f(i, j, k + 1);
-            }
-
-            if (k > 0 && m_markers(i, j, k - 1) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.z * f(i, j, k - 1);
-            }
-        }
-    });
+    ParallelForEachIndex(m_system.x.Size(),
+                         [this, &f, &data](size_t i, size_t j, size_t k) {
+                             m_system.x(i, j, k) = f(i, j, k);
+                             m_system.b(i, j, k) = BuildRHS(i, j, k, data);
+                         });
 }
 
 void GridBackwardEulerDiffusionSolver3::BuildVectors(
@@ -332,43 +408,18 @@ void GridBackwardEulerDiffusionSolver3::BuildVectors(
     m_system.x.Resize(size, 0.0);
     m_system.b.Resize(size, 0.0);
 
+    const auto valueAt = [&f, component](size_t x, size_t y, size_t z) {
+        return f(x, y, z)[component];
+    };
+    const RHSData3<decltype(valueAt)> data{
+        size, c, m_markers, m_boundaryType == BoundaryType::Dirichlet, valueAt
+    };
+
     // Build linear system
-    ParallelForEachIndex(m_system.x.Size(), [&](size_t i, size_t j, size_t k) {
-        m_system.b(i, j, k) = m_system.x(i, j, k) = f(i, j, k)[component];
-
-        if (m_boundaryType == BoundaryType::Dirichlet &&
-            m_markers(i, j, k) == FLUID)
-        {
-            if (i + 1 < size.x && m_markers(i + 1, j, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.x * f(i + 1, j, k)[component];
-            }
-
-            if (i > 0 && m_markers(i - 1, j, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.x * f(i - 1, j, k)[component];
-            }
-
-            if (j + 1 < size.y && m_markers(i, j + 1, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.y * f(i, j + 1, k)[component];
-            }
-
-            if (j > 0 && m_markers(i, j - 1, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.y * f(i, j - 1, k)[component];
-            }
-
-            if (k + 1 < size.z && m_markers(i, j, k + 1) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.z * f(i, j, k + 1)[component];
-            }
-
-            if (k > 0 && m_markers(i, j, k - 1) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.z * f(i, j, k - 1)[component];
-            }
-        }
+    ParallelForEachIndex(m_system.x.Size(), [this, &f, component, &data](
+                                                size_t i, size_t j, size_t k) {
+        m_system.x(i, j, k) = f(i, j, k)[component];
+        m_system.b(i, j, k) = BuildRHS(i, j, k, data);
     });
 }
 }  // namespace CubbyFlow

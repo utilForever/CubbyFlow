@@ -24,7 +24,7 @@ void Relax(const typename BLASType::MatrixType& a,
 
     for (unsigned int iter = 0; iter < numberOfIterations; ++iter)
     {
-        ForEachIndex(x->GetRows(), [&](size_t i) {
+        ForEachIndex(x->GetRows(), [&n, &a, &x, &b](size_t i) {
             double sum = 0.0;
 
             for (size_t j = 0; j < n; ++j)
@@ -44,7 +44,7 @@ void Rest(const typename BLASType::VectorType& finer,
           typename BLASType::VectorType* coarser)
 {
     size_t n = coarser->GetRows();
-    ParallelForEachIndex(coarser->GetRows(), [&](size_t i) {
+    ParallelForEachIndex(coarser->GetRows(), [&n, &coarser, &finer](size_t i) {
         // --*--|--*--|--*--|--*--
         //  1/8   3/8   3/8   1/8
         //           to
@@ -62,7 +62,7 @@ void Corr(const typename BLASType::VectorType& coarser,
 {
     size_t n = coarser.GetRows();
 
-    ForEachIndex(coarser.GetRows(), [&](size_t i) {
+    ForEachIndex(coarser.GetRows(), [&n, &finer, &coarser](size_t i) {
         // -----|-----*-----|-----
         //           to
         //  1/4   3/4   3/4   1/4

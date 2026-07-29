@@ -100,11 +100,13 @@ CUBBYFLOW_BEGIN_TEST_F(PICSolver2, Rotation)
             {
                 Vector2D rp = x[i] - Vector2D(0.5, 0.5);
 
-                if (rp.LengthSquared() > 0.0)
+                if (rp.LengthSquared() <= 0.0)
                 {
-                    double scale = r[i] / rp.Length();
-                    x[i] = scale * rp + Vector2D(0.5, 0.5);
+                    continue;
                 }
+
+                double scale = r[i] / rp.Length();
+                x[i] = scale * rp + Vector2D(0.5, 0.5);
             }
         }
 

@@ -29,8 +29,14 @@ class Plane final : public Surface<N>
 
     //! Constructs a plane that crosses (0, 0, ...) with surface normal
     //! (y-axis).
-    Plane(const Transform<N>& _transform = Transform<N>{},
-          bool _isNormalFlipped = false);
+    Plane() : Plane(Transform<N>{})
+    {
+        // Do nothing
+    }
+
+    //! Constructs a default plane with a transform.
+    explicit Plane(const Transform<N>& _transform,
+                   bool _isNormalFlipped = false);
 
     //! Constructs a plane that cross \p point with surface normal \p normal.
     Plane(const Vector<double, N>& normal, const Vector<double, N>& point,

@@ -21,8 +21,14 @@ namespace CubbyFlow
 class SphericalPointsToImplicit2 final : public PointsToImplicit2
 {
  public:
+    //! Constructs the converter with default parameters.
+    SphericalPointsToImplicit2() : SphericalPointsToImplicit2(1.0)
+    {
+        // Do nothing
+    }
+
     //! Constructs the converter with given sphere radius.
-    SphericalPointsToImplicit2(double radius = 1.0, bool isOutputSdf = true);
+    explicit SphericalPointsToImplicit2(double radius, bool isOutputSdf = true);
 
     //! Converts the given points to implicit surface scalar field.
     void Convert(const ConstArrayView1<Vector2D>& points,

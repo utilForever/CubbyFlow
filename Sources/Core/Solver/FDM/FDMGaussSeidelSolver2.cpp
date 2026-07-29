@@ -132,7 +132,7 @@ void FDMGaussSeidelSolver2::Relax(const FDMMatrix2& A, const FDMVector2& b,
     Vector2UZ size = A.Size();
     FDMVector2& refX = *x;
 
-    ForEachIndex(size, [&](size_t i, size_t j) {
+    ForEachIndex(size, [&A, &refX, &size, &sorFactor, &b](size_t i, size_t j) {
         const double r =
             ((i > 0) ? A(i - 1, j).right * refX(i - 1, j) : 0.0) +
             ((i + 1 < size.x) ? A(i, j).right * refX(i + 1, j) : 0.0) +
@@ -153,7 +153,8 @@ void FDMGaussSeidelSolver2::Relax(const MatrixCSRD& A, const VectorND& b,
 
     VectorND& xRef = *x;
 
-    ForEachIndex(b.GetRows(), [&](size_t i) {
+    ForEachIndex(b.GetRows(), [&rp, &ci, &nnz, &xRef, &sorFactor,
+                               &b](size_t i) {
         const size_t rowBegin = rp[i];
         const size_t rowEnd = rp[i + 1];
 
@@ -187,7 +188,8 @@ void FDMGaussSeidelSolver2::RelaxRedBlack(const FDMMatrix2& A,
     // Red update
     ParallelRangeFor(
         ZERO_SIZE, size.x, ZERO_SIZE, size.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
+        [&A, &xRef, &size, &sorFactor, &b](size_t iBegin, size_t iEnd,
+                                           size_t jBegin, size_t jEnd) {
             for (size_t j = jBegin; j < jEnd; ++j)
             {
                 // i.e. (0, 0)
@@ -211,7 +213,8 @@ void FDMGaussSeidelSolver2::RelaxRedBlack(const FDMMatrix2& A,
     // Black update
     ParallelRangeFor(
         ZERO_SIZE, size.x, ZERO_SIZE, size.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
+        [&A, &xRef, &size, &sorFactor, &b](size_t iBegin, size_t iEnd,
+                                           size_t jBegin, size_t jEnd) {
             for (size_t j = jBegin; j < jEnd; ++j)
             {
                 size_t i = 1 - j % 2 + iBegin;  // i.e. (1, 0)

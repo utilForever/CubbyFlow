@@ -13,6 +13,8 @@
 #include <Core/Solver/Grid/GridSinglePhasePressureSolver3.hpp>
 #include <Core/Utils/LevelSetUtils.hpp>
 
+#include <array>
+
 namespace CubbyFlow
 {
 const char FLUID = 0;
@@ -23,6 +25,179 @@ const double DEFAULT_TOLERANCE = 1e-6;
 
 namespace
 {
+struct SingleRowData3
+{
+    const Vector3UZ& size;
+    const Vector3D& invHSqr;
+    const Array3<char>& markers;
+    const FaceCenteredGrid3& input;
+};
+
+void BuildSingleRow(size_t i, size_t j, size_t k, const SingleRowData3& data,
+                    FDMMatrixRow3* row, double* rhs)
+{
+    const auto& [size, invHSqr, markers, input] = data;
+    *row = {};
+    *rhs = 0.0;
+
+    if (markers(i, j, k) != FLUID)
+    {
+        row->center = 1.0;
+        return;
+    }
+
+    *rhs = input.DivergenceAtCellCenter(i, j, k);
+
+    const auto addNeighbor = [&](bool valid, size_t x, size_t y, size_t z,
+                                 double weight, double* offDiagonal) {
+        if (!valid || markers(x, y, z) == BOUNDARY)
+        {
+            return;
+        }
+
+        row->center += weight;
+
+        if (offDiagonal != nullptr && markers(x, y, z) == FLUID)
+        {
+            *offDiagonal -= weight;
+        }
+    };
+
+    addNeighbor(i + 1 < size.x, i + 1, j, k, invHSqr.x, &row->right);
+    addNeighbor(i > 0, i - 1, j, k, invHSqr.x, nullptr);
+    addNeighbor(j + 1 < size.y, i, j + 1, k, invHSqr.y, &row->up);
+    addNeighbor(j > 0, i, j - 1, k, invHSqr.y, nullptr);
+    addNeighbor(k + 1 < size.z, i, j, k + 1, invHSqr.z, &row->front);
+    addNeighbor(k > 0, i, j, k - 1, invHSqr.z, nullptr);
+}
+
+struct CompressedRowData3
+{
+    const Vector3UZ& size;
+    const Vector3D& invHSqr;
+    const ConstArrayView3<char>& markers;
+    const Array3<size_t>& coordToIndex;
+    MatrixCSRD* A;
+    VectorND* b;
+    const FaceCenteredGrid3& input;
+};
+
+void BuildCompressedRow(size_t i, size_t j, size_t k,
+                        const CompressedRowData3& data)
+{
+    const auto& [size, invHSqr, markers, coordToIndex, A, b, input] = data;
+    const size_t center = markers.Index(i, j, k);
+
+    if (markers[center] != FLUID)
+    {
+        return;
+    }
+
+    b->AddElement(input.DivergenceAtCellCenter(i, j, k));
+
+    std::vector<double> row(1, 0.0);
+    std::vector<size_t> columns(1, coordToIndex[center]);
+
+    const auto addNeighbor = [&](bool valid, size_t x, size_t y, size_t z,
+                                 double weight) {
+        if (!valid || markers(x, y, z) == BOUNDARY)
+        {
+            return;
+        }
+
+        row[0] += weight;
+
+        const size_t neighbor = markers.Index(x, y, z);
+
+        if (markers[neighbor] == FLUID)
+        {
+            row.push_back(-weight);
+            columns.push_back(coordToIndex[neighbor]);
+        }
+    };
+
+    addNeighbor(i + 1 < size.x, i + 1, j, k, invHSqr.x);
+    addNeighbor(i > 0, i - 1, j, k, invHSqr.x);
+    addNeighbor(j + 1 < size.y, i, j + 1, k, invHSqr.y);
+    addNeighbor(j > 0, i, j - 1, k, invHSqr.y);
+    addNeighbor(k + 1 < size.z, i, j, k + 1, invHSqr.z);
+    addNeighbor(k > 0, i, j, k - 1, invHSqr.z);
+    A->AddRow(row, columns);
+}
+
+char CoarsenMarker(size_t i, size_t j, size_t k, const Vector3UZ& size,
+                   const Array3<char>& finer)
+{
+    const std::array<size_t, 4> iIndices{ (i > 0) ? 2 * i - 1 : 2 * i, 2 * i,
+                                          2 * i + 1,
+                                          (i + 1 < size.x) ? 2 * i + 2
+                                                           : 2 * i + 1 };
+    const std::array<size_t, 4> jIndices{ (j > 0) ? 2 * j - 1 : 2 * j, 2 * j,
+                                          2 * j + 1,
+                                          (j + 1 < size.y) ? 2 * j + 2
+                                                           : 2 * j + 1 };
+    const std::array<size_t, 4> kIndices{ (k > 0) ? 2 * k - 1 : 2 * k, 2 * k,
+                                          2 * k + 1,
+                                          (k + 1 < size.z) ? 2 * k + 2
+                                                           : 2 * k + 1 };
+    std::array<int, 3> counts{};
+
+    for (size_t z : kIndices)
+    {
+        for (size_t y : jIndices)
+        {
+            for (size_t x : iIndices)
+            {
+                ++counts[static_cast<int>(finer(x, y, z))];
+            }
+        }
+    }
+
+    return static_cast<char>(ArgMax3(counts[0], counts[1], counts[2]));
+}
+
+struct PressureGradientData3
+{
+    const Vector3UZ& size;
+    const Array3<char>& markers;
+    const ConstArrayView3<double>& u;
+    const ConstArrayView3<double>& v;
+    const ConstArrayView3<double>& w;
+    ArrayView3<double>& u0;
+    ArrayView3<double>& v0;
+    ArrayView3<double>& w0;
+    const Vector3D& invH;
+    const FDMVector3& pressure;
+};
+
+void ApplyPressureGradientAt(size_t i, size_t j, size_t k,
+                             const PressureGradientData3& data)
+{
+    const auto& [size, markers, u, v, w, u0, v0, w0, invH, pressure] = data;
+    if (markers(i, j, k) != FLUID)
+    {
+        return;
+    }
+
+    if (i + 1 < size.x && markers(i + 1, j, k) != BOUNDARY)
+    {
+        u0(i + 1, j, k) = u(i + 1, j, k) +
+                          invH.x * (pressure(i + 1, j, k) - pressure(i, j, k));
+    }
+
+    if (j + 1 < size.y && markers(i, j + 1, k) != BOUNDARY)
+    {
+        v0(i, j + 1, k) = v(i, j + 1, k) +
+                          invH.y * (pressure(i, j + 1, k) - pressure(i, j, k));
+    }
+
+    if (k + 1 < size.z && markers(i, j, k + 1) != BOUNDARY)
+    {
+        w0(i, j, k + 1) = w(i, j, k + 1) +
+                          invH.z * (pressure(i, j, k + 1) - pressure(i, j, k));
+    }
+}
+
 void BuildSingleSystem(FDMMatrix3* A, FDMVector3* b,
                        const Array3<char>& markers,
                        const FaceCenteredGrid3& input)
@@ -30,66 +205,13 @@ void BuildSingleSystem(FDMMatrix3* A, FDMVector3* b,
     Vector3UZ size = input.Resolution();
     const Vector3D invH = 1.0 / input.GridSpacing();
     Vector3D invHSqr = ElemMul(invH, invH);
+    const SingleRowData3 data{ size, invHSqr, markers, input };
 
     // Build linear system
-    ParallelForEachIndex(A->Size(), [&](size_t i, size_t j, size_t k) {
-        FDMMatrixRow3& row = (*A)(i, j, k);
-
-        // initialize
-        row.center = row.right = row.up = row.front = 0.0;
-        (*b)(i, j, k) = 0.0;
-
-        if (markers(i, j, k) == FLUID)
-        {
-            (*b)(i, j, k) = input.DivergenceAtCellCenter(i, j, k);
-
-            if (i + 1 < size.x && markers(i + 1, j, k) != BOUNDARY)
-            {
-                row.center += invHSqr.x;
-                if (markers(i + 1, j, k) == FLUID)
-                {
-                    row.right -= invHSqr.x;
-                }
-            }
-
-            if (i > 0 && markers(i - 1, j, k) != BOUNDARY)
-            {
-                row.center += invHSqr.x;
-            }
-
-            if (j + 1 < size.y && markers(i, j + 1, k) != BOUNDARY)
-            {
-                row.center += invHSqr.y;
-                if (markers(i, j + 1, k) == FLUID)
-                {
-                    row.up -= invHSqr.y;
-                }
-            }
-
-            if (j > 0 && markers(i, j - 1, k) != BOUNDARY)
-            {
-                row.center += invHSqr.y;
-            }
-
-            if (k + 1 < size.z && markers(i, j, k + 1) != BOUNDARY)
-            {
-                row.center += invHSqr.z;
-                if (markers(i, j, k + 1) == FLUID)
-                {
-                    row.front -= invHSqr.z;
-                }
-            }
-
-            if (k > 0 && markers(i, j, k - 1) != BOUNDARY)
-            {
-                row.center += invHSqr.z;
-            }
-        }
-        else
-        {
-            row.center = 1.0;
-        }
-    });
+    ParallelForEachIndex(
+        A->Size(), [&A, &b, &data](size_t i, size_t j, size_t k) {
+            BuildSingleRow(i, j, k, data, &(*A)(i, j, k), &(*b)(i, j, k));
+        });
 }
 
 void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
@@ -107,7 +229,8 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
 
     size_t numRows = 0;
     Array3<size_t> coordToIndex{ size };
-    ForEachIndex(markers.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(markers.Size(), [&markerAcc, &coordToIndex, &numRows](
+                                     size_t i, size_t j, size_t k) {
         const size_t cIdx = markerAcc.Index(i, j, k);
 
         if (markerAcc[cIdx] == FLUID)
@@ -115,91 +238,11 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
             coordToIndex[cIdx] = numRows++;
         }
     });
+    const CompressedRowData3 data{ size, invHSqr, markerAcc, coordToIndex,
+                                   A,    b,       input };
 
-    ForEachIndex(markers.Size(), [&](size_t i, size_t j, size_t k) {
-        const size_t cIdx = markerAcc.Index(i, j, k);
-
-        if (markerAcc[cIdx] == FLUID)
-        {
-            b->AddElement(input.DivergenceAtCellCenter(i, j, k));
-
-            std::vector<double> row(1, 0.0);
-            std::vector<size_t> colIdx(1, coordToIndex[cIdx]);
-
-            if (i + 1 < size.x && markers(i + 1, j, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.x;
-                const size_t rIdx = markerAcc.Index(i + 1, j, k);
-
-                if (markers[rIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.x);
-                    colIdx.push_back(coordToIndex[rIdx]);
-                }
-            }
-
-            if (i > 0 && markers(i - 1, j, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.x;
-                const size_t lIdx = markerAcc.Index(i - 1, j, k);
-
-                if (markers[lIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.x);
-                    colIdx.push_back(coordToIndex[lIdx]);
-                }
-            }
-
-            if (j + 1 < size.y && markers(i, j + 1, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.y;
-                const size_t uIdx = markerAcc.Index(i, j + 1, k);
-
-                if (markers[uIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.y);
-                    colIdx.push_back(coordToIndex[uIdx]);
-                }
-            }
-
-            if (j > 0 && markers(i, j - 1, k) != BOUNDARY)
-            {
-                row[0] += invHSqr.y;
-                const size_t dIdx = markerAcc.Index(i, j - 1, k);
-
-                if (markers[dIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.y);
-                    colIdx.push_back(coordToIndex[dIdx]);
-                }
-            }
-
-            if (k + 1 < size.z && markers(i, j, k + 1) != BOUNDARY)
-            {
-                row[0] += invHSqr.z;
-                const size_t fIdx = markerAcc.Index(i, j, k + 1);
-
-                if (markers[fIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.z);
-                    colIdx.push_back(coordToIndex[fIdx]);
-                }
-            }
-
-            if (k > 0 && markers(i, j, k - 1) != BOUNDARY)
-            {
-                row[0] += invHSqr.z;
-                const size_t bIdx = markerAcc.Index(i, j, k - 1);
-
-                if (markers[bIdx] == FLUID)
-                {
-                    row.push_back(-invHSqr.z);
-                    colIdx.push_back(coordToIndex[bIdx]);
-                }
-            }
-
-            A->AddRow(row, colIdx);
-        }
+    ForEachIndex(markers.Size(), [&data](size_t i, size_t j, size_t k) {
+        BuildCompressedRow(i, j, k, data);
     });
 
     x->Resize(b->GetRows(), 0.0);
@@ -295,9 +338,9 @@ const FDMVector3& GridSinglePhasePressureSolver3::GetPressure() const
     return m_mgSystem.x.levels.front();
 }
 
+template <typename PositionFunc>
 void GridSinglePhasePressureSolver3::BuildMarkers(
-    const Vector3UZ& size,
-    const std::function<Vector3D(size_t, size_t, size_t)>& pos,
+    const Vector3UZ& size, const PositionFunc& pos,
     const ScalarField3& boundarySDF, const ScalarField3& fluidSDF)
 {
     // Build levels
@@ -309,23 +352,24 @@ void GridSinglePhasePressureSolver3::BuildMarkers(
     FDMMGUtils3::ResizeArrayWithFinest(size, maxLevels, &m_markers);
 
     // Build top-level markers
-    ParallelForEachIndex(m_markers[0].Size(),
-                         [&](size_t i, size_t j, size_t k) {
-                             const Vector3D pt = pos(i, j, k);
+    ParallelForEachIndex(
+        m_markers[0].Size(),
+        [&pos, &boundarySDF, this, &fluidSDF](size_t i, size_t j, size_t k) {
+            const Vector3D pt = pos(i, j, k);
 
-                             if (IsInsideSDF(boundarySDF.Sample(pt)))
-                             {
-                                 m_markers[0](i, j, k) = BOUNDARY;
-                             }
-                             else if (IsInsideSDF(fluidSDF.Sample(pt)))
-                             {
-                                 m_markers[0](i, j, k) = FLUID;
-                             }
-                             else
-                             {
-                                 m_markers[0](i, j, k) = AIR;
-                             }
-                         });
+            if (IsInsideSDF(boundarySDF.Sample(pt)))
+            {
+                m_markers[0](i, j, k) = BOUNDARY;
+            }
+            else if (IsInsideSDF(fluidSDF.Sample(pt)))
+            {
+                m_markers[0](i, j, k) = FLUID;
+            }
+            else
+            {
+                m_markers[0](i, j, k) = AIR;
+            }
+        });
 
     // Build sub-level markers
     for (size_t l = 1; l < m_markers.size(); ++l)
@@ -336,62 +380,15 @@ void GridSinglePhasePressureSolver3::BuildMarkers(
 
         ParallelRangeFor(
             ZERO_SIZE, n.x, ZERO_SIZE, n.y, ZERO_SIZE, n.z,
-            [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-                size_t kBegin, size_t kEnd) {
-                std::array<size_t, 4> kIndices{};
-
+            [&n, &finer, &coarser](size_t iBegin, size_t iEnd, size_t jBegin,
+                                   size_t jEnd, size_t kBegin, size_t kEnd) {
                 for (size_t k = kBegin; k < kEnd; ++k)
                 {
-                    kIndices[0] = (k > 0) ? 2 * k - 1 : 2 * k;
-                    kIndices[1] = 2 * k;
-                    kIndices[2] = 2 * k + 1;
-                    kIndices[3] = (k + 1 < n.z) ? 2 * k + 2 : 2 * k + 1;
-
-                    std::array<size_t, 4> jIndices{};
-
                     for (size_t j = jBegin; j < jEnd; ++j)
                     {
-                        jIndices[0] = (j > 0) ? 2 * j - 1 : 2 * j;
-                        jIndices[1] = 2 * j;
-                        jIndices[2] = 2 * j + 1;
-                        jIndices[3] = (j + 1 < n.y) ? 2 * j + 2 : 2 * j + 1;
-
-                        std::array<size_t, 4> iIndices{};
                         for (size_t i = iBegin; i < iEnd; ++i)
                         {
-                            iIndices[0] = (i > 0) ? 2 * i - 1 : 2 * i;
-                            iIndices[1] = 2 * i;
-                            iIndices[2] = 2 * i + 1;
-                            iIndices[3] = (i + 1 < n.x) ? 2 * i + 2 : 2 * i + 1;
-
-                            int cnt[3] = { 0, 0, 0 };
-                            for (size_t z = 0; z < 4; ++z)
-                            {
-                                for (size_t y = 0; y < 4; ++y)
-                                {
-                                    for (size_t x = 0; x < 4; ++x)
-                                    {
-                                        const char f =
-                                            finer(iIndices[x], jIndices[y],
-                                                  kIndices[z]);
-                                        if (f == BOUNDARY)
-                                        {
-                                            ++cnt[static_cast<int>(BOUNDARY)];
-                                        }
-                                        else if (f == FLUID)
-                                        {
-                                            ++cnt[static_cast<int>(FLUID)];
-                                        }
-                                        else
-                                        {
-                                            ++cnt[static_cast<int>(AIR)];
-                                        }
-                                    }
-                                }
-                            }
-
-                            coarser(i, j, k) = static_cast<char>(
-                                ArgMax3(cnt[0], cnt[1], cnt[2]));
+                            coarser(i, j, k) = CoarsenMarker(i, j, k, n, finer);
                         }
                     }
                 }
@@ -405,13 +402,14 @@ void GridSinglePhasePressureSolver3::DecompressSolution()
     m_system.x.Resize(acc.Size());
 
     size_t row = 0;
-    ForEachIndex(m_markers[0].Size(), [&](size_t i, size_t j, size_t k) {
-        if (acc(i, j, k) == FLUID)
-        {
-            m_system.x(i, j, k) = m_compSystem.x[row];
-            ++row;
-        }
-    });
+    ForEachIndex(m_markers[0].Size(),
+                 [&acc, this, &row](size_t i, size_t j, size_t k) {
+                     if (acc(i, j, k) == FLUID)
+                     {
+                         m_system.x(i, j, k) = m_compSystem.x[row];
+                         ++row;
+                     }
+                 });
 }
 
 void GridSinglePhasePressureSolver3::BuildSystem(const FaceCenteredGrid3& input,
@@ -499,26 +497,11 @@ void GridSinglePhasePressureSolver3::ApplyPressureGradient(
     const FDMVector3& x = GetPressure();
 
     Vector3D invH = 1.0 / input.GridSpacing();
+    const PressureGradientData3 data{ size, m_markers[0], u,  v,    w,
+                                      u0,   v0,           w0, invH, x };
 
-    ParallelForEachIndex(x.Size(), [&](size_t i, size_t j, size_t k) {
-        if (m_markers[0](i, j, k) == FLUID)
-        {
-            if (i + 1 < size.x && m_markers[0](i + 1, j, k) != BOUNDARY)
-            {
-                u0(i + 1, j, k) =
-                    u(i + 1, j, k) + invH.x * (x(i + 1, j, k) - x(i, j, k));
-            }
-            if (j + 1 < size.y && m_markers[0](i, j + 1, k) != BOUNDARY)
-            {
-                v0(i, j + 1, k) =
-                    v(i, j + 1, k) + invH.y * (x(i, j + 1, k) - x(i, j, k));
-            }
-            if (k + 1 < size.z && m_markers[0](i, j, k + 1) != BOUNDARY)
-            {
-                w0(i, j, k + 1) =
-                    w(i, j, k + 1) + invH.z * (x(i, j, k + 1) - x(i, j, k));
-            }
-        }
+    ParallelForEachIndex(x.Size(), [&data](size_t i, size_t j, size_t k) {
+        ApplyPressureGradientAt(i, j, k, data);
     });
 }
 }  // namespace CubbyFlow

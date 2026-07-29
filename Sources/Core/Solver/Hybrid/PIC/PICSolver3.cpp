@@ -14,8 +14,52 @@
 #include <Core/Utils/Logging.hpp>
 #include <Core/Utils/Timer.hpp>
 
+#include <array>
+
 namespace CubbyFlow
 {
+namespace
+{
+void MoveParticle(const FaceCenteredGrid3& flow, double timeIntervalInSeconds,
+                  unsigned int numSubSteps, int domainBoundaryFlag,
+                  const BoundingBox3D& boundingBox, Vector3D* position,
+                  Vector3D* velocity)
+{
+    Vector3D pt = *position;
+    const double dt = timeIntervalInSeconds / numSubSteps;
+
+    for (unsigned int t = 0; t < numSubSteps; ++t)
+    {
+        const Vector3D midPt = pt + 0.5 * dt * flow.Sample(pt);
+        pt += dt * flow.Sample(midPt);
+    }
+
+    const std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                 DIRECTION_BACK };
+    const std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                 DIRECTION_FRONT };
+
+    for (size_t axis = 0; axis < 3; ++axis)
+    {
+        if ((domainBoundaryFlag & lowerFlags[axis]) &&
+            pt[axis] <= boundingBox.lowerCorner[axis])
+        {
+            pt[axis] = boundingBox.lowerCorner[axis];
+            (*velocity)[axis] = 0.0;
+        }
+
+        if ((domainBoundaryFlag & upperFlags[axis]) &&
+            pt[axis] >= boundingBox.upperCorner[axis])
+        {
+            pt[axis] = boundingBox.upperCorner[axis];
+            (*velocity)[axis] = 0.0;
+        }
+    }
+
+    *position = pt;
+}
+}  // namespace
+
 PICSolver3::PICSolver3() : PICSolver3{ { 1, 1, 1 }, { 1, 1, 1 }, { 0, 0, 0 } }
 {
     // Do nothing
@@ -180,24 +224,27 @@ void PICSolver3::TransferFromParticlesToGrids()
         }
     }
 
-    ParallelForEachIndex(uWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (uWeight(i, j, k) > 0.0)
-        {
-            u(i, j, k) /= uWeight(i, j, k);
-        }
-    });
-    ParallelForEachIndex(vWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (vWeight(i, j, k) > 0.0)
-        {
-            v(i, j, k) /= vWeight(i, j, k);
-        }
-    });
-    ParallelForEachIndex(wWeight.Size(), [&](size_t i, size_t j, size_t k) {
-        if (wWeight(i, j, k) > 0.0)
-        {
-            w(i, j, k) /= wWeight(i, j, k);
-        }
-    });
+    ParallelForEachIndex(uWeight.Size(),
+                         [&uWeight, &u](size_t i, size_t j, size_t k) {
+                             if (uWeight(i, j, k) > 0.0)
+                             {
+                                 u(i, j, k) /= uWeight(i, j, k);
+                             }
+                         });
+    ParallelForEachIndex(vWeight.Size(),
+                         [&vWeight, &v](size_t i, size_t j, size_t k) {
+                             if (vWeight(i, j, k) > 0.0)
+                             {
+                                 v(i, j, k) /= vWeight(i, j, k);
+                             }
+                         });
+    ParallelForEachIndex(wWeight.Size(),
+                         [&wWeight, &w](size_t i, size_t j, size_t k) {
+                             if (wWeight(i, j, k) > 0.0)
+                             {
+                                 w(i, j, k) /= wWeight(i, j, k);
+                             }
+                         });
 }
 
 void PICSolver3::TransferFromGridsToParticles()
@@ -208,7 +255,9 @@ void PICSolver3::TransferFromGridsToParticles()
     const size_t numberOfParticles = m_particles->NumberOfParticles();
 
     ParallelFor(ZERO_SIZE, numberOfParticles,
-                [&](size_t i) { velocities[i] = flow->Sample(positions[i]); });
+                [&velocities, &flow, &positions](size_t i) {
+                    velocities[i] = flow->Sample(positions[i]);
+                });
 }
 
 void PICSolver3::MoveParticles(double timeIntervalInSeconds)
@@ -219,75 +268,25 @@ void PICSolver3::MoveParticles(double timeIntervalInSeconds)
     const size_t numberOfParticles = m_particles->NumberOfParticles();
     int domainBoundaryFlag = GetClosedDomainBoundaryFlag();
     BoundingBox3D boundingBox = flow->GetBoundingBox();
+    const auto numSubSteps =
+        static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        Vector3D pt0 = positions[i];
-        Vector3D pt1 = pt0;
-        Vector3D vel = velocities[i];
-
-        // Adaptive time-stepping
-        const unsigned int numSubSteps =
-            static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
-        const double dt = timeIntervalInSeconds / numSubSteps;
-        for (unsigned int t = 0; t < numSubSteps; ++t)
-        {
-            Vector3D vel0 = flow->Sample(pt0);
-
-            // Mid-point rule
-            Vector3D midPt = pt0 + 0.5 * dt * vel0;
-            Vector3D midVel = flow->Sample(midPt);
-            pt1 = pt0 + dt * midVel;
-
-            pt0 = pt1;
-        }
-
-        if ((domainBoundaryFlag & DIRECTION_LEFT) &&
-            pt1.x <= boundingBox.lowerCorner.x)
-        {
-            pt1.x = boundingBox.lowerCorner.x;
-            vel.x = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
-            pt1.x >= boundingBox.upperCorner.x)
-        {
-            pt1.x = boundingBox.upperCorner.x;
-            vel.x = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_DOWN) &&
-            pt1.y <= boundingBox.lowerCorner.y)
-        {
-            pt1.y = boundingBox.lowerCorner.y;
-            vel.y = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_UP) &&
-            pt1.y >= boundingBox.upperCorner.y)
-        {
-            pt1.y = boundingBox.upperCorner.y;
-            vel.y = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_BACK) &&
-            pt1.z <= boundingBox.lowerCorner.z)
-        {
-            pt1.z = boundingBox.lowerCorner.z;
-            vel.z = 0.0;
-        }
-        if ((domainBoundaryFlag & DIRECTION_FRONT) &&
-            pt1.z >= boundingBox.upperCorner.z)
-        {
-            pt1.z = boundingBox.upperCorner.z;
-            vel.z = 0.0;
-        }
-
-        positions[i] = pt1;
-        velocities[i] = vel;
-    });
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&positions, &velocities, &timeIntervalInSeconds, &flow,
+                 &numSubSteps, &domainBoundaryFlag, &boundingBox](size_t i) {
+                    MoveParticle(*flow, timeIntervalInSeconds, numSubSteps,
+                                 domainBoundaryFlag, boundingBox, &positions[i],
+                                 &velocities[i]);
+                });
 
     Collider3Ptr col = GetCollider();
     if (col != nullptr)
     {
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            col->ResolveCollision(0.0, 0.0, &positions[i], &velocities[i]);
-        });
+        ParallelFor(ZERO_SIZE, numberOfParticles,
+                    [&col, &positions, &velocities](size_t i) {
+                        col->ResolveCollision(0.0, 0.0, &positions[i],
+                                              &velocities[i]);
+                    });
     }
 }
 
@@ -315,12 +314,14 @@ void PICSolver3::BuildSignedDistanceField()
 
     m_particles->BuildNeighborSearcher(2 * radius);
     PointNeighborSearcher3Ptr searcher = m_particles->NeighborSearcher();
-    sdf->ParallelForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
+    sdf->ParallelForEachDataPointIndex([&sdfPos, &sdfBandRadius, &searcher,
+                                        &sdf,
+                                        &radius](size_t i, size_t j, size_t k) {
         Vector3D pt = sdfPos(i, j, k);
         double minDist = sdfBandRadius;
 
         searcher->ForEachNearbyPoint(
-            pt, sdfBandRadius, [&](size_t, const Vector3D& x) {
+            pt, sdfBandRadius, [&minDist, &pt](size_t, const Vector3D& x) {
                 minDist = std::min(minDist, pt.DistanceTo(x));
             });
         (*sdf)(i, j, k) = minDist - radius;

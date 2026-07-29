@@ -64,7 +64,8 @@ double GridFluidSolver3::GetCFL(double timeIntervalInSeconds) const
     FaceCenteredGrid3Ptr vel = m_grids->Velocity();
     double maxVel = 0.0;
 
-    vel->ForEachCellIndex([&](size_t i, size_t j, size_t k) {
+    vel->ForEachCellIndex([&vel, &timeIntervalInSeconds, this, &maxVel](
+                              size_t i, size_t j, size_t k) {
         const Vector3D v =
             vel->ValueAtCellCenter(i, j, k) + timeIntervalInSeconds * m_gravity;
         maxVel = std::max(maxVel, v.Max());
@@ -394,23 +395,26 @@ void GridFluidSolver3::ComputeGravity(double timeIntervalInSeconds)
 
         if (std::abs(m_gravity.x) > std::numeric_limits<double>::epsilon())
         {
-            vel->ForEachUIndex([&](const Vector3UZ& idx) {
-                u(idx) += timeIntervalInSeconds * m_gravity.x;
-            });
+            vel->ForEachUIndex(
+                [&u, &timeIntervalInSeconds, this](const Vector3UZ& idx) {
+                    u(idx) += timeIntervalInSeconds * m_gravity.x;
+                });
         }
 
         if (std::abs(m_gravity.y) > std::numeric_limits<double>::epsilon())
         {
-            vel->ForEachVIndex([&](const Vector3UZ& idx) {
-                v(idx) += timeIntervalInSeconds * m_gravity.y;
-            });
+            vel->ForEachVIndex(
+                [&v, &timeIntervalInSeconds, this](const Vector3UZ& idx) {
+                    v(idx) += timeIntervalInSeconds * m_gravity.y;
+                });
         }
 
         if (std::abs(m_gravity.z) > std::numeric_limits<double>::epsilon())
         {
-            vel->ForEachWIndex([&](const Vector3UZ& idx) {
-                w(idx) += timeIntervalInSeconds * m_gravity.z;
-            });
+            vel->ForEachWIndex(
+                [&w, &timeIntervalInSeconds, this](const Vector3UZ& idx) {
+                    w(idx) += timeIntervalInSeconds * m_gravity.z;
+                });
         }
 
         ApplyBoundaryCondition();
@@ -433,16 +437,17 @@ void GridFluidSolver3::ExtrapolateIntoCollider(ScalarGrid3* grid)
     Array3<char> marker(grid->DataSize());
     GridDataPositionFunc<3> pos = grid->DataPosition();
 
-    ParallelForEachIndex(marker.Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF(GetColliderSDF()->Sample(pos(i, j, k))))
-        {
-            marker(i, j, k) = 0;
-        }
-        else
-        {
-            marker(i, j, k) = 1;
-        }
-    });
+    ParallelForEachIndex(
+        marker.Size(), [this, &pos, &marker](size_t i, size_t j, size_t k) {
+            if (IsInsideSDF(GetColliderSDF()->Sample(pos(i, j, k))))
+            {
+                marker(i, j, k) = 0;
+            }
+            else
+            {
+                marker(i, j, k) = 1;
+            }
+        });
 
     const auto depth = static_cast<unsigned int>(std::ceil(m_maxCFL));
     ExtrapolateToRegion(grid->DataView(), marker, depth, grid->DataView());
@@ -453,16 +458,17 @@ void GridFluidSolver3::ExtrapolateIntoCollider(CollocatedVectorGrid3* grid)
     Array3<char> marker(grid->DataSize());
     GridDataPositionFunc<3> pos = grid->DataPosition();
 
-    ParallelForEachIndex(marker.Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF(GetColliderSDF()->Sample(pos(i, j, k))))
-        {
-            marker(i, j, k) = 0;
-        }
-        else
-        {
-            marker(i, j, k) = 1;
-        }
-    });
+    ParallelForEachIndex(
+        marker.Size(), [this, &pos, &marker](size_t i, size_t j, size_t k) {
+            if (IsInsideSDF(GetColliderSDF()->Sample(pos(i, j, k))))
+            {
+                marker(i, j, k) = 0;
+            }
+            else
+            {
+                marker(i, j, k) = 1;
+            }
+        });
 
     const auto depth = static_cast<unsigned int>(std::ceil(m_maxCFL));
     ExtrapolateToRegion(grid->DataView(), marker, depth, grid->DataView());
@@ -482,38 +488,41 @@ void GridFluidSolver3::ExtrapolateIntoCollider(FaceCenteredGrid3* grid)
     Array3<char> vMarker{ v.Size() };
     Array3<char> wMarker{ w.Size() };
 
-    ParallelForEachIndex(uMarker.Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF(GetColliderSDF()->Sample(uPos(i, j, k))))
-        {
-            uMarker(i, j, k) = 0;
-        }
-        else
-        {
-            uMarker(i, j, k) = 1;
-        }
-    });
+    ParallelForEachIndex(
+        uMarker.Size(), [this, &uPos, &uMarker](size_t i, size_t j, size_t k) {
+            if (IsInsideSDF(GetColliderSDF()->Sample(uPos(i, j, k))))
+            {
+                uMarker(i, j, k) = 0;
+            }
+            else
+            {
+                uMarker(i, j, k) = 1;
+            }
+        });
 
-    ParallelForEachIndex(vMarker.Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF(GetColliderSDF()->Sample(vPos(i, j, k))))
-        {
-            vMarker(i, j, k) = 0;
-        }
-        else
-        {
-            vMarker(i, j, k) = 1;
-        }
-    });
+    ParallelForEachIndex(
+        vMarker.Size(), [this, &vPos, &vMarker](size_t i, size_t j, size_t k) {
+            if (IsInsideSDF(GetColliderSDF()->Sample(vPos(i, j, k))))
+            {
+                vMarker(i, j, k) = 0;
+            }
+            else
+            {
+                vMarker(i, j, k) = 1;
+            }
+        });
 
-    ParallelForEachIndex(wMarker.Size(), [&](size_t i, size_t j, size_t k) {
-        if (IsInsideSDF(GetColliderSDF()->Sample(wPos(i, j, k))))
-        {
-            wMarker(i, j, k) = 0;
-        }
-        else
-        {
-            wMarker(i, j, k) = 1;
-        }
-    });
+    ParallelForEachIndex(
+        wMarker.Size(), [this, &wPos, &wMarker](size_t i, size_t j, size_t k) {
+            if (IsInsideSDF(GetColliderSDF()->Sample(wPos(i, j, k))))
+            {
+                wMarker(i, j, k) = 0;
+            }
+            else
+            {
+                wMarker(i, j, k) = 1;
+            }
+        });
 
     const auto depth = static_cast<unsigned int>(std::ceil(m_maxCFL));
     ExtrapolateToRegion(grid->UView(), uMarker, depth, u);

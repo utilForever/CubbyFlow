@@ -87,7 +87,8 @@ void PointParticleEmitter2::OnUpdate(double currentTimeInSeconds,
         newPositions.Append(candidatePositions);
         newVelocities.Append(candidateVelocities);
 
-        particles->AddParticles(newPositions, newVelocities);
+        particles->AddParticles(ConstArrayView1<Vector2D>(newPositions),
+                                ConstArrayView1<Vector2D>(newVelocities));
 
         m_numberOfEmittedParticles += newPositions.Length();
     }
@@ -104,7 +105,8 @@ void PointParticleEmitter2::Emit(Array1<Vector2D>* newPositions,
             Matrix2x2D::MakeRotationMatrix(newAngleInRadian);
 
         newPositions->Append(m_origin);
-        newVelocities->Append(m_speed * (rotationMatrix * m_direction));
+        newVelocities->Append(
+            Vector2D(m_speed * (rotationMatrix * m_direction)));
     }
 }
 

@@ -15,6 +15,81 @@
 
 namespace CubbyFlow
 {
+namespace
+{
+constexpr std::array<double, 4> RESTRICTION_KERNEL = { 0.125, 0.375, 0.375,
+                                                       0.125 };
+
+struct InterpolationAxis
+{
+    std::array<size_t, 2> indices;
+    std::array<double, 2> weights;
+};
+
+InterpolationAxis GetInterpolationAxis(size_t index, size_t size)
+{
+    const size_t coarseIndex = index / 2;
+
+    if (index % 2 == 0)
+    {
+        return { { index > 1 ? coarseIndex - 1 : coarseIndex, coarseIndex },
+                 { 0.25, 0.75 } };
+    }
+
+    return { { coarseIndex, index + 1 < size ? coarseIndex + 1 : coarseIndex },
+             { 0.75, 0.25 } };
+}
+
+void RestrictRange(const FDMVector2& finer, FDMVector2* coarser,
+                   const Vector2UZ& size, size_t iBegin, size_t iEnd,
+                   size_t jBegin, size_t jEnd)
+{
+    for (size_t j = jBegin; j < jEnd; ++j)
+    {
+        const std::array<size_t, 4> jIndices = { (j > 0) ? 2 * j - 1 : 2 * j,
+                                                 2 * j, 2 * j + 1,
+                                                 (j + 1 < size.y) ? 2 * j + 2
+                                                                  : 2 * j + 1 };
+
+        for (size_t i = iBegin; i < iEnd; ++i)
+        {
+            const std::array<size_t, 4> iIndices = {
+                (i > 0) ? 2 * i - 1 : 2 * i, 2 * i, 2 * i + 1,
+                (i + 1 < size.x) ? 2 * i + 2 : 2 * i + 1
+            };
+            double sum = 0.0;
+
+            for (size_t y = 0; y < 4; ++y)
+            {
+                for (size_t x = 0; x < 4; ++x)
+                {
+                    sum += RESTRICTION_KERNEL[x] * RESTRICTION_KERNEL[y] *
+                           finer(iIndices[x], jIndices[y]);
+                }
+            }
+
+            (*coarser)(i, j) = sum;
+        }
+    }
+}
+
+void CorrectPoint(const FDMVector2& coarser, FDMVector2* finer,
+                  const Vector2UZ& size, size_t i, size_t j)
+{
+    const InterpolationAxis xAxis = GetInterpolationAxis(i, size.x);
+    const InterpolationAxis yAxis = GetInterpolationAxis(j, size.y);
+
+    for (size_t y = 0; y < 2; ++y)
+    {
+        for (size_t x = 0; x < 2; ++x)
+        {
+            (*finer)(i, j) += xAxis.weights[x] * yAxis.weights[y] *
+                              coarser(xAxis.indices[x], yAxis.indices[y]);
+        }
+    }
+}
+}  // namespace
+
 void FDMMGLinearSystem2::Clear()
 {
     A.levels.clear();
@@ -58,44 +133,13 @@ void FDMMGUtils2::Restrict(const FDMVector2& finer, FDMVector2* coarser)
     //  1/8   3/8   3/8   1/8
     //           to
     // -----|-----*-----|-----
-    static const std::array<double, 4> kernel = { { 0.125, 0.375, 0.375,
-                                                    0.125 } };
-
     const Vector2UZ n = coarser->Size();
-    ParallelRangeFor(
-        ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
-            std::array<size_t, 4> jIndices{};
-
-            for (size_t j = jBegin; j < jEnd; ++j)
-            {
-                jIndices[0] = (j > 0) ? 2 * j - 1 : 2 * j;
-                jIndices[1] = 2 * j;
-                jIndices[2] = 2 * j + 1;
-                jIndices[3] = (j + 1 < n.y) ? 2 * j + 2 : 2 * j + 1;
-
-                std::array<size_t, 4> iIndices{};
-                for (size_t i = iBegin; i < iEnd; ++i)
-                {
-                    iIndices[0] = (i > 0) ? 2 * i - 1 : 2 * i;
-                    iIndices[1] = 2 * i;
-                    iIndices[2] = 2 * i + 1;
-                    iIndices[3] = (i + 1 < n.x) ? 2 * i + 2 : 2 * i + 1;
-
-                    double sum = 0.0;
-                    for (size_t y = 0; y < 4; ++y)
-                    {
-                        for (size_t x = 0; x < 4; ++x)
-                        {
-                            const double w = kernel[x] * kernel[y];
-                            sum += w * finer(iIndices[x], jIndices[y]);
-                        }
-                    }
-
-                    (*coarser)(i, j) = sum;
-                }
-            }
-        });
+    ParallelRangeFor(ZERO_SIZE, n.x, ZERO_SIZE, n.y,
+                     [&n, &finer, &coarser](size_t iBegin, size_t iEnd,
+                                            size_t jBegin, size_t jEnd) {
+                         RestrictRange(finer, coarser, n, iBegin, iEnd, jBegin,
+                                       jEnd);
+                     });
 }
 
 void FDMMGUtils2::Correct(const FDMVector2& coarser, FDMVector2* finer)
@@ -108,62 +152,16 @@ void FDMMGUtils2::Correct(const FDMVector2& coarser, FDMVector2* finer)
     //  1/4   3/4   3/4   1/4
     // --*--|--*--|--*--|--*--
     const Vector2UZ n = finer->Size();
-    ParallelRangeFor(
-        ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
-            for (size_t j = jBegin; j < jEnd; ++j)
-            {
-                for (size_t i = iBegin; i < iEnd; ++i)
-                {
-                    std::array<size_t, 2> iIndices{};
-                    std::array<size_t, 2> jIndices{};
-                    std::array<double, 2> iWeights{};
-                    std::array<double, 2> jWeights{};
-
-                    const size_t ci = i / 2;
-                    const size_t cj = j / 2;
-
-                    if (i % 2 == 0)
-                    {
-                        iIndices[0] = (i > 1) ? ci - 1 : ci;
-                        iIndices[1] = ci;
-                        iWeights[0] = 0.25;
-                        iWeights[1] = 0.75;
-                    }
-                    else
-                    {
-                        iIndices[0] = ci;
-                        iIndices[1] = (i + 1 < n.x) ? ci + 1 : ci;
-                        iWeights[0] = 0.75;
-                        iWeights[1] = 0.25;
-                    }
-
-                    if (j % 2 == 0)
-                    {
-                        jIndices[0] = (j > 1) ? cj - 1 : cj;
-                        jIndices[1] = cj;
-                        jWeights[0] = 0.25;
-                        jWeights[1] = 0.75;
-                    }
-                    else
-                    {
-                        jIndices[0] = cj;
-                        jIndices[1] = (j + 1 < n.y) ? cj + 1 : cj;
-                        jWeights[0] = 0.75;
-                        jWeights[1] = 0.25;
-                    }
-
-                    for (size_t y = 0; y < 2; ++y)
-                    {
-                        for (size_t x = 0; x < 2; ++x)
-                        {
-                            const double w = iWeights[x] * jWeights[y] *
-                                             coarser(iIndices[x], jIndices[y]);
-                            (*finer)(i, j) += w;
-                        }
-                    }
-                }
-            }
-        });
+    ParallelRangeFor(ZERO_SIZE, n.x, ZERO_SIZE, n.y,
+                     [&n, &coarser, &finer](size_t iBegin, size_t iEnd,
+                                            size_t jBegin, size_t jEnd) {
+                         for (size_t j = jBegin; j < jEnd; ++j)
+                         {
+                             for (size_t i = iBegin; i < iEnd; ++i)
+                             {
+                                 CorrectPoint(coarser, finer, n, i, j);
+                             }
+                         }
+                     });
 }
 }  // namespace CubbyFlow

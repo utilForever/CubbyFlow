@@ -4,6 +4,7 @@
 #include <Core/Geometry/Sphere.hpp>
 #include <Core/Grid/CellCenteredScalarGrid.hpp>
 #include <Core/Grid/CellCenteredVectorGrid.hpp>
+#include <Core/Grid/FaceCenteredGrid.hpp>
 #include <Core/Utils/LevelSetUtils.hpp>
 
 using namespace CubbyFlow;
@@ -40,19 +41,41 @@ TEST(VolumeGridEmitter3, Velocity)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<3> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        Vector3D gx = pos(i, j, k);
-        double sdf = emitter->GetSourceRegion()->SignedDistance(gx);
+    grid->ForEachDataPointIndex(
+        [&pos, &emitter, &grid](size_t i, size_t j, size_t k) {
+            Vector3D gx = pos(i, j, k);
+            double sdf = emitter->GetSourceRegion()->SignedDistance(gx);
 
-        if (IsInsideSDF(sdf))
-        {
-            Vector3D answer{ gx.y, -gx.x, 3.5 };
-            Vector3D acttual = (*grid)(i, j, k);
+            if (IsInsideSDF(sdf))
+            {
+                Vector3D answer{ gx.y, -gx.x, 3.5 };
+                Vector3D acttual = (*grid)(i, j, k);
 
-            EXPECT_NEAR(answer.x, acttual.x, 1e-6);
-            EXPECT_NEAR(answer.y, acttual.y, 1e-6);
-        }
+                EXPECT_NEAR(answer.x, acttual.x, 1e-6);
+                EXPECT_NEAR(answer.y, acttual.y, 1e-6);
+            }
+        });
+}
+
+TEST(VolumeGridEmitter3, FaceCenteredVelocity)
+{
+    auto sphere = Sphere3::Builder().WithRadius(1.0).MakeShared();
+    auto emitter =
+        VolumeGridEmitter3::Builder().WithSourceRegion(sphere).MakeShared();
+    auto grid =
+        FaceCenteredGrid3::Builder().WithResolution({ 2, 2, 2 }).MakeShared();
+
+    emitter->AddTarget(grid, [](double, const Vector3D&, const Vector3D&) {
+        return Vector3D{ 1.0, 2.0, 3.0 };
     });
+    emitter->Update(0.0, 0.01);
+
+    grid->ForEachUIndex(
+        [&grid](const Vector3UZ& idx) { EXPECT_DOUBLE_EQ(1.0, grid->U(idx)); });
+    grid->ForEachVIndex(
+        [&grid](const Vector3UZ& idx) { EXPECT_DOUBLE_EQ(2.0, grid->V(idx)); });
+    grid->ForEachWIndex(
+        [&grid](const Vector3UZ& idx) { EXPECT_DOUBLE_EQ(3.0, grid->W(idx)); });
 }
 
 TEST(VolumeGridEmitter3, SignedDistance)
@@ -77,13 +100,14 @@ TEST(VolumeGridEmitter3, SignedDistance)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<3> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        Vector3D gx = pos(i, j, k);
-        double answer = (sphere->center - gx).Length() - 0.15;
-        double acttual = (*grid)(i, j, k);
+    grid->ForEachDataPointIndex(
+        [&pos, &sphere, &grid](size_t i, size_t j, size_t k) {
+            Vector3D gx = pos(i, j, k);
+            double answer = (sphere->center - gx).Length() - 0.15;
+            double acttual = (*grid)(i, j, k);
 
-        EXPECT_NEAR(answer, acttual, 1e-6);
-    });
+            EXPECT_NEAR(answer, acttual, 1e-6);
+        });
 }
 
 TEST(VolumeGridEmitter3, StepFunction)
@@ -107,12 +131,13 @@ TEST(VolumeGridEmitter3, StepFunction)
     emitter->Update(0.0, 0.01);
 
     GridDataPositionFunc<3> pos = grid->DataPosition();
-    grid->ForEachDataPointIndex([&](size_t i, size_t j, size_t k) {
-        Vector3D gx = pos(i, j, k);
-        double answer = (sphere->center - gx).Length() - 0.15;
-        answer = 4.0 * (1.0 - SmearedHeavisideSDF(answer * 16.0)) + 3.0;
-        double acttual = (*grid)(i, j, k);
+    grid->ForEachDataPointIndex(
+        [&pos, &sphere, &grid](size_t i, size_t j, size_t k) {
+            Vector3D gx = pos(i, j, k);
+            double answer = (sphere->center - gx).Length() - 0.15;
+            answer = 4.0 * (1.0 - SmearedHeavisideSDF(answer * 16.0)) + 3.0;
+            double acttual = (*grid)(i, j, k);
 
-        EXPECT_NEAR(answer, acttual, 1e-6);
-    });
+            EXPECT_NEAR(answer, acttual, 1e-6);
+        });
 }

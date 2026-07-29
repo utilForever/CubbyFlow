@@ -47,6 +47,8 @@ class FDMMGPCGSolver2 final : public FDMMGSolver2
                     double maxTolerance = 1e-9, double sorFactor = 1.5,
                     bool useRedBlackOrdering = false);
 
+    using FDMMGSolver2::Solve;
+
     //! Solves the given linear system.
     bool Solve(FDMMGLinearSystem2* system) override;
 

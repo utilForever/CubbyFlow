@@ -11,6 +11,22 @@ TEST(Quadtree, Constructors)
     EXPECT_EQ(quadtree.begin(), quadtree.end());
 }
 
+TEST(Quadtree, Clear)
+{
+    Quadtree<Vector2D> quadtree;
+
+    quadtree.Build(
+        { Vector2D(0.2, 0.7) }, BoundingBox2D({ 0, 0 }, { 1, 1 }),
+        [](const Vector2D& point, const BoundingBox2D& box) {
+            return box.Contains(point);
+        },
+        3);
+    quadtree.Clear();
+
+    EXPECT_EQ(quadtree.begin(), quadtree.end());
+    EXPECT_EQ(0u, quadtree.GetNumberOfNodes());
+}
+
 TEST(Quadtree, Nearest)
 {
     Quadtree<Vector2D> quadtree;
@@ -131,11 +147,12 @@ TEST(Quadtree, ForEachOverlappingItems)
     }
 
     size_t measured = 0;
-    quadtree.ForEachIntersectingItem(testBox, overlapsFunc,
-                                     [&](const Vector2D& pt) {
-                                         EXPECT_TRUE(overlapsFunc(pt, testBox));
-                                         ++measured;
-                                     });
+    quadtree.ForEachIntersectingItem(
+        testBox, overlapsFunc,
+        [&overlapsFunc, &testBox, &measured](const Vector2D& pt) {
+            EXPECT_TRUE(overlapsFunc(pt, testBox));
+            ++measured;
+        });
 
     EXPECT_EQ(numOverlaps, measured);
 }
@@ -156,7 +173,7 @@ TEST(Quadtree, RayIntersects)
     std::vector<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 
@@ -215,7 +232,7 @@ TEST(Quadtree, ClosestIntersection)
     std::vector<BoundingBox2D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::ranges::generate(items, [&i]() {
         auto c = GetSamplePoints2()[i++];
         BoundingBox2D box(c, c);
 

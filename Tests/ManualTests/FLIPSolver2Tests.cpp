@@ -267,7 +267,7 @@ CUBBYFLOW_BEGIN_TEST_F(FLIPSolver2, RotatingTank)
                         .WithAngularVelocity(2.0)
                         .MakeShared();
 
-    collider->SetOnBeginUpdateCallback([&](Collider2* col, double t, double) {
+    collider->SetOnBeginUpdateCallback([](Collider2* col, double t, double) {
         if (t < 1.0)
         {
             col->GetSurface()->transform.SetOrientation(2.0 * t);

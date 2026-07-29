@@ -21,6 +21,13 @@ namespace CubbyFlow
 {
 static const size_t DEFAULT_HASH_GRID_RESOLUTION = 64;
 
+static Vector2D Jitter(const Vector2D& point, double maxDistance, double random)
+{
+    const double angle = (random - 0.5) * (2 * PI_DOUBLE);
+    return point +
+           maxDistance * (Matrix2x2D::MakeRotationMatrix(angle) * Vector2D());
+}
+
 VolumeParticleEmitter2::VolumeParticleEmitter2(
     ImplicitSurface2Ptr implicitSurface, BoundingBox2D maxRegion,
     double spacing, const Vector2D& initialVel, const Vector2D& linearVel,
@@ -99,28 +106,25 @@ void VolumeParticleEmitter2::Emit(const ParticleSystemData2Ptr& particles,
     if (m_allowOverlapping || m_isOneShot)
     {
         m_pointsGen->ForEachPoint(
-            region, m_spacing, [&](const Vector2D& point) {
-                const double newAngleInRadian =
-                    (Random() - 0.5) * (2 * PI_DOUBLE);
-                const Matrix2x2D rotationMatrix =
-                    Matrix2x2D::MakeRotationMatrix(newAngleInRadian);
-                const Vector2D randomDir = rotationMatrix * Vector2D();
-                const Vector2D offset = maxJitterDist * randomDir;
-                const Vector2D candidate = point + offset;
+            region, m_spacing,
+            [this, &maxJitterDist, &newPositions,
+             &numNewParticles](const Vector2D& point) {
+                const Vector2D candidate =
+                    Jitter(point, maxJitterDist, Random());
 
-                if (m_implicitSurface->SignedDistance(candidate) <= 0.0)
+                if (m_implicitSurface->SignedDistance(candidate) > 0.0)
                 {
-                    if (m_numberOfEmittedParticles < m_maxNumberOfParticles)
-                    {
-                        newPositions->Append(candidate);
-                        ++m_numberOfEmittedParticles;
-                        ++numNewParticles;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return true;
                 }
+
+                if (m_numberOfEmittedParticles >= m_maxNumberOfParticles)
+                {
+                    return false;
+                }
+
+                newPositions->Append(candidate);
+                ++m_numberOfEmittedParticles;
+                ++numNewParticles;
 
                 return true;
             });
@@ -139,31 +143,27 @@ void VolumeParticleEmitter2::Emit(const ParticleSystemData2Ptr& particles,
         }
 
         m_pointsGen->ForEachPoint(
-            region, m_spacing, [&](const Vector2D& point) {
-                const double newAngleInRadian =
-                    (Random() - 0.5) * (2 * PI_DOUBLE);
-                const Matrix2x2D rotationMatrix =
-                    Matrix2x2D::MakeRotationMatrix(newAngleInRadian);
-                const Vector2D randomDir = rotationMatrix * Vector2D();
-                const Vector2D offset = maxJitterDist * randomDir;
-                const Vector2D candidate = point + offset;
+            region, m_spacing,
+            [this, &maxJitterDist, &neighborSearcher, &newPositions,
+             &numNewParticles](const Vector2D& point) {
+                const Vector2D candidate =
+                    Jitter(point, maxJitterDist, Random());
 
-                if (m_implicitSurface->IsInside(candidate) &&
-                    (!m_allowOverlapping &&
-                     !neighborSearcher.HasNearbyPoint(candidate, m_spacing)))
+                if (!m_implicitSurface->IsInside(candidate) ||
+                    neighborSearcher.HasNearbyPoint(candidate, m_spacing))
                 {
-                    if (m_numberOfEmittedParticles < m_maxNumberOfParticles)
-                    {
-                        newPositions->Append(candidate);
-                        neighborSearcher.Add(candidate);
-                        ++m_numberOfEmittedParticles;
-                        ++numNewParticles;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return true;
                 }
+
+                if (m_numberOfEmittedParticles >= m_maxNumberOfParticles)
+                {
+                    return false;
+                }
+
+                newPositions->Append(candidate);
+                neighborSearcher.Add(candidate);
+                ++m_numberOfEmittedParticles;
+                ++numNewParticles;
 
                 return true;
             });
@@ -175,7 +175,8 @@ void VolumeParticleEmitter2::Emit(const ParticleSystemData2Ptr& particles,
                    << m_numberOfEmittedParticles;
 
     newVelocities->Resize(newPositions->Length());
-    ParallelForEachIndex(newVelocities->Length(), [&](size_t i) {
+    ParallelForEachIndex(newVelocities->Length(), [&newVelocities, this,
+                                                   &newPositions](size_t i) {
         (*newVelocities)[i] = VelocityAt((*newPositions)[i]);
     });
 }

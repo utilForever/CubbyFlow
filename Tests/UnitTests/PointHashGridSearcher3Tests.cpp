@@ -14,7 +14,7 @@ TEST(PointHashGridSearcher3, ForEachNearByPoint)
     searcher.Build(points);
 
     searcher.ForEachNearbyPoint(Vector3D{ 0, 0, 0 }, std::sqrt(25.0),
-                                [&](size_t i, const Vector3D& pt) {
+                                [&points](size_t i, const Vector3D& pt) {
                                     EXPECT_TRUE(i == 0 || i == 2);
                                     if (i == 0)
                                     {
@@ -34,8 +34,9 @@ TEST(PointHashGridSearcher3, ForEachNearbyPointEmpty)
     PointHashGridSearcher3 searcher(Vector3UZ{ 4, 4, 4 }, 2.0 * std::sqrt(10));
     searcher.Build(points);
 
-    searcher.ForEachNearbyPoint(Vector3D{ 0, 0, 0 }, std::sqrt(10.0),
-                                [](size_t, const Vector3D&) {});
+    searcher.ForEachNearbyPoint(
+        Vector3D{ 0, 0, 0 }, std::sqrt(10.0),
+        [](size_t, const Vector3D&) { FAIL() << "Unexpected nearby point"; });
 }
 
 TEST(PointHashGridSearcher3, HasEachNearByPoint)

@@ -53,10 +53,10 @@ void SphericalPointsToImplicit3::Convert(
         particles.NeighborSearcher();
 
     std::shared_ptr<ScalarGrid3> temp = output->Clone();
-    temp->Fill([&](const Vector3D& x) {
+    temp->Fill([this, &neighborSearcher](const Vector3D& x) {
         double minDist = 2.0 * m_radius;
         neighborSearcher->ForEachNearbyPoint(
-            x, 2.0 * m_radius, [&](size_t, const Vector3D& xj) {
+            x, 2.0 * m_radius, [&minDist, &x](size_t, const Vector3D& xj) {
                 minDist = std::min(minDist, (x - xj).Length());
             });
 

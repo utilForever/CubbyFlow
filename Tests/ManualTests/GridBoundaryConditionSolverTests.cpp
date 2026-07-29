@@ -37,7 +37,8 @@ CUBBYFLOW_BEGIN_TEST_F(GridBlockedBoundaryConditionSolver2,
     Array2<double> dataV(10, 10);
     Array2<double> dataM(10, 10);
 
-    ForEachIndex(dataU.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(dataU.Size(), [&velocity, &dataU, &dataV, &dataM, &solver](
+                                   size_t i, size_t j) {
         Vector2D vel = velocity.ValueAtCellCenter(i, j);
         dataU(i, j) = vel.x;
         dataV(i, j) = vel.y;
@@ -84,7 +85,8 @@ CUBBYFLOW_BEGIN_TEST_F(GridBlockedBoundaryConditionSolver2, ConstrainVelocity)
     Array2<double> dataV(64, 32);
     Array2<double> dataM(64, 32);
 
-    ForEachIndex(dataU.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(dataU.Size(), [&velocity, &dataU, &dataV, &dataM, &solver](
+                                   size_t i, size_t j) {
         Vector2D vel = velocity.ValueAtCellCenter(i, j);
         dataU(i, j) = vel.x;
         dataV(i, j) = vel.y;
@@ -133,7 +135,8 @@ CUBBYFLOW_BEGIN_TEST_F(GridBlockedBoundaryConditionSolver2,
     Array2<double> dataV(64, 32);
     Array2<double> dataM(64, 32);
 
-    ForEachIndex(dataU.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(dataU.Size(), [&velocity, &dataU, &dataV, &dataM, &solver](
+                                   size_t i, size_t j) {
         Vector2D vel = velocity.ValueAtCellCenter(i, j);
         dataU(i, j) = vel.x;
         dataV(i, j) = vel.y;
@@ -182,7 +185,7 @@ CUBBYFLOW_BEGIN_TEST_F(GridFractionalBoundaryConditionSolver2,
     Array2<double> dataU(64, 32);
     Array2<double> dataV(64, 32);
 
-    ForEachIndex(dataU.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(dataU.Size(), [&velocity, &dataU, &dataV](size_t i, size_t j) {
         Vector2D vel = velocity.ValueAtCellCenter(i, j);
         dataU(i, j) = vel.x;
         dataV(i, j) = vel.y;

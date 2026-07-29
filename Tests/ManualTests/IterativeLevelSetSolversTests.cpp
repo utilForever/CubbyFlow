@@ -22,11 +22,11 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetSolver2, Reinitialize)
     CellCenteredScalarGrid2 data0(size, gridSpacing);
     CellCenteredScalarGrid2 data1(size, gridSpacing);
 
-    data0.Fill([&](const Vector2D& pt) {
+    data0.Fill([](const Vector2D& pt) {
         return pt.DistanceTo(Vector2D(0.5, 0.75)) - 0.15;
     });
 
-    auto flowFunc = [&](const Vector2D& pt) {
+    auto flowFunc = [](const Vector2D& pt) {
         Vector2D ret;
         ret.x = 2.0 * Square(std::sin(PI_DOUBLE * pt.x)) *
                 std::sin(PI_DOUBLE * pt.y) * std::cos(PI_DOUBLE * pt.y);
@@ -42,8 +42,8 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetSolver2, Reinitialize)
     CellCenteredScalarGrid2 dataV(Vector2UZ(20, 20),
                                   Vector2D(1 / 20.0, 1 / 20.0));
 
-    dataU.Fill([&](const Vector2D& pt) { return flowFunc(pt).x; });
-    dataV.Fill([&](const Vector2D& pt) { return flowFunc(pt).y; });
+    dataU.Fill([&flowFunc](const Vector2D& pt) { return flowFunc(pt).x; });
+    dataV.Fill([&flowFunc](const Vector2D& pt) { return flowFunc(pt).y; });
 
     SaveData(dataU.DataView(), "flow_#grid2,x.npy");
     SaveData(dataV.DataView(), "flow_#grid2,y.npy");
@@ -71,11 +71,11 @@ CUBBYFLOW_BEGIN_TEST_F(LevelSetSolver2, NoReinitialize)
     CellCenteredScalarGrid2 data0(size, gridSpacing);
     CellCenteredScalarGrid2 data1(size, gridSpacing);
 
-    data0.Fill([&](const Vector2D& pt) {
+    data0.Fill([](const Vector2D& pt) {
         return pt.DistanceTo(Vector2D(0.5, 0.75)) - 0.15;
     });
 
-    CustomVectorField2 flow([&](const Vector2D& pt) {
+    CustomVectorField2 flow([](const Vector2D& pt) {
         Vector2D ret;
         ret.x = 2.0 * Square(std::sin(PI_DOUBLE * pt.x)) *
                 std::sin(PI_DOUBLE * pt.y) * std::cos(PI_DOUBLE * pt.y);
@@ -211,11 +211,11 @@ CUBBYFLOW_BEGIN_TEST_F(UpwindLevelSetSolver2, Extrapolate)
     CellCenteredScalarGrid2 input(size, gridSpacing);
     CellCenteredScalarGrid2 output(size, gridSpacing);
 
-    sdf.Fill([&](const Vector2D& x) {
+    sdf.Fill([](const Vector2D& x) {
         return (x - Vector2D(0.75, 0.5)).Length() - 0.3;
     });
 
-    input.Fill([&](const Vector2D& x) {
+    input.Fill([](const Vector2D& x) {
         if ((x - Vector2D(0.75, 0.5)).Length() <= 0.3)
         {
             double p = 10.0 * PI_DOUBLE;
@@ -274,7 +274,7 @@ CUBBYFLOW_BEGIN_TEST_F(UpwindLevelSetSolver3, ExtrapolateSmall)
         return (x - Vector3D(20, 20, 20)).Length() - 8.0;
     });
 
-    field.Fill([&](const Vector3D& x) {
+    field.Fill([](const Vector3D& x) {
         if ((x - Vector3D(20, 20, 20)).Length() <= 8.0)
         {
             return 0.5 * 0.25 * std::sin(x.x) * std::sin(x.y) * std::sin(x.z);
@@ -420,11 +420,11 @@ CUBBYFLOW_BEGIN_TEST_F(ENOLevelSetSolver2, Extrapolate)
     CellCenteredScalarGrid2 input(size, gridSpacing);
     CellCenteredScalarGrid2 output(size, gridSpacing);
 
-    sdf.Fill([&](const Vector2D& x) {
+    sdf.Fill([](const Vector2D& x) {
         return (x - Vector2D(0.75, 0.5)).Length() - 0.3;
     });
 
-    input.Fill([&](const Vector2D& x) {
+    input.Fill([](const Vector2D& x) {
         if ((x - Vector2D(0.75, 0.5)).Length() <= 0.3)
         {
             double p = 10.0 * PI_DOUBLE;
@@ -482,7 +482,7 @@ CUBBYFLOW_BEGIN_TEST_F(ENOLevelSetSolver3, ExtrapolateSmall)
         return (x - Vector3D(20, 20, 20)).Length() - 8.0;
     });
 
-    field.Fill([&](const Vector3D& x) {
+    field.Fill([](const Vector3D& x) {
         if ((x - Vector3D(20, 20, 20)).Length() <= 8.0)
         {
             return 0.5 * 0.25 * std::sin(x.x) * std::sin(x.y) * std::sin(x.z);

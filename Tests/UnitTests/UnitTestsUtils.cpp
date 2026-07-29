@@ -3,6 +3,8 @@
 
 #include <Core/Matrix/Matrix.hpp>
 
+#include <iterator>
+
 #define STR(s) #s
 
 namespace CubbyFlow
@@ -203,7 +205,8 @@ const Vector3D SAMPLE_DIRS3[] = {
     { 0.624382, -0.591191, 0.510530 },   { 0.769309, -0.608519, 0.194597 }
 };
 
-const char* CUBE_TRI_MESH_3X3X3_AS_OBJ = STR(
+// clang-format off
+const char* const CUBE_TRI_MESH_3X3X3_AS_OBJ = STR(
     v -0.500000 -0.500000 0.500000\n
     v -0.166667 -0.500000 0.500000\n
     v 0.166667 -0.500000 0.500000\n
@@ -541,7 +544,7 @@ const char* CUBE_TRI_MESH_3X3X3_AS_OBJ = STR(
     f 56/73/91 9/9/92 17/76/95\n
     f 17/76/95 9/9/92 13/13/96);
 
-    const char* SPHERE_TRI_MESH_5X5_AS_OBJ = STR(
+    const char* const SPHERE_TRI_MESH_5X5_AS_OBJ = STR(
     v 0.090818 -0.404509 -0.279509\n
     v -0.237764 -0.404509 -0.172746\n
     v -0.237764 -0.404509 0.172746\n
@@ -729,6 +732,7 @@ const char* CUBE_TRI_MESH_3X3X3_AS_OBJ = STR(
     f 19/22/85 20/23/86 22/33/87\n
     f 20/23/88 16/24/89 22/34/90\n
 );
+// clang-format on
 
 const Vector2D* GetSamplePoints2()
 {
@@ -737,7 +741,7 @@ const Vector2D* GetSamplePoints2()
 
 size_t GetNumberOfSamplePoints2()
 {
-    return sizeof(SAMPLE_POINTS2) / sizeof(SAMPLE_POINTS2[0]);
+    return std::size(SAMPLE_POINTS2);
 }
 
 const Vector3D* GetSamplePoints3()
@@ -747,7 +751,7 @@ const Vector3D* GetSamplePoints3()
 
 size_t GetNumberOfSamplePoints3()
 {
-    return sizeof(SAMPLE_POINTS3) / sizeof(SAMPLE_POINTS3[0]);
+    return std::size(SAMPLE_POINTS3);
 }
 
 const Vector2D* GetSampleDirs2()
@@ -757,7 +761,7 @@ const Vector2D* GetSampleDirs2()
 
 size_t GetNumberOfSampleDirs2()
 {
-    return sizeof(SAMPLE_DIRS2) / sizeof(SAMPLE_DIRS2[0]);
+    return std::size(SAMPLE_DIRS2);
 }
 
 const Vector3D* GetSampleDirs3()
@@ -767,7 +771,7 @@ const Vector3D* GetSampleDirs3()
 
 size_t GetNumberOfSampleDirs3()
 {
-    return sizeof(SAMPLE_DIRS3) / sizeof(SAMPLE_DIRS3[0]);
+    return std::size(SAMPLE_DIRS3);
 }
 
 const char* GetCubeTriMesh3x3x3Obj()

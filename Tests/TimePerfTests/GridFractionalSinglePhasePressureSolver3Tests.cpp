@@ -47,7 +47,7 @@ class GridFractionalSinglePhasePressureSolver3 : public ::benchmark::Fixture
         }
 
         fluidSDF.Resize({ n, n, n });
-        fluidSDF.Fill([&](const Vector3D& x) { return x.y - height; });
+        fluidSDF.Fill([&height](const Vector3D& x) { return x.y - height; });
     }
 };
 

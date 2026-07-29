@@ -113,7 +113,7 @@ TEST(Array1, ForEach)
 {
     Array1<float> arr1 = { 6.f, 4.f, 1.f, -5.f };
     size_t i = 0;
-    std::for_each(arr1.begin(), arr1.end(), [&](float val) {
+    std::for_each(arr1.begin(), arr1.end(), [&arr1, &i](float val) {
         EXPECT_FLOAT_EQ(arr1[i], val);
         ++i;
     });
@@ -123,7 +123,7 @@ TEST(Array1, ForEachIndex)
 {
     Array1<float> arr1 = { 6.f, 4.f, 1.f, -5.f };
     size_t cnt = 0;
-    ForEachIndex(arr1.Length(), [&](size_t i) {
+    ForEachIndex(arr1.Length(), [&cnt](size_t i) {
         EXPECT_EQ(cnt, i);
         ++cnt;
     });
@@ -132,10 +132,11 @@ TEST(Array1, ForEachIndex)
 TEST(Array1, ParallelForEachIndex)
 {
     Array1<float> arr1(200);
-    ForEachIndex(arr1.Length(),
-                 [&](size_t i) { arr1[i] = static_cast<float>(200.f - i); });
+    ForEachIndex(arr1.Length(), [&arr1](size_t i) {
+        arr1[i] = static_cast<float>(200.f - i);
+    });
 
-    ParallelForEachIndex(arr1.Length(), [&](size_t i) {
+    ParallelForEachIndex(arr1.Length(), [&arr1](size_t i) {
         float ans = static_cast<float>(200.f - i);
         EXPECT_EQ(ans, arr1[i]);
     });

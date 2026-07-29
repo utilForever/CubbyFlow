@@ -191,7 +191,7 @@ void CollocatedVectorGrid<N>::GetData(Array1<double>& data) const
     data.Resize(size);
 
     size_t cnt = 0;
-    ForEachIndex(m_data.Size(), [&](auto... indices) {
+    ForEachIndex(m_data.Size(), [this, &data, &cnt](auto... indices) {
         const Vector<double, N>& value = m_data(indices...);
         for (size_t c = 0; c < N; ++c)
         {
@@ -206,7 +206,7 @@ void CollocatedVectorGrid<N>::SetData(const ConstArrayView1<double>& data)
     assert(N * Product(DataSize(), ONE_SIZE) == data.Length());
 
     size_t cnt = 0;
-    ForEachIndex(m_data.Size(), [&](auto... indices) {
+    ForEachIndex(m_data.Size(), [this, &data, &cnt](auto... indices) {
         for (size_t c = 0; c < N; ++c)
         {
             m_data(indices...)[c] = data[cnt++];

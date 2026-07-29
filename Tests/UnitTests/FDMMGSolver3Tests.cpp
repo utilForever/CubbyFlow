@@ -19,7 +19,7 @@ TEST(FDMMGSolver3, Solve)
 
         system.x[l].Fill(0);
 
-        ForEachIndex(A.Size(), [&](size_t i, size_t j, size_t k) {
+        ForEachIndex(A.Size(), [&A, &invdx, &b](size_t i, size_t j, size_t k) {
             if (i > 0)
             {
                 A(i, j, k).center += invdx * invdx;

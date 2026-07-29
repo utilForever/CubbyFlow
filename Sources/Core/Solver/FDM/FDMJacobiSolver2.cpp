@@ -118,15 +118,16 @@ void FDMJacobiSolver2::Relax(const FDMMatrix2& A, const FDMVector2& b,
     FDMVector2& xRef = *x;
     FDMVector2& xTempRef = *xTemp;
 
-    ParallelForEachIndex(size, [&](size_t i, size_t j) {
-        const double r =
-            ((i > 0) ? A(i - 1, j).right * xRef(i - 1, j) : 0.0) +
-            ((i + 1 < size.x) ? A(i, j).right * xRef(i + 1, j) : 0.0) +
-            ((j > 0) ? A(i, j - 1).up * xRef(i, j - 1) : 0.0) +
-            ((j + 1 < size.y) ? A(i, j).up * xRef(i, j + 1) : 0.0);
+    ParallelForEachIndex(
+        size, [&A, &xRef, &size, &xTempRef, &b](size_t i, size_t j) {
+            const double r =
+                ((i > 0) ? A(i - 1, j).right * xRef(i - 1, j) : 0.0) +
+                ((i + 1 < size.x) ? A(i, j).right * xRef(i + 1, j) : 0.0) +
+                ((j > 0) ? A(i, j - 1).up * xRef(i, j - 1) : 0.0) +
+                ((j + 1 < size.y) ? A(i, j).up * xRef(i, j + 1) : 0.0);
 
-        xTempRef(i, j) = (b(i, j) - r) / A(i, j).center;
-    });
+            xTempRef(i, j) = (b(i, j) - r) / A(i, j).center;
+        });
 }
 
 void FDMJacobiSolver2::Relax(const MatrixCSRD& A, const VectorND& b,
@@ -139,28 +140,29 @@ void FDMJacobiSolver2::Relax(const MatrixCSRD& A, const VectorND& b,
     VectorND& xRef = *x;
     VectorND& xTempRef = *xTemp;
 
-    ParallelForEachIndex(b.GetRows(), [&](size_t i) {
-        const size_t rowBegin = rp[i];
-        const size_t rowEnd = rp[i + 1];
+    ParallelForEachIndex(b.GetRows(),
+                         [&rp, &ci, &nnz, &xRef, &xTempRef, &b](size_t i) {
+                             const size_t rowBegin = rp[i];
+                             const size_t rowEnd = rp[i + 1];
 
-        double r = 0.0;
-        double diag = 1.0;
-        for (size_t jj = rowBegin; jj < rowEnd; ++jj)
-        {
-            const size_t j = ci[jj];
+                             double r = 0.0;
+                             double diag = 1.0;
+                             for (size_t jj = rowBegin; jj < rowEnd; ++jj)
+                             {
+                                 const size_t j = ci[jj];
 
-            if (i == j)
-            {
-                diag = nnz[jj];
-            }
-            else
-            {
-                r += nnz[jj] * xRef[j];
-            }
-        }
+                                 if (i == j)
+                                 {
+                                     diag = nnz[jj];
+                                 }
+                                 else
+                                 {
+                                     r += nnz[jj] * xRef[j];
+                                 }
+                             }
 
-        xTempRef[i] = (b[i] - r) / diag;
-    });
+                             xTempRef[i] = (b[i] - r) / diag;
+                         });
 }
 
 void FDMJacobiSolver2::ClearUncompressedVectors()

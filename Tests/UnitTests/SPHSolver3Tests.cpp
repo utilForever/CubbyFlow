@@ -13,6 +13,21 @@ TEST(SPHSolver3, UpdateEmpty)
     solver.Update(frame);
 }
 
+TEST(SPHSolver3, UpdateParticles)
+{
+    SPHSolver3 solver;
+    solver.SetGravity({});
+
+    const SPHSystemData3Ptr particles = solver.GetSPHSystemData();
+    particles->AddParticle({ 0.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 });
+    particles->AddParticle({ 0.05, 0.0, 0.0 }, { 0.0, 1.0, 0.0 });
+
+    solver.Update(Frame{ 0, 0.001 });
+
+    EXPECT_GT(particles->Densities()[0], 0.0);
+    EXPECT_GT(particles->Densities()[1], 0.0);
+}
+
 TEST(SPHSolver3, Parameters)
 {
     SPHSolver3 solver;

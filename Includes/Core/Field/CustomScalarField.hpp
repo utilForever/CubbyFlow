@@ -30,7 +30,7 @@ class CustomScalarField final : public ScalarField<N>
     //! differencing is used. Thus, the differencing resolution also can be
     //! provided as the last parameter.
     //!
-    CustomScalarField(
+    explicit CustomScalarField(
         std::function<double(const Vector<double, N>&)> customFunction,
         double derivativeResolution = 1e-3);
 

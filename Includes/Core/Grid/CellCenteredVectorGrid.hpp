@@ -43,7 +43,7 @@ class CellCenteredVectorGrid final : public CollocatedVectorGrid<N>
 
     //! Constructs a grid with given resolution, grid spacing, origin and
     //! initial value.
-    CellCenteredVectorGrid(
+    explicit CellCenteredVectorGrid(
         const Vector<size_t, N>& resolution,
         const Vector<double, N>& gridSpacing =
             Vector<double, N>::MakeConstant(1.0),

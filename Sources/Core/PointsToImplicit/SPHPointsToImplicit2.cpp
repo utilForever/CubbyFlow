@@ -56,7 +56,7 @@ void SPHPointsToImplicit2::Convert(const ConstArrayView1<Vector2D>& points,
 
     Array1<double> constData(sphParticles.NumberOfParticles(), 1.0);
     std::shared_ptr<ScalarGrid2> temp = output->Clone();
-    temp->Fill([&](const Vector2D& x) {
+    temp->Fill([&sphParticles, &constData, this](const Vector2D& x) {
         const double d = sphParticles.Interpolate(x, constData);
         return m_cutOffDensity - d;
     });

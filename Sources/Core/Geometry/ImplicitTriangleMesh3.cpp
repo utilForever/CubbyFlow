@@ -41,7 +41,7 @@ ImplicitTriangleMesh3::ImplicitTriangleMesh3(TriangleMesh3Ptr mesh,
 
     m_customImplicitSurface =
         CustomImplicitSurface3::Builder{}
-            .WithSignedDistanceFunction([&](const Vector3D& pt) -> double {
+            .WithSignedDistanceFunction([this](const Vector3D& pt) -> double {
                 return m_grid->Sample(pt);
             })
             .WithDomain(m_grid->GetBoundingBox())

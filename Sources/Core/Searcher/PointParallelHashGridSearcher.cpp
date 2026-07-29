@@ -125,12 +125,13 @@ void PointParallelHashGridSearcher<N>::Build(
     }
 
     // Initialize indices array and generate hash key for each point
-    ParallelFor(static_cast<size_t>(0), numberOfPoints, [&](size_t i) {
-        m_sortedIndices[i] = i;
-        m_points[i] = points[i];
-        tempKeys[i] = PointHashGridUtils<N>::GetHashKeyFromPosition(
-            points[i], m_gridSpacing, m_resolution);
-    });
+    ParallelFor(static_cast<size_t>(0), numberOfPoints,
+                [this, &points, &tempKeys](size_t i) {
+                    m_sortedIndices[i] = i;
+                    m_points[i] = points[i];
+                    tempKeys[i] = PointHashGridUtils<N>::GetHashKeyFromPosition(
+                        points[i], m_gridSpacing, m_resolution);
+                });
 
     // Sort indices based on hash key
     ParallelSort(m_sortedIndices.begin(), m_sortedIndices.end(),
@@ -139,10 +140,11 @@ void PointParallelHashGridSearcher<N>::Build(
                  });
 
     // Re-order point and key arrays
-    ParallelFor(static_cast<size_t>(0), numberOfPoints, [&](size_t i) {
-        m_points[i] = points[m_sortedIndices[i]];
-        m_keys[i] = tempKeys[m_sortedIndices[i]];
-    });
+    ParallelFor(static_cast<size_t>(0), numberOfPoints,
+                [this, &points, &tempKeys](size_t i) {
+                    m_points[i] = points[m_sortedIndices[i]];
+                    m_keys[i] = tempKeys[m_sortedIndices[i]];
+                });
 
     // Now m_points and m_keys are sorted by points' hash key values.
     // Let's fill in start/end index table with m_keys.
@@ -159,7 +161,7 @@ void PointParallelHashGridSearcher<N>::Build(
     m_startIndexTable[m_keys[0]] = 0;
     m_endIndexTable[m_keys[numberOfPoints - 1]] = numberOfPoints;
 
-    ParallelFor(static_cast<size_t>(1), numberOfPoints, [&](size_t i) {
+    ParallelFor(static_cast<size_t>(1), numberOfPoints, [this](size_t i) {
         if (m_keys[i] > m_keys[i - 1])
         {
             m_startIndexTable[m_keys[i]] = i;

@@ -26,7 +26,7 @@ class GridDataPositionFunc final
     using RawFunctionType =
         std::function<Vector<double, N>(const Vector<size_t, N>&)>;
 
-    GridDataPositionFunc(const RawFunctionType& func) : m_func(func)
+    explicit GridDataPositionFunc(const RawFunctionType& func) : m_func(func)
     {
         // Do nothing
     }

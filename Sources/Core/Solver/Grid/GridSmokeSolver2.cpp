@@ -145,10 +145,11 @@ void GridSmokeSolver2::ComputeDiffusion(double timeIntervalInSeconds)
     }
 
     ScalarGrid2Ptr den = GetSmokeDensity();
-    den->ParallelForEachDataPointIndex(
-        [&](size_t i, size_t j) { (*den)(i, j) *= 1.0 - m_smokeDecayFactor; });
+    den->ParallelForEachDataPointIndex([&den, this](size_t i, size_t j) {
+        (*den)(i, j) *= 1.0 - m_smokeDecayFactor;
+    });
     ScalarGrid2Ptr temp = GetTemperature();
-    temp->ParallelForEachDataPointIndex([&](size_t i, size_t j) {
+    temp->ParallelForEachDataPointIndex([&temp, this](size_t i, size_t j) {
         (*temp)(i, j) *= 1.0 - m_temperatureDecayFactor;
     });
 }
@@ -174,7 +175,7 @@ void GridSmokeSolver2::ComputeBuoyancyForce(double timeIntervalInSeconds)
 
         double tAmb = 0.0;
         temp->ForEachCellIndex(
-            [&](size_t i, size_t j) { tAmb += (*temp)(i, j); });
+            [&tAmb, &temp](size_t i, size_t j) { tAmb += (*temp)(i, j); });
 
         tAmb /=
             static_cast<double>(temp->Resolution().x * temp->Resolution().y);
@@ -186,7 +187,9 @@ void GridSmokeSolver2::ComputeBuoyancyForce(double timeIntervalInSeconds)
 
         if (std::abs(up.x) > std::numeric_limits<double>::epsilon())
         {
-            vel->ParallelForEachUIndex([&](const Vector2UZ& idx) {
+            vel->ParallelForEachUIndex([&uPos, this, &den, &temp, &tAmb, &u,
+                                        &timeIntervalInSeconds,
+                                        &up](const Vector2UZ& idx) {
                 const Vector2D pt = uPos(idx);
                 const double fBuoy =
                     m_buoyancySmokeDensityFactor * den->Sample(pt) +
@@ -197,7 +200,9 @@ void GridSmokeSolver2::ComputeBuoyancyForce(double timeIntervalInSeconds)
 
         if (std::abs(up.y) > std::numeric_limits<double>::epsilon())
         {
-            vel->ParallelForEachVIndex([&](const Vector2UZ& idx) {
+            vel->ParallelForEachVIndex([&vPos, this, &den, &temp, &tAmb, &v,
+                                        &timeIntervalInSeconds,
+                                        &up](const Vector2UZ& idx) {
                 const Vector2D pt = vPos(idx);
                 const double fBuoy =
                     m_buoyancySmokeDensityFactor * den->Sample(pt) +

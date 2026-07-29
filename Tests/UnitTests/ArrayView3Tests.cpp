@@ -56,7 +56,7 @@ TEST(ArrayView3, ForEachIndex)
                            { 21.f, 22.f, 23.f, 24.f } } });
     auto acc = arr1.View();
 
-    ForEachIndex(acc.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(acc.Size(), [&acc](size_t i, size_t j, size_t k) {
         size_t idx = i + (4 * (j + 3 * k)) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), acc(i, j, k));
     });
@@ -72,7 +72,7 @@ TEST(ArrayView3, ParallelForEachIndex)
                            { 21.f, 22.f, 23.f, 24.f } } });
     auto acc = arr1.View();
 
-    ParallelForEachIndex(acc.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(acc.Size(), [&acc](size_t i, size_t j, size_t k) {
         size_t idx = i + (4 * (j + 3 * k)) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), acc(i, j, k));
     });
@@ -124,7 +124,7 @@ TEST(ConstArrayView3, ForEachIndex)
                            { 21.f, 22.f, 23.f, 24.f } } });
     auto acc = arr1.View();
 
-    ForEachIndex(acc.Size(), [&](size_t i, size_t j, size_t k) {
+    ForEachIndex(acc.Size(), [&acc](size_t i, size_t j, size_t k) {
         size_t idx = i + (4 * (j + 3 * k)) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), acc(i, j, k));
     });
@@ -140,7 +140,7 @@ TEST(ConstArrayView3, ParallelForEachIndex)
                            { 21.f, 22.f, 23.f, 24.f } } });
     auto acc = arr1.View();
 
-    ParallelForEachIndex(acc.Size(), [&](size_t i, size_t j, size_t k) {
+    ParallelForEachIndex(acc.Size(), [&acc](size_t i, size_t j, size_t k) {
         size_t idx = i + (4 * (j + 3 * k)) + 1;
         EXPECT_FLOAT_EQ(static_cast<float>(idx), acc(i, j, k));
     });

@@ -178,7 +178,7 @@ void ParticleSystemSolver3::EndAdvanceTimeStep(double timeStepInSeconds)
     ArrayView1<Vector3D> positions = m_particleSystemData->Positions();
     ArrayView1<Vector3D> velocities = m_particleSystemData->Velocities();
 
-    ParallelFor(ZERO_SIZE, n, [&](size_t i) {
+    ParallelFor(ZERO_SIZE, n, [&positions, this, &velocities](size_t i) {
         positions[i] = m_newPositions[i];
         velocities[i] = m_newVelocities[i];
     });
@@ -210,10 +210,12 @@ void ParticleSystemSolver3::ResolveCollision(ArrayView1<Vector3D> newPositions,
             m_particleSystemData->NumberOfParticles();
         const double radius = m_particleSystemData->Radius();
 
-        ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-            m_collider->ResolveCollision(radius, m_restitutionCoefficient,
-                                         &newPositions[i], &newVelocities[i]);
-        });
+        ParallelFor(ZERO_SIZE, numberOfParticles,
+                    [this, &radius, &newPositions, &newVelocities](size_t i) {
+                        m_collider->ResolveCollision(
+                            radius, m_restitutionCoefficient, &newPositions[i],
+                            &newVelocities[i]);
+                    });
     }
 }
 
@@ -231,17 +233,18 @@ void ParticleSystemSolver3::AccumulateExternalForces()
     ArrayView1<Vector3D> positions = m_particleSystemData->Positions();
     const double mass = m_particleSystemData->Mass();
 
-    ParallelFor(ZERO_SIZE, n, [&](size_t i) {
-        // Gravity
-        Vector3D force = mass * m_gravity;
+    ParallelFor(ZERO_SIZE, n,
+                [&mass, this, &velocities, &positions, &forces](size_t i) {
+                    // Gravity
+                    Vector3D force = mass * m_gravity;
 
-        // Wind forces
-        const Vector3D relativeVel =
-            velocities[i] - m_wind->Sample(positions[i]);
-        force += -m_dragCoefficient * relativeVel;
+                    // Wind forces
+                    const Vector3D relativeVel =
+                        velocities[i] - m_wind->Sample(positions[i]);
+                    force += -m_dragCoefficient * relativeVel;
 
-        forces[i] += force;
-    });
+                    forces[i] += force;
+                });
 }
 
 void ParticleSystemSolver3::TimeIntegration(double timeStepInSeconds)
@@ -252,15 +255,18 @@ void ParticleSystemSolver3::TimeIntegration(double timeStepInSeconds)
     ArrayView1<Vector3D> positions = m_particleSystemData->Positions();
     const double mass = m_particleSystemData->Mass();
 
-    ParallelFor(ZERO_SIZE, n, [&](size_t i) {
-        // Integrate velocity first
-        Vector3D& newVelocity = m_newVelocities[i];
-        newVelocity = velocities[i] + timeStepInSeconds * forces[i] / mass;
+    ParallelFor(
+        ZERO_SIZE, n,
+        [this, &velocities, &timeStepInSeconds, &forces, &mass,
+         &positions](size_t i) {
+            // Integrate velocity first
+            Vector3D& newVelocity = m_newVelocities[i];
+            newVelocity = velocities[i] + timeStepInSeconds * forces[i] / mass;
 
-        // Integrate position.
-        Vector3D& newPosition = m_newPositions[i];
-        newPosition = positions[i] + timeStepInSeconds * newVelocity;
-    });
+            // Integrate position.
+            Vector3D& newPosition = m_newPositions[i];
+            newPosition = positions[i] + timeStepInSeconds * newVelocity;
+        });
 }
 
 void ParticleSystemSolver3::UpdateCollider(double timeStepInSeconds) const

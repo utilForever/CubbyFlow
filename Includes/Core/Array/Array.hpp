@@ -44,10 +44,10 @@ class Array final : public ArrayBase<T, N, Array<T, N>>
  public:
     Array();
 
-    Array(const Vector<size_t, N>& size, const T& initVal = T{});
+    explicit Array(const Vector<size_t, N>& size, const T& initVal = T{});
 
     template <typename... Args>
-    Array(size_t nx, Args... args);
+    explicit Array(size_t nx, Args... args);
 
     Array(NestedInitializerListsT<T, N> lst);
 

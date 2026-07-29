@@ -100,18 +100,6 @@ class Logging
     static void Unmute();
 };
 
-//! Info-level logger.
-extern Logger infoLogger;
-
-//! Warn-level logger.
-extern Logger warnLogger;
-
-//! Error-level logger.
-extern Logger errorLogger;
-
-//! Debug-level logger.
-extern Logger debugLogger;
-
 #define CUBBYFLOW_INFO                                               \
     (Logger(LogLevel::Info)                                          \
      << Logging::GetHeader(LogLevel::Info) << "[" << __FILE__ << ":" \

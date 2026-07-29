@@ -45,7 +45,7 @@ TEST(ArrayView1, ForEachIndex)
     auto acc = arr1.View();
 
     size_t cnt = 0;
-    ForEachIndex(acc.Size(), [&](size_t i) {
+    ForEachIndex(acc.Size(), [&cnt](size_t i) {
         EXPECT_EQ(cnt, i);
         ++cnt;
     });
@@ -56,11 +56,12 @@ TEST(ArrayView1, ParallelForEachIndex)
     Array1<float> arr1(200);
     auto acc = arr1.View();
 
-    ForEachIndex(acc.Size(),
-                 [&](size_t i) { arr1[i] = static_cast<float>(200.f - i); });
+    ForEachIndex(acc.Size(), [&arr1](size_t i) {
+        arr1[i] = 200.f - static_cast<float>(i);
+    });
 
-    ParallelForEachIndex(acc.Size(), [&](size_t i) {
-        float ans = static_cast<float>(200.f - i);
+    ParallelForEachIndex(acc.Size(), [&arr1](size_t i) {
+        float ans = 200.f - static_cast<float>(i);
         EXPECT_EQ(ans, arr1[i]);
     });
 }
@@ -100,7 +101,7 @@ TEST(ConstArrayView1, ForEachIndex)
     auto acc = arr1.View();
 
     size_t cnt = 0;
-    ForEachIndex(acc.Size(), [&](size_t i) {
+    ForEachIndex(acc.Size(), [&cnt](size_t i) {
         EXPECT_EQ(cnt, i);
         ++cnt;
     });
@@ -111,11 +112,12 @@ TEST(ConstArrayView1, ParallelForEachIndex)
     Array1<float> arr1(200);
     auto acc = arr1.View();
 
-    ForEachIndex(acc.Size(),
-                 [&](size_t i) { arr1[i] = static_cast<float>(200.f - i); });
+    ForEachIndex(acc.Size(), [&arr1](size_t i) {
+        arr1[i] = 200.f - static_cast<float>(i);
+    });
 
-    ParallelForEachIndex(acc.Size(), [&](size_t i) {
-        float ans = static_cast<float>(200.f - i);
+    ParallelForEachIndex(acc.Size(), [&arr1](size_t i) {
+        float ans = 200.f - static_cast<float>(i);
         EXPECT_EQ(ans, arr1[i]);
     });
 }

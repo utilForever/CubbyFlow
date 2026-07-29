@@ -39,8 +39,8 @@ class Surface
 {
  public:
     //! Constructs a surface with normal direction.
-    Surface(const Transform<N>& transform = Transform<N>(),
-            bool isNormalFlipped = false);
+    explicit Surface(const Transform<N>& transform = Transform<N>(),
+                     bool isNormalFlipped = false);
 
     //! Default virtual destructor.
     virtual ~Surface() = default;

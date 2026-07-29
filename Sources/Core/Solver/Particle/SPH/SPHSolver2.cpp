@@ -16,8 +16,33 @@
 
 namespace CubbyFlow
 {
-static double TIME_STEP_LIMIT_BY_SPEED_FACTOR = 0.4;
-static double TIME_STEP_LIMIT_BY_FORCE_FACTOR = 0.25;
+constexpr double TIME_STEP_LIMIT_BY_SPEED_FACTOR = 0.4;
+constexpr double TIME_STEP_LIMIT_BY_FORCE_FACTOR = 0.25;
+
+Vector2D SmoothedVelocity(size_t i, const Array1<Array1<size_t>>& neighborLists,
+                          ArrayView1<Vector2D> positions,
+                          ArrayView1<Vector2D> velocities,
+                          ArrayView1<double> densities,
+                          const SPHSpikyKernel2& kernel, double mass)
+{
+    double weightSum = 0.0;
+    Vector2D result;
+
+    for (size_t j : neighborLists[i])
+    {
+        const double weight =
+            mass / densities[j] * kernel(positions[i].DistanceTo(positions[j]));
+        weightSum += weight;
+        result += weight * velocities[j];
+    }
+
+    const double selfWeight = mass / densities[i];
+
+    weightSum += selfWeight;
+    result += selfWeight * velocities[i];
+
+    return weightSum > 0.0 ? result / weightSum : result;
+}
 
 SPHSolver2::SPHSolver2()
 {
@@ -206,11 +231,12 @@ void SPHSolver2::ComputePressure()
     const double targetDensity = particles->TargetDensity();
     const double eosScale = targetDensity * Square(m_speedOfSound);
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        p[i] = ComputePressureFromEos(d[i], targetDensity, eosScale,
-                                      GetEosExponent(),
-                                      GetNegativePressureScale());
-    });
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&p, &d, &targetDensity, &eosScale, this](size_t i) {
+                    p[i] = ComputePressureFromEos(d[i], targetDensity, eosScale,
+                                                  GetEosExponent(),
+                                                  GetNegativePressureScale());
+                });
 }
 
 void SPHSolver2::AccumulatePressureForce(
@@ -225,22 +251,25 @@ void SPHSolver2::AccumulatePressureForce(
     const double massSquared = Square(particles->Mass());
     const SPHSpikyKernel2 kernel{ particles->KernelRadius() };
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        const Array1<size_t>& neighbors = particles->NeighborLists()[i];
-        for (size_t j : neighbors)
-        {
-            const double dist = positions[i].DistanceTo(positions[j]);
-            if (dist > 0.0)
+    ParallelFor(
+        ZERO_SIZE, numberOfParticles,
+        [&particles, &positions, &pressureForces, &massSquared, &pressures,
+         &densities, &kernel](size_t i) {
+            const Array1<size_t>& neighbors = particles->NeighborLists()[i];
+            for (size_t j : neighbors)
             {
-                Vector2D dir = (positions[j] - positions[i]) / dist;
-                pressureForces[i] -=
-                    massSquared *
-                    (pressures[i] / (densities[i] * densities[i]) +
-                     pressures[j] / (densities[j] * densities[j])) *
-                    kernel.Gradient(dist, dir);
+                const double dist = positions[i].DistanceTo(positions[j]);
+                if (dist > 0.0)
+                {
+                    Vector2D dir = (positions[j] - positions[i]) / dist;
+                    pressureForces[i] -=
+                        massSquared *
+                        (pressures[i] / (densities[i] * densities[i]) +
+                         pressures[j] / (densities[j] * densities[j])) *
+                        kernel.Gradient(dist, dir);
+                }
             }
-        }
-    });
+        });
 }
 
 void SPHSolver2::AccumulateViscosityForce()
@@ -255,16 +284,18 @@ void SPHSolver2::AccumulateViscosityForce()
     const double massSquared = Square(particles->Mass());
     const SPHSpikyKernel2 kernel{ particles->KernelRadius() };
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        const Array1<size_t>& neighbors = particles->NeighborLists()[i];
-        for (size_t j : neighbors)
-        {
-            const double dist = x[i].DistanceTo(x[j]);
+    ParallelFor(
+        ZERO_SIZE, numberOfParticles,
+        [&particles, &x, &f, this, &massSquared, &v, &d, &kernel](size_t i) {
+            const Array1<size_t>& neighbors = particles->NeighborLists()[i];
+            for (size_t j : neighbors)
+            {
+                const double dist = x[i].DistanceTo(x[j]);
 
-            f[i] += GetViscosityCoefficient() * massSquared * (v[j] - v[i]) /
-                    d[j] * kernel.SecondDerivative(dist);
-        }
-    });
+                f[i] += GetViscosityCoefficient() * massSquared *
+                        (v[j] - v[i]) / d[j] * kernel.SecondDerivative(dist);
+            }
+        });
 }
 
 void SPHSolver2::ComputePseudoViscosity(double timeStepInSeconds)
@@ -280,37 +311,20 @@ void SPHSolver2::ComputePseudoViscosity(double timeStepInSeconds)
 
     Array1<Vector2D> smoothedVelocities{ numberOfParticles };
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        double weightSum = 0.0;
-        Vector2D smoothedVelocity;
-
-        const Array1<size_t>& neighbors = particles->NeighborLists()[i];
-        for (size_t j : neighbors)
-        {
-            const double dist = x[i].DistanceTo(x[j]);
-            const double wj = mass / d[j] * kernel(dist);
-            weightSum += wj;
-            smoothedVelocity += wj * v[j];
-        }
-
-        const double wi = mass / d[i];
-        weightSum += wi;
-        smoothedVelocity += wi * v[i];
-
-        if (weightSum > 0.0)
-        {
-            smoothedVelocity /= weightSum;
-        }
-
-        smoothedVelocities[i] = smoothedVelocity;
-    });
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&particles, &x, &mass, &d, &kernel, &v,
+                 &smoothedVelocities](size_t i) {
+                    smoothedVelocities[i] = SmoothedVelocity(
+                        i, particles->NeighborLists(), x, v, d, kernel, mass);
+                });
 
     double factor = timeStepInSeconds * m_pseudoViscosityCoefficient;
     factor = std::clamp(factor, 0.0, 1.0);
 
-    ParallelFor(ZERO_SIZE, numberOfParticles, [&](size_t i) {
-        v[i] = Lerp(v[i], smoothedVelocities[i], factor);
-    });
+    ParallelFor(ZERO_SIZE, numberOfParticles,
+                [&v, &smoothedVelocities, &factor](size_t i) {
+                    v[i] = Lerp(v[i], smoothedVelocities[i], factor);
+                });
 }
 
 SPHSolver2::Builder SPHSolver2::GetBuilder()

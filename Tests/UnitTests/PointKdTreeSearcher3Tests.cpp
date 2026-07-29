@@ -14,7 +14,7 @@ TEST(PointKdTreeSearcher3, ForEachNearbyPoint)
 
     int cnt = 0;
     searcher.ForEachNearbyPoint(Vector3D(0, 0, 0), std::sqrt(10.0),
-                                [&](size_t i, const Vector3D& pt) {
+                                [&points, &cnt](size_t i, const Vector3D& pt) {
                                     EXPECT_TRUE(i == 0 || i == 2);
 
                                     if (i == 0)
@@ -56,7 +56,7 @@ TEST(PointKdTreeSearcher3, CopyConstructor)
     const PointKdTreeSearcher3 searcher2(searcher);
     int cnt = 0;
     searcher2.ForEachNearbyPoint(Vector3D(0, 0, 0), std::sqrt(10.0),
-                                 [&](size_t i, const Vector3D& pt) {
+                                 [&points, &cnt](size_t i, const Vector3D& pt) {
                                      EXPECT_TRUE(i == 0 || i == 2);
 
                                      if (i == 0)
@@ -90,7 +90,7 @@ TEST(PointKdTreeSearcher3, Serialize)
 
     int cnt = 0;
     searcher2.ForEachNearbyPoint(Vector3D(0, 0, 0), std::sqrt(10.0),
-                                 [&](size_t i, const Vector3D& pt) {
+                                 [&points, &cnt](size_t i, const Vector3D& pt) {
                                      EXPECT_TRUE(i == 0 || i == 2);
 
                                      if (i == 0)

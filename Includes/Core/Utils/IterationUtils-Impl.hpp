@@ -101,7 +101,7 @@ void ParallelForEachIndex(const Vector<IndexType, N>& begin,
 {
     ParallelFor(
         begin[N - 1], end[N - 1],
-        [&](IndexType i) {
+        [&begin, &end, &func](IndexType i) {
             Internal::ForEachIndex<IndexType, N, N - 1>::Call(begin, end, func,
                                                               i);
         },

@@ -27,6 +27,92 @@ const double MIN_WEIGHT = 0.01;
 
 namespace
 {
+std::array<size_t, 4> FineIndices(size_t i, size_t size, int kernelSize)
+{
+    std::array<size_t, 4> indices{};
+    indices[0] = (i > 0) ? 2 * i - 1 : 2 * i;
+    indices[1] = 2 * i;
+    indices[2] = (kernelSize == 3 && i + 1 >= size) ? 2 * i : 2 * i + 1;
+    indices[3] = (i + 1 < size) ? 2 * i + 2 : 2 * i + 1;
+
+    return indices;
+}
+
+double RestrictPoint(size_t i, size_t j, const Vector2UZ& size,
+                     const std::array<int, 2>& kernelSize,
+                     const std::array<std::array<double, 4>, 2>& kernels,
+                     const Array2<double>& finer)
+{
+    const auto iIndices = FineIndices(i, size.x, kernelSize[0]);
+    const auto jIndices = FineIndices(j, size.y, kernelSize[1]);
+    double sum = 0.0;
+
+    for (int y = 0; y < kernelSize[1]; ++y)
+    {
+        for (int x = 0; x < kernelSize[0]; ++x)
+        {
+            sum +=
+                kernels[0][x] * kernels[1][y] * finer(iIndices[x], jIndices[y]);
+        }
+    }
+
+    return sum;
+}
+
+struct PressureGradientData2
+{
+    const Vector2UZ& size;
+    const Array2<double>& fluidSDF;
+    const Array2<double>& uWeights;
+    const Array2<double>& vWeights;
+    const ConstArrayView2<double>& u;
+    const ConstArrayView2<double>& v;
+    ArrayView2<double>& u0;
+    ArrayView2<double>& v0;
+    const Vector2D& invH;
+    const FDMVector2& pressure;
+};
+
+double PressureTheta(double centerPhi, double neighborPhi)
+{
+    return std::max(FractionInsideSDF(centerPhi, neighborPhi), 0.01);
+}
+
+void ApplyUGradient(size_t i, size_t j, double centerPhi,
+                    const PressureGradientData2& data)
+{
+    if (i + 1 < data.size.x && data.uWeights(i + 1, j) > 0.0 &&
+        (IsInsideSDF(centerPhi) || IsInsideSDF(data.fluidSDF(i + 1, j))))
+    {
+        const double theta = PressureTheta(centerPhi, data.fluidSDF(i + 1, j));
+        data.u0(i + 1, j) = data.u(i + 1, j) +
+                            data.invH.x / theta *
+                                (data.pressure(i + 1, j) - data.pressure(i, j));
+    }
+}
+
+void ApplyVGradient(size_t i, size_t j, double centerPhi,
+                    const PressureGradientData2& data)
+{
+    if (j + 1 < data.size.y && data.vWeights(i, j + 1) > 0.0 &&
+        (IsInsideSDF(centerPhi) || IsInsideSDF(data.fluidSDF(i, j + 1))))
+    {
+        const double theta = PressureTheta(centerPhi, data.fluidSDF(i, j + 1));
+        data.v0(i, j + 1) = data.v(i, j + 1) +
+                            data.invH.y / theta *
+                                (data.pressure(i, j + 1) - data.pressure(i, j));
+    }
+}
+
+void ApplyPressureGradientAt(size_t i, size_t j,
+                             const PressureGradientData2& data)
+{
+    const double centerPhi = data.fluidSDF(i, j);
+
+    ApplyUGradient(i, j, centerPhi, data);
+    ApplyVGradient(i, j, centerPhi, data);
+}
+
 void Restrict(const Array2<double>& finer, Array2<double>* coarser)
 {
     // --*--|--*--|--*--|--*--
@@ -54,63 +140,201 @@ void Restrict(const Array2<double>& finer, Array2<double>* coarser)
     const Vector2UZ n = coarser->Size();
     ParallelRangeFor(
         ZERO_SIZE, n.x, ZERO_SIZE, n.y,
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
-            std::array<size_t, 4> jIndices{};
-
+        [&kernelSize, &n, &kernels, &finer, &coarser](
+            size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
             for (size_t j = jBegin; j < jEnd; ++j)
             {
-                if (kernelSize[1] == 3)
-                {
-                    jIndices[0] = (j > 0) ? 2 * j - 1 : 2 * j;
-                    jIndices[1] = 2 * j;
-                    jIndices[2] = (j + 1 < n.y) ? 2 * j + 1 : 2 * j;
-                }
-                else
-                {
-                    jIndices[0] = (j > 0) ? 2 * j - 1 : 2 * j;
-                    jIndices[1] = 2 * j;
-                    jIndices[2] = 2 * j + 1;
-                    jIndices[3] = (j + 1 < n.y) ? 2 * j + 2 : 2 * j + 1;
-                }
-
-                std::array<size_t, 4> iIndices{};
                 for (size_t i = iBegin; i < iEnd; ++i)
                 {
-                    if (kernelSize[0] == 3)
-                    {
-                        iIndices[0] = (i > 0) ? 2 * i - 1 : 2 * i;
-                        iIndices[1] = 2 * i;
-                        iIndices[2] = (i + 1 < n.x) ? 2 * i + 1 : 2 * i;
-                    }
-                    else
-                    {
-                        iIndices[0] = (i > 0) ? 2 * i - 1 : 2 * i;
-                        iIndices[1] = 2 * i;
-                        iIndices[2] = 2 * i + 1;
-                        iIndices[3] = (i + 1 < n.x) ? 2 * i + 2 : 2 * i + 1;
-                    }
-
-                    double sum = 0.0;
-                    for (int y = 0; y < kernelSize[1]; ++y)
-                    {
-                        for (int x = 0; x < kernelSize[0]; ++x)
-                        {
-                            const double w = kernels[0][x] * kernels[1][y];
-                            sum += w * finer(iIndices[x], jIndices[y]);
-                        }
-                    }
-
-                    (*coarser)(i, j) = sum;
+                    (*coarser)(i, j) =
+                        RestrictPoint(i, j, n, kernelSize, kernels, finer);
                 }
             }
         });
 }
 
+struct PressureRow2
+{
+    double center = 0.0;
+    double rhs = 0.0;
+    std::array<double, 4> offDiagonal{};
+    std::array<bool, 4> coupled{};
+};
+
+template <typename BoundaryVelocityFunc>
+struct PressureRowData2
+{
+    const Vector2UZ& size;
+    const Vector2D& invH;
+    const Vector2D& invHSqr;
+    const Array2<double>& fluidSDF;
+    const Array2<double>& uWeights;
+    const Array2<double>& vWeights;
+    const GridDataPositionFunc<2>& uPos;
+    const GridDataPositionFunc<2>& vPos;
+    const BoundaryVelocityFunc& boundaryVel;
+    const FaceCenteredGrid2& input;
+};
+
+void AddCoefficient(double centerPhi, double neighborPhi, double term,
+                    size_t direction, PressureRow2* row)
+{
+    if (IsInsideSDF(neighborPhi))
+    {
+        row->center += term;
+        row->offDiagonal[direction] = -term;
+        row->coupled[direction] = true;
+    }
+    else
+    {
+        const double theta =
+            std::max(FractionInsideSDF(centerPhi, neighborPhi), 0.01);
+        row->center += term / theta;
+    }
+}
+
+template <typename BoundaryVelocityFunc>
+void AddXTerms(size_t i, size_t j, double centerPhi,
+               const PressureRowData2<BoundaryVelocityFunc>& data,
+               PressureRow2* row)
+{
+    if (i + 1 < data.size.x)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i + 1, j),
+                       data.uWeights(i + 1, j) * data.invHSqr.x, 0, row);
+        row->rhs +=
+            data.uWeights(i + 1, j) * data.input.U(i + 1, j) * data.invH.x;
+    }
+    else
+    {
+        row->rhs += data.input.U(i + 1, j) * data.invH.x;
+    }
+
+    if (i > 0)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i - 1, j),
+                       data.uWeights(i, j) * data.invHSqr.x, 1, row);
+        row->rhs -= data.uWeights(i, j) * data.input.U(i, j) * data.invH.x;
+    }
+    else
+    {
+        row->rhs -= data.input.U(i, j) * data.invH.x;
+    }
+}
+
+template <typename BoundaryVelocityFunc>
+void AddYTerms(size_t i, size_t j, double centerPhi,
+               const PressureRowData2<BoundaryVelocityFunc>& data,
+               PressureRow2* row)
+{
+    if (j + 1 < data.size.y)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i, j + 1),
+                       data.vWeights(i, j + 1) * data.invHSqr.y, 2, row);
+        row->rhs +=
+            data.vWeights(i, j + 1) * data.input.V(i, j + 1) * data.invH.y;
+    }
+    else
+    {
+        row->rhs += data.input.V(i, j + 1) * data.invH.y;
+    }
+
+    if (j > 0)
+    {
+        AddCoefficient(centerPhi, data.fluidSDF(i, j - 1),
+                       data.vWeights(i, j) * data.invHSqr.y, 3, row);
+        row->rhs -= data.vWeights(i, j) * data.input.V(i, j) * data.invH.y;
+    }
+    else
+    {
+        row->rhs -= data.input.V(i, j) * data.invH.y;
+    }
+}
+
+template <typename BoundaryVelocityFunc>
+void AddBoundaryVelocity(size_t i, size_t j,
+                         const PressureRowData2<BoundaryVelocityFunc>& data,
+                         PressureRow2* row)
+{
+    row->rhs += (1.0 - data.uWeights(i + 1, j)) *
+                    data.boundaryVel(data.uPos(i + 1, j)).x * data.invH.x -
+                (1.0 - data.uWeights(i, j)) *
+                    data.boundaryVel(data.uPos(i, j)).x * data.invH.x +
+                (1.0 - data.vWeights(i, j + 1)) *
+                    data.boundaryVel(data.vPos(i, j + 1)).y * data.invH.y -
+                (1.0 - data.vWeights(i, j)) *
+                    data.boundaryVel(data.vPos(i, j)).y * data.invH.y;
+}
+
+template <typename BoundaryVelocityFunc>
+PressureRow2 BuildPressureRow(
+    size_t i, size_t j, const PressureRowData2<BoundaryVelocityFunc>& data)
+{
+    PressureRow2 row;
+    const double centerPhi = data.fluidSDF(i, j);
+    if (!IsInsideSDF(centerPhi))
+    {
+        row.center = 1.0;
+        return row;
+    }
+
+    AddXTerms(i, j, centerPhi, data, &row);
+    AddYTerms(i, j, centerPhi, data, &row);
+    AddBoundaryVelocity(i, j, data, &row);
+
+    if (row.center < std::numeric_limits<double>::epsilon())
+    {
+        row.center = 1.0;
+        row.rhs = 0.0;
+    }
+
+    return row;
+}
+
+template <typename BoundaryVelocityFunc>
+struct CompressedRowData2
+{
+    const PressureRowData2<BoundaryVelocityFunc>& pressure;
+    const Array2<size_t>& coordToIndex;
+    MatrixCSRD* A;
+    VectorND* b;
+};
+
+template <typename BoundaryVelocityFunc>
+void AppendCompressedRow(size_t i, size_t j,
+                         const CompressedRowData2<BoundaryVelocityFunc>& data)
+{
+    if (!IsInsideSDF(data.pressure.fluidSDF(i, j)))
+    {
+        return;
+    }
+
+    const PressureRow2 pressureRow = BuildPressureRow(i, j, data.pressure);
+    std::vector<double> row{ pressureRow.center };
+    std::vector<size_t> columns{ data.coordToIndex(i, j) };
+
+    const auto addColumn = [&](size_t direction, size_t x, size_t y) {
+        if (pressureRow.coupled[direction])
+        {
+            row.push_back(pressureRow.offDiagonal[direction]);
+            columns.push_back(data.coordToIndex(x, y));
+        }
+    };
+
+    addColumn(0, i + 1, j);
+    addColumn(1, i - 1, j);
+    addColumn(2, i, j + 1);
+    addColumn(3, i, j - 1);
+    data.A->AddRow(row, columns);
+    data.b->AddElement(pressureRow.rhs);
+}
+
+template <typename BoundaryVelocityFunc>
 void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
                        const Array2<double>& fluidSDF,
                        const Array2<double>& uWeights,
                        const Array2<double>& vWeights,
-                       std::function<Vector2D(const Vector2D&)> boundaryVel,
+                       const BoundaryVelocityFunc& boundaryVel,
                        const FaceCenteredGrid2& input)
 {
     const Vector2UZ size = input.Resolution();
@@ -119,145 +343,28 @@ void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
 
     const Vector2D invH = 1.0 / input.GridSpacing();
     const Vector2D invHSqr = ElemMul(invH, invH);
+    const PressureRowData2<BoundaryVelocityFunc> rowData{
+        size,     invH, invHSqr, fluidSDF,    uWeights,
+        vWeights, uPos, vPos,    boundaryVel, input
+    };
 
     // Build linear system
-    ParallelForEachIndex(A->Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(A->Size(), [&A, &b, &rowData](size_t i, size_t j) {
+        const PressureRow2 data = BuildPressureRow(i, j, rowData);
         FDMMatrixRow2& row = (*A)(i, j);
-
-        // initialize
-        row.center = row.right = row.up = 0.0;
-        (*b)(i, j) = 0.0;
-
-        const double centerPhi = fluidSDF(i, j);
-
-        if (IsInsideSDF(centerPhi))
-        {
-            double term;
-
-            if (i + 1 < size.x)
-            {
-                term = uWeights(i + 1, j) * invHSqr.x;
-                const double rightPhi = fluidSDF(i + 1, j);
-
-                if (IsInsideSDF(rightPhi))
-                {
-                    row.center += term;
-                    row.right -= term;
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, rightPhi);
-                    theta = std::max(theta, 0.01);
-                    row.center += term / theta;
-                }
-
-                (*b)(i, j) += uWeights(i + 1, j) * input.U(i + 1, j) * invH.x;
-            }
-            else
-            {
-                (*b)(i, j) += input.U(i + 1, j) * invH.x;
-            }
-
-            if (i > 0)
-            {
-                term = uWeights(i, j) * invHSqr.x;
-                const double leftPhi = fluidSDF(i - 1, j);
-
-                if (IsInsideSDF(leftPhi))
-                {
-                    row.center += term;
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, leftPhi);
-                    theta = std::max(theta, 0.01);
-                    row.center += term / theta;
-                }
-
-                (*b)(i, j) -= uWeights(i, j) * input.U(i, j) * invH.x;
-            }
-            else
-            {
-                (*b)(i, j) -= input.U(i, j) * invH.x;
-            }
-
-            if (j + 1 < size.y)
-            {
-                term = vWeights(i, j + 1) * invHSqr.y;
-                const double upPhi = fluidSDF(i, j + 1);
-
-                if (IsInsideSDF(upPhi))
-                {
-                    row.center += term;
-                    row.up -= term;
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, upPhi);
-                    theta = std::max(theta, 0.01);
-                    row.center += term / theta;
-                }
-
-                (*b)(i, j) += vWeights(i, j + 1) * input.V(i, j + 1) * invH.y;
-            }
-            else
-            {
-                (*b)(i, j) += input.V(i, j + 1) * invH.y;
-            }
-
-            if (j > 0)
-            {
-                term = vWeights(i, j) * invHSqr.y;
-                const double downPhi = fluidSDF(i, j - 1);
-
-                if (IsInsideSDF(downPhi))
-                {
-                    row.center += term;
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, downPhi);
-                    theta = std::max(theta, 0.01);
-                    row.center += term / theta;
-                }
-
-                (*b)(i, j) -= vWeights(i, j) * input.V(i, j) * invH.y;
-            }
-            else
-            {
-                (*b)(i, j) -= input.V(i, j) * invH.y;
-            }
-
-            // Accumulate contributions from the moving boundary
-            const double boundaryContribution =
-                (1.0 - uWeights(i + 1, j)) * boundaryVel(uPos(i + 1, j)).x *
-                    invH.x -
-                (1.0 - uWeights(i, j)) * boundaryVel(uPos(i, j)).x * invH.x +
-                (1.0 - vWeights(i, j + 1)) * boundaryVel(vPos(i, j + 1)).y *
-                    invH.y -
-                (1.0 - vWeights(i, j)) * boundaryVel(vPos(i, j)).y * invH.y;
-            (*b)(i, j) += boundaryContribution;
-
-            // If row.center is near-zero, the cell is likely inside a solid
-            // boundary.
-            if (row.center < std::numeric_limits<double>::epsilon())
-            {
-                row.center = 1.0;
-                (*b)(i, j) = 0.0;
-            }
-        }
-        else
-        {
-            row.center = 1.0;
-        }
+        row.center = data.center;
+        row.right = data.offDiagonal[0];
+        row.up = data.offDiagonal[2];
+        (*b)(i, j) = data.rhs;
     });
 }
 
+template <typename BoundaryVelocityFunc>
 void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
                        const Array2<double>& fluidSDF,
                        const Array2<double>& uWeights,
                        const Array2<double>& vWeights,
-                       std::function<Vector2D(const Vector2D&)> boundaryVel,
+                       const BoundaryVelocityFunc& boundaryVel,
                        const FaceCenteredGrid2& input)
 {
     const Vector2UZ size = input.Resolution();
@@ -274,7 +381,8 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
 
     size_t numRows = 0;
     Array2<size_t> coordToIndex{ size };
-    ForEachIndex(fluidSDF.Size(), [&](size_t i, size_t j) {
+    ForEachIndex(fluidSDF.Size(), [&fluidSDFAcc, &fluidSDF, &coordToIndex,
+                                   &numRows](size_t i, size_t j) {
         const size_t cIdx = fluidSDFAcc.Index(i, j);
         const double centerPhi = fluidSDF[cIdx];
 
@@ -283,141 +391,16 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
             coordToIndex[cIdx] = numRows++;
         }
     });
+    const PressureRowData2<BoundaryVelocityFunc> rowData{
+        size,     invH, invHSqr, fluidSDF,    uWeights,
+        vWeights, uPos, vPos,    boundaryVel, input
+    };
+    const CompressedRowData2<BoundaryVelocityFunc> compressedData{ rowData,
+                                                                   coordToIndex,
+                                                                   A, b };
 
-    ForEachIndex(fluidSDF.Size(), [&](size_t i, size_t j) {
-        const size_t cIdx = fluidSDFAcc.Index(i, j);
-        const double centerPhi = fluidSDF(i, j);
-
-        if (IsInsideSDF(centerPhi))
-        {
-            double bij = 0.0;
-
-            std::vector<double> row(1, 0.0);
-            std::vector<size_t> colIdx(1, coordToIndex[cIdx]);
-
-            double term;
-
-            if (i + 1 < size.x)
-            {
-                term = uWeights(i + 1, j) * invHSqr.x;
-                const double rightPhi = fluidSDF(i + 1, j);
-
-                if (IsInsideSDF(rightPhi))
-                {
-                    row[0] += term;
-                    row.push_back(-term);
-                    colIdx.push_back(coordToIndex(i + 1, j));
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, rightPhi);
-                    theta = std::max(theta, 0.01);
-                    row[0] += term / theta;
-                }
-
-                bij += uWeights(i + 1, j) * input.U(i + 1, j) * invH.x;
-            }
-            else
-            {
-                bij += input.U(i + 1, j) * invH.x;
-            }
-
-            if (i > 0)
-            {
-                term = uWeights(i, j) * invHSqr.x;
-                const double leftPhi = fluidSDF(i - 1, j);
-
-                if (IsInsideSDF(leftPhi))
-                {
-                    row[0] += term;
-                    row.push_back(-term);
-                    colIdx.push_back(coordToIndex(i - 1, j));
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, leftPhi);
-                    theta = std::max(theta, 0.01);
-                    row[0] += term / theta;
-                }
-
-                bij -= uWeights(i, j) * input.U(i, j) * invH.x;
-            }
-            else
-            {
-                bij -= input.U(i, j) * invH.x;
-            }
-
-            if (j + 1 < size.y)
-            {
-                term = vWeights(i, j + 1) * invHSqr.y;
-                const double upPhi = fluidSDF(i, j + 1);
-
-                if (IsInsideSDF(upPhi))
-                {
-                    row[0] += term;
-                    row.push_back(-term);
-                    colIdx.push_back(coordToIndex(i, j + 1));
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, upPhi);
-                    theta = std::max(theta, 0.01);
-                    row[0] += term / theta;
-                }
-
-                bij += vWeights(i, j + 1) * input.V(i, j + 1) * invH.y;
-            }
-            else
-            {
-                bij += input.V(i, j + 1) * invH.y;
-            }
-
-            if (j > 0)
-            {
-                term = vWeights(i, j) * invHSqr.y;
-                const double downPhi = fluidSDF(i, j - 1);
-
-                if (IsInsideSDF(downPhi))
-                {
-                    row[0] += term;
-                    row.push_back(-term);
-                    colIdx.push_back(coordToIndex(i, j - 1));
-                }
-                else
-                {
-                    double theta = FractionInsideSDF(centerPhi, downPhi);
-                    theta = std::max(theta, 0.01);
-                    row[0] += term / theta;
-                }
-
-                bij -= vWeights(i, j) * input.V(i, j) * invH.y;
-            }
-            else
-            {
-                bij -= input.V(i, j) * invH.y;
-            }
-
-            // Accumulate contributions from the moving boundary
-            const double boundaryContribution =
-                (1.0 - uWeights(i + 1, j)) * boundaryVel(uPos(i + 1, j)).x *
-                    invH.x -
-                (1.0 - uWeights(i, j)) * boundaryVel(uPos(i, j)).x * invH.x +
-                (1.0 - vWeights(i, j + 1)) * boundaryVel(vPos(i, j + 1)).y *
-                    invH.y -
-                (1.0 - vWeights(i, j)) * boundaryVel(vPos(i, j)).y * invH.y;
-            bij += boundaryContribution;
-
-            // If row.center is near-zero, the cell is likely inside a solid
-            // boundary.
-            if (row[0] < std::numeric_limits<double>::epsilon())
-            {
-                row[0] = 1.0;
-                bij = 0.0;
-            }
-
-            A->AddRow(row, colIdx);
-            b->AddElement(bij);
-        }
+    ForEachIndex(fluidSDF.Size(), [&compressedData](size_t i, size_t j) {
+        AppendCompressedRow(i, j, compressedData);
     });
 
     x->Resize(b->GetRows(), 0.0);
@@ -539,11 +522,13 @@ void GridFractionalSinglePhasePressureSolver2::BuildWeights(
     m_boundaryVel = boundaryVelocity.Sampler();
     Vector2D h = input.GridSpacing();
 
-    ParallelForEachIndex(m_fluidSDF[0].Size(), [&](size_t i, size_t j) {
-        m_fluidSDF[0](i, j) = fluidSDF.Sample(cellPos(i, j));
-    });
+    ParallelForEachIndex(
+        m_fluidSDF[0].Size(), [this, &fluidSDF, &cellPos](size_t i, size_t j) {
+            m_fluidSDF[0](i, j) = fluidSDF.Sample(cellPos(i, j));
+        });
 
-    ParallelForEachIndex(m_uWeights[0].Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(m_uWeights[0].Size(), [&uPos, &boundarySDF, &h, this](
+                                                   size_t i, size_t j) {
         const Vector2D pt = uPos(i, j);
         const double phi0 = boundarySDF.Sample(pt - Vector2D{ 0.5 * h.x, 0.0 });
         const double phi1 = boundarySDF.Sample(pt + Vector2D{ 0.5 * h.x, 0.0 });
@@ -560,7 +545,8 @@ void GridFractionalSinglePhasePressureSolver2::BuildWeights(
         m_uWeights[0](i, j) = weight;
     });
 
-    ParallelForEachIndex(m_vWeights[0].Size(), [&](size_t i, size_t j) {
+    ParallelForEachIndex(m_vWeights[0].Size(), [&vPos, &boundarySDF, &h, this](
+                                                   size_t i, size_t j) {
         const Vector2D pt = vPos(i, j);
         const double phi0 = boundarySDF.Sample(pt - Vector2D{ 0.0, 0.5 * h.y });
         const double phi1 = boundarySDF.Sample(pt + Vector2D{ 0.0, 0.5 * h.y });
@@ -600,7 +586,7 @@ void GridFractionalSinglePhasePressureSolver2::DecompressSolution()
     m_system.x.Resize(acc.Size());
 
     size_t row = 0;
-    ForEachIndex(m_fluidSDF[0].Size(), [&](size_t i, size_t j) {
+    ForEachIndex(m_fluidSDF[0].Size(), [&acc, this, &row](size_t i, size_t j) {
         if (IsInsideSDF(acc(i, j)))
         {
             m_system.x(i, j) = m_compSystem.x[row];
@@ -696,31 +682,12 @@ void GridFractionalSinglePhasePressureSolver2::ApplyPressureGradient(
     const FDMVector2& x = GetPressure();
 
     Vector2D invH = 1.0 / input.GridSpacing();
+    const PressureGradientData2 data{
+        size, m_fluidSDF[0], m_uWeights[0], m_vWeights[0], u, v, u0, v0, invH, x
+    };
 
-    ParallelForEachIndex(x.Size(), [&](size_t i, size_t j) {
-        const double centerPhi = m_fluidSDF[0](i, j);
-
-        if (i + 1 < size.x && m_uWeights[0](i + 1, j) > 0.0 &&
-            (IsInsideSDF(centerPhi) || IsInsideSDF(m_fluidSDF[0](i + 1, j))))
-        {
-            const double rightPhi = m_fluidSDF[0](i + 1, j);
-            double theta = FractionInsideSDF(centerPhi, rightPhi);
-            theta = std::max(theta, 0.01);
-
-            u0(i + 1, j) =
-                u(i + 1, j) + invH.x / theta * (x(i + 1, j) - x(i, j));
-        }
-
-        if (j + 1 < size.y && m_vWeights[0](i, j + 1) > 0.0 &&
-            (IsInsideSDF(centerPhi) || IsInsideSDF(m_fluidSDF[0](i, j + 1))))
-        {
-            const double upPhi = m_fluidSDF[0](i, j + 1);
-            double theta = FractionInsideSDF(centerPhi, upPhi);
-            theta = std::max(theta, 0.01);
-
-            v0(i, j + 1) =
-                v(i, j + 1) + invH.y / theta * (x(i, j + 1) - x(i, j));
-        }
+    ParallelForEachIndex(x.Size(), [&data](size_t i, size_t j) {
+        ApplyPressureGradientAt(i, j, data);
     });
 }
 }  // namespace CubbyFlow

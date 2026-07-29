@@ -52,7 +52,7 @@ TEST(Serial, For2D)
     }
 
     SerialFor(ZERO_SIZE, a.Width(), ZERO_SIZE, a.Height(),
-              [&](size_t i, size_t j) {
+              [&nX, &a](size_t i, size_t j) {
                   double expected = static_cast<double>(i + j * nX);
                   EXPECT_DOUBLE_EQ(expected, a(i, j));
               });
@@ -77,7 +77,7 @@ TEST(Serial, For3D)
     }
 
     SerialFor(ZERO_SIZE, a.Width(), ZERO_SIZE, a.Height(), ZERO_SIZE, a.Depth(),
-              [&](size_t i, size_t j, size_t k) {
+              [&nY, &nX, &a](size_t i, size_t j, size_t k) {
                   double expected = static_cast<double>(i + (j + k * nY) * nX);
                   EXPECT_DOUBLE_EQ(expected, a(i, j, k));
               });
@@ -125,7 +125,7 @@ TEST(Serial, Sort)
     }
 
     SerialSort(idx.begin(), idx.end(),
-               [&](size_t x, size_t y) { return c[x] < c[y]; });
+               [&c](size_t x, size_t y) { return c[x] < c[y]; });
 
     for (size_t i = 0; i + 1 < a.size(); ++i)
     {

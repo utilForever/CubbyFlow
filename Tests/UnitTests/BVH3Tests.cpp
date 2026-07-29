@@ -20,7 +20,7 @@ TEST(BVH3, BasicGetters)
     size_t i = 0;
     BoundingBox3D rootBounds;
 
-    std::generate(bounds.begin(), bounds.end(), [&]() {
+    std::generate(bounds.begin(), bounds.end(), [&points, &i, &rootBounds]() {
         const auto c = points[i++];
         BoundingBox3D box{ c, c };
 
@@ -68,7 +68,7 @@ TEST(BVH3, Nearest)
     }
 
     Array1<BoundingBox3D> bounds(points.Length());
-    std::generate(bounds.begin(), bounds.end(), [&]() {
+    std::generate(bounds.begin(), bounds.end(), [&points, &i]() {
         auto c = points[i++];
         BoundingBox3D box(c, c);
 
@@ -120,7 +120,7 @@ TEST(BVH3, BBoxIntersects)
     }
 
     Array1<BoundingBox3D> bounds(points.Length());
-    std::generate(bounds.begin(), bounds.end(), [&]() {
+    std::generate(bounds.begin(), bounds.end(), [&points, &i]() {
         auto c = points[i++];
         BoundingBox3D box(c, c);
 
@@ -164,7 +164,7 @@ TEST(BVH3, RayIntersects)
     Array1<BoundingBox3D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::generate(items.begin(), items.end(), [&i]() {
         auto c = GetSamplePoints3()[i++];
         BoundingBox3D box(c, c);
 
@@ -219,7 +219,7 @@ TEST(BVH3, ClosestIntersection)
     Array1<BoundingBox3D> items(numSamples / 2);
     size_t i = 0;
 
-    std::generate(items.begin(), items.end(), [&]() {
+    std::generate(items.begin(), items.end(), [&i]() {
         auto c = GetSamplePoints3()[i++];
         BoundingBox3D box(c, c);
 
@@ -274,7 +274,7 @@ TEST(BVH3, ForEachOverlappingItems)
     }
 
     Array1<BoundingBox3D> bounds(points.Length());
-    std::generate(bounds.begin(), bounds.end(), [&]() {
+    std::generate(bounds.begin(), bounds.end(), [&points, &i]() {
         auto c = points[i++];
         BoundingBox3D box(c, c);
 
@@ -294,10 +294,12 @@ TEST(BVH3, ForEachOverlappingItems)
     }
 
     size_t measured = 0;
-    bvh.ForEachIntersectingItem(testBox, overlapsFunc, [&](const Vector3D& pt) {
-        EXPECT_TRUE(overlapsFunc(pt, testBox));
-        ++measured;
-    });
+    bvh.ForEachIntersectingItem(
+        testBox, overlapsFunc,
+        [&overlapsFunc, &testBox, &measured](const Vector3D& pt) {
+            EXPECT_TRUE(overlapsFunc(pt, testBox));
+            ++measured;
+        });
 
     EXPECT_EQ(numOverlaps, measured);
 }

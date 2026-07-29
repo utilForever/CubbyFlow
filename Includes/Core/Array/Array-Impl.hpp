@@ -263,8 +263,9 @@ template <typename D>
 void Array<T, N>::CopyFrom(const ArrayBase<T, N, D>& other)
 {
     Resize(other.Size());
-    ForEachIndex(Vector<size_t, N>{}, other.Size(),
-                 [&](auto... idx) { this->At(idx...) = other(idx...); });
+    ForEachIndex(
+        Vector<size_t, N>{}, other.Size(),
+        [this, &other](auto... idx) { this->At(idx...) = other(idx...); });
 }
 
 template <typename T, size_t N>
@@ -272,8 +273,9 @@ template <typename D>
 void Array<T, N>::CopyFrom(const ArrayBase<const T, N, D>& other)
 {
     Resize(other.Size());
-    ForEachIndex(Vector<size_t, N>{}, other.Size(),
-                 [&](auto... idx) { this->At(idx...) = other(idx...); });
+    ForEachIndex(
+        Vector<size_t, N>{}, other.Size(),
+        [this, &other](auto... idx) { this->At(idx...) = other(idx...); });
 }
 
 template <typename T, size_t N>
@@ -288,8 +290,9 @@ void Array<T, N>::Resize(Vector<size_t, N> size_, const T& initVal)
     Array newArray(size_, initVal);
     Vector<size_t, N> minSize = Min(m_size, newArray.m_size);
 
-    ForEachIndex(minSize,
-                 [&](auto... idx) { newArray(idx...) = (*this)(idx...); });
+    ForEachIndex(minSize, [&newArray, this](auto... idx) {
+        newArray(idx...) = (*this)(idx...);
+    });
 
     *this = std::move(newArray);
 }

@@ -15,6 +15,21 @@
 
 namespace CubbyFlow
 {
+double ReinitializedValue(double value, double sign, double dtau,
+                          const std::array<double, 2>& dx,
+                          const std::array<double, 2>& dy)
+{
+    const double positiveGradient =
+        std::sqrt(Square(std::max(dx[0], 0.0)) + Square(std::min(dx[1], 0.0)) +
+                  Square(std::max(dy[0], 0.0)) + Square(std::min(dy[1], 0.0)));
+    const double negativeGradient =
+        std::sqrt(Square(std::min(dx[0], 0.0)) + Square(std::max(dx[1], 0.0)) +
+                  Square(std::min(dy[0], 0.0)) + Square(std::max(dy[1], 0.0)));
+
+    return value - dtau * std::max(sign, 0.0) * (positiveGradient - 1.0) -
+           dtau * std::min(sign, 0.0) * (negativeGradient - 1.0);
+}
+
 void IterativeLevelSetSolver2::Reinitialize(const ScalarGrid2& inputSDF,
                                             double maxDistance,
                                             ScalarGrid2* outputSDF)
@@ -45,28 +60,16 @@ void IterativeLevelSetSolver2::Reinitialize(const ScalarGrid2& inputSDF,
 
     for (unsigned int n = 0; n < numberOfIterations; ++n)
     {
-        inputSDF.ParallelForEachDataPointIndex([&](size_t i, size_t j) {
+        inputSDF.ParallelForEachDataPointIndex([&outputAcc, &gridSpacing, this,
+                                                &dtau,
+                                                &tempAcc](size_t i, size_t j) {
             const double s = Sign(outputAcc, gridSpacing, i, j);
 
             std::array<double, 2> dx{}, dy{};
 
             GetDerivatives(outputAcc, gridSpacing, i, j, &dx, &dy);
-
-            // Explicit Euler step
-            const double val = outputAcc(i, j) -
-                               dtau * std::max(s, 0.0) *
-                                   (std::sqrt(Square(std::max(dx[0], 0.0)) +
-                                              Square(std::min(dx[1], 0.0)) +
-                                              Square(std::max(dy[0], 0.0)) +
-                                              Square(std::min(dy[1], 0.0))) -
-                                    1.0) -
-                               dtau * std::min(s, 0.0) *
-                                   (std::sqrt(Square(std::min(dx[0], 0.0)) +
-                                              Square(std::max(dx[1], 0.0)) +
-                                              Square(std::min(dy[0], 0.0)) +
-                                              Square(std::max(dy[1], 0.0))) -
-                                    1.0);
-            tempAcc(i, j) = val;
+            tempAcc(i, j) =
+                ReinitializedValue(outputAcc(i, j), s, dtau, dx, dy);
         });
 
         std::swap(tempAcc, outputAcc);
@@ -90,9 +93,10 @@ void IterativeLevelSetSolver2::Extrapolate(const ScalarGrid2& input,
 
     Array2<double> sdfGrid{ input.DataSize() };
     GridDataPositionFunc<2> pos = input.DataPosition();
-    ParallelForEachIndex(sdfGrid.Size(), [&](size_t i, size_t j) {
-        sdfGrid(i, j) = sdf.Sample(pos(i, j));
-    });
+    ParallelForEachIndex(sdfGrid.Size(),
+                         [&sdfGrid, &sdf, &pos](size_t i, size_t j) {
+                             sdfGrid(i, j) = sdf.Sample(pos(i, j));
+                         });
 
     Extrapolate(input.DataView(), sdfGrid.View(), input.GridSpacing(),
                 maxDistance, output->DataView());
@@ -112,9 +116,10 @@ void IterativeLevelSetSolver2::Extrapolate(const CollocatedVectorGrid2& input,
 
     Array2<double> sdfGrid{ input.DataSize() };
     GridDataPositionFunc<2> pos = input.DataPosition();
-    ParallelForEachIndex(sdfGrid.Size(), [&](size_t i, size_t j) {
-        sdfGrid(i, j) = sdf.Sample(pos(i, j));
-    });
+    ParallelForEachIndex(sdfGrid.Size(),
+                         [&sdfGrid, &sdf, &pos](size_t i, size_t j) {
+                             sdfGrid(i, j) = sdf.Sample(pos(i, j));
+                         });
 
     const Vector2D gridSpacing = input.GridSpacing();
 
@@ -123,7 +128,7 @@ void IterativeLevelSetSolver2::Extrapolate(const CollocatedVectorGrid2& input,
     Array2<double> v{ input.DataSize() };
     Array2<double> v0{ input.DataSize() };
 
-    input.ParallelForEachDataPointIndex([&](size_t i, size_t j) {
+    input.ParallelForEachDataPointIndex([&u, &input, &v](size_t i, size_t j) {
         u(i, j) = input(i, j).x;
         v(i, j) = input(i, j).y;
     });
@@ -131,10 +136,11 @@ void IterativeLevelSetSolver2::Extrapolate(const CollocatedVectorGrid2& input,
     Extrapolate(u, sdfGrid.View(), gridSpacing, maxDistance, u0);
     Extrapolate(v, sdfGrid.View(), gridSpacing, maxDistance, v0);
 
-    output->ParallelForEachDataPointIndex([&](size_t i, size_t j) {
-        (*output)(i, j).x = u(i, j);
-        (*output)(i, j).y = v(i, j);
-    });
+    output->ParallelForEachDataPointIndex(
+        [&output, &u, &v](size_t i, size_t j) {
+            (*output)(i, j).x = u(i, j);
+            (*output)(i, j).y = v(i, j);
+        });
 }
 
 void IterativeLevelSetSolver2::Extrapolate(const FaceCenteredGrid2& input,
@@ -154,16 +160,18 @@ void IterativeLevelSetSolver2::Extrapolate(const FaceCenteredGrid2& input,
     const ConstArrayView2<double> u = input.UView();
     auto uPos = input.UPosition();
     Array2<double> sdfAtU{ u.Size() };
-    input.ParallelForEachUIndex(
-        [&](const Vector2UZ& idx) { sdfAtU(idx) = sdf.Sample(uPos(idx)); });
+    input.ParallelForEachUIndex([&sdfAtU, &sdf, &uPos](const Vector2UZ& idx) {
+        sdfAtU(idx) = sdf.Sample(uPos(idx));
+    });
 
     Extrapolate(u, sdfAtU, gridSpacing, maxDistance, output->UView());
 
     const ConstArrayView2<double> v = input.VView();
     auto vPos = input.VPosition();
     Array2<double> sdfAtV{ v.Size() };
-    input.ParallelForEachVIndex(
-        [&](const Vector2UZ& idx) { sdfAtV(idx) = sdf.Sample(vPos(idx)); });
+    input.ParallelForEachVIndex([&sdfAtV, &sdf, &vPos](const Vector2UZ& idx) {
+        sdfAtV(idx) = sdf.Sample(vPos(idx));
+    });
 
     Extrapolate(v, sdfAtV, gridSpacing, maxDistance, output->VView());
 }
@@ -190,7 +198,9 @@ void IterativeLevelSetSolver2::Extrapolate(const ConstArrayView2<double>& input,
     for (unsigned int n = 0; n < numberOfIterations; ++n)
     {
         ParallelFor(
-            ZERO_SIZE, size.x, ZERO_SIZE, size.y, [&](size_t i, size_t j) {
+            ZERO_SIZE, size.x, ZERO_SIZE, size.y,
+            [&sdf, &gridSpacing, this, &outputAcc, &tempAcc, &dtau](size_t i,
+                                                                    size_t j) {
                 if (sdf(i, j) >= 0)
                 {
                     std::array<double, 2> dx{}, dy{};

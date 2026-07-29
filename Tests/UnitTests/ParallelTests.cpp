@@ -8,7 +8,7 @@
 
 using namespace CubbyFlow;
 
-static unsigned int NUM_CORES = std::thread::hardware_concurrency();
+const unsigned int NUM_CORES = std::thread::hardware_concurrency();
 
 TEST(Parallel, Async)
 {
@@ -79,7 +79,7 @@ TEST(Parallel, For2D)
     }
 
     ParallelFor(ZERO_SIZE, a.Width(), ZERO_SIZE, a.Height(),
-                [&](size_t i, size_t j) {
+                [&nX, &a](size_t i, size_t j) {
                     double expected = static_cast<double>(i + j * nX);
                     EXPECT_DOUBLE_EQ(expected, a(i, j));
                 });
@@ -101,7 +101,7 @@ TEST(Parallel, RangeFor2D)
 
     ParallelRangeFor(
         ZERO_SIZE, a.Width(), ZERO_SIZE, a.Height(),
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
+        [&nX, &a](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd) {
             for (size_t j = jBegin; j < jEnd; ++j)
             {
                 for (size_t i = iBegin; i < iEnd; ++i)
@@ -132,7 +132,7 @@ TEST(Parallel, For3D)
     }
 
     ParallelFor(ZERO_SIZE, a.Width(), ZERO_SIZE, a.Height(), ZERO_SIZE,
-                a.Depth(), [&](size_t i, size_t j, size_t k) {
+                a.Depth(), [&nY, &nX, &a](size_t i, size_t j, size_t k) {
                     double expected =
                         static_cast<double>(i + (j + k * nY) * nX);
                     EXPECT_DOUBLE_EQ(expected, a(i, j, k));
@@ -159,8 +159,8 @@ TEST(Parallel, RangeFor3D)
 
     ParallelRangeFor(
         ZERO_SIZE, a.Width(), ZERO_SIZE, a.Height(), ZERO_SIZE, a.Depth(),
-        [&](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-            size_t kBegin, size_t kEnd) {
+        [&nY, &nX, &a](size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
+                       size_t kBegin, size_t kEnd) {
             for (size_t k = kBegin; k < kEnd; ++k)
             {
                 for (size_t j = jBegin; j < jEnd; ++j)
@@ -218,7 +218,7 @@ TEST(Parallel, Sort)
     }
 
     ParallelSort(idx.begin(), idx.end(),
-                 [&](size_t i1, size_t i2) { return c[i1] < c[i2]; });
+                 [&c](size_t i1, size_t i2) { return c[i1] < c[i2]; });
 
     for (size_t i = 0; i + 1 < a.size(); ++i)
     {
@@ -241,7 +241,7 @@ TEST(Parallel, Reduce)
 
     int sum = ParallelReduce(
         ZERO_SIZE, a.size(), 0,
-        [&](size_t start, size_t end, int init) {
+        [&a](size_t start, size_t end, int init) {
             int result = init;
 
             for (size_t i = start; i < end; ++i)

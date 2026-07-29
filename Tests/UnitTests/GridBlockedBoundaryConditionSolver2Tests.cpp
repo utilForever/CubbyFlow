@@ -18,7 +18,7 @@ TEST(GridBlockedBoundaryConditionSolver2, ClosedDomain)
 
     bndSolver.ConstrainVelocity(&velocity);
 
-    velocity.ForEachUIndex([&](const Vector2UZ& idx) {
+    velocity.ForEachUIndex([&gridSize, &velocity](const Vector2UZ& idx) {
         if (idx.x == 0 || idx.x == gridSize.x)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.U(idx));
@@ -29,7 +29,7 @@ TEST(GridBlockedBoundaryConditionSolver2, ClosedDomain)
         }
     });
 
-    velocity.ForEachVIndex([&](const Vector2UZ& idx) {
+    velocity.ForEachVIndex([&gridSize, &velocity](const Vector2UZ& idx) {
         if (idx.y == 0 || idx.y == gridSize.y)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.V(idx));
@@ -57,7 +57,7 @@ TEST(GridBlockedBoundaryConditionSolver2, OpenDomain)
 
     bndSolver.ConstrainVelocity(&velocity);
 
-    velocity.ForEachUIndex([&](const Vector2UZ& idx) {
+    velocity.ForEachUIndex([&velocity](const Vector2UZ& idx) {
         if (idx.x == 0)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.U(idx));
@@ -68,7 +68,7 @@ TEST(GridBlockedBoundaryConditionSolver2, OpenDomain)
         }
     });
 
-    velocity.ForEachVIndex([&](const Vector2UZ& idx) {
+    velocity.ForEachVIndex([&gridSize, &velocity](const Vector2UZ& idx) {
         if (idx.y == gridSize.y)
         {
             EXPECT_DOUBLE_EQ(0.0, velocity.V(idx));

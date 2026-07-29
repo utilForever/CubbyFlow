@@ -36,9 +36,9 @@ class SurfaceToImplicit final : public ImplicitSurface<N>
     using ImplicitSurface<N>::isNormalFlipped;
 
     //! Constructs an instance with generic Surface2 instance.
-    SurfaceToImplicit(std::shared_ptr<Surface<N>> surface,
-                      const Transform<N>& _transform = Transform<N>{},
-                      bool _isNormalFlipped = false);
+    explicit SurfaceToImplicit(std::shared_ptr<Surface<N>> surface,
+                               const Transform<N>& _transform = Transform<N>{},
+                               bool _isNormalFlipped = false);
 
     //! Default virtual destructor.
     ~SurfaceToImplicit() override = default;

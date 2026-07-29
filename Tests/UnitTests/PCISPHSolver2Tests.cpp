@@ -13,6 +13,21 @@ TEST(PCISPHSolver2, UpdateEmpty)
     solver.Update(frame);
 }
 
+TEST(PCISPHSolver2, UpdateParticles)
+{
+    PCISPHSolver2 solver;
+    solver.SetGravity({});
+
+    const SPHSystemData2Ptr particles = solver.GetSPHSystemData();
+    particles->AddParticle({ 0.0, 0.0 });
+    particles->AddParticle({ 0.05, 0.0 });
+
+    solver.Update(Frame{ 0, 0.001 });
+
+    EXPECT_GT(particles->Densities()[0], 0.0);
+    EXPECT_GT(particles->Densities()[1], 0.0);
+}
+
 TEST(PCISPHSolver2, Parameters)
 {
     PCISPHSolver2 solver;

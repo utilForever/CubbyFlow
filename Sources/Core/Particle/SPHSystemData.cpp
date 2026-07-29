@@ -190,7 +190,7 @@ void SPHSystemData<N>::UpdateDensities()
     ArrayView1<double> d = Densities();
     const double m = Mass();
 
-    ParallelFor(ZERO_SIZE, NumberOfParticles(), [&](size_t i) {
+    ParallelFor(ZERO_SIZE, NumberOfParticles(), [this, &p, &d, &m](size_t i) {
         const double sum = SumOfKernelNearby(p[i]);
         d[i] = m * sum;
     });
@@ -266,7 +266,8 @@ double SPHSystemData<N>::SumOfKernelNearby(
 
     NeighborSearcher()->ForEachNearbyPoint(
         position, m_kernelRadius,
-        [&](size_t, const Vector<double, N>& neighborPosition) {
+        [&position, &sum, &kernel](size_t,
+                                   const Vector<double, N>& neighborPosition) {
             double dist = position.DistanceTo(neighborPosition);
             sum += kernel(dist);
         });
@@ -286,7 +287,8 @@ double SPHSystemData<N>::Interpolate(
 
     NeighborSearcher()->ForEachNearbyPoint(
         origin, m_kernelRadius,
-        [&](size_t i, const Vector<double, N>& neighborPosition) {
+        [&origin, &m, &d, &kernel, &sum, &values](
+            size_t i, const Vector<double, N>& neighborPosition) {
             double dist = origin.DistanceTo(neighborPosition);
             const double weight = m / d[i] * kernel(dist);
             sum += weight * values[i];
@@ -307,7 +309,8 @@ Vector<double, N> SPHSystemData<N>::Interpolate(
 
     NeighborSearcher()->ForEachNearbyPoint(
         origin, m_kernelRadius,
-        [&](size_t i, const Vector<double, N>& neighborPosition) {
+        [&origin, &m, &d, &kernel, &sum, &values](
+            size_t i, const Vector<double, N>& neighborPosition) {
             double dist = origin.DistanceTo(neighborPosition);
             double weight = m / d[i] * kernel(dist);
             sum += weight * values[i];
