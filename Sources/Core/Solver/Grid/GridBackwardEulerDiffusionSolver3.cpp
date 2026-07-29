@@ -18,6 +18,111 @@ const char FLUID = 0;
 const char AIR = 1;
 const char BOUNDARY = 2;
 
+static FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
+                                    const Vector3UZ& size, const Vector3D& c,
+                                    const Array3<char>& markers,
+                                    bool isDirichlet)
+{
+    FDMMatrixRow3 row;
+    row.center = 1.0;
+    row.right = row.up = row.front = 0.0;
+    if (markers(i, j, k) != FLUID)
+    {
+        return row;
+    }
+
+    if (i + 1 < size.x)
+    {
+        if ((isDirichlet && markers(i + 1, j, k) != AIR) ||
+            markers(i + 1, j, k) == FLUID)
+        {
+            row.center += c.x;
+        }
+        if (markers(i + 1, j, k) == FLUID)
+        {
+            row.right -= c.x;
+        }
+    }
+    if (i > 0 && ((isDirichlet && markers(i - 1, j, k) != AIR) ||
+                  markers(i - 1, j, k) == FLUID))
+    {
+        row.center += c.x;
+    }
+    if (j + 1 < size.y)
+    {
+        if ((isDirichlet && markers(i, j + 1, k) != AIR) ||
+            markers(i, j + 1, k) == FLUID)
+        {
+            row.center += c.y;
+        }
+        if (markers(i, j + 1, k) == FLUID)
+        {
+            row.up -= c.y;
+        }
+    }
+    if (j > 0 && ((isDirichlet && markers(i, j - 1, k) != AIR) ||
+                  markers(i, j - 1, k) == FLUID))
+    {
+        row.center += c.y;
+    }
+    if (k + 1 < size.z)
+    {
+        if ((isDirichlet && markers(i, j, k + 1) != AIR) ||
+            markers(i, j, k + 1) == FLUID)
+        {
+            row.center += c.z;
+        }
+        if (markers(i, j, k + 1) == FLUID)
+        {
+            row.front -= c.z;
+        }
+    }
+    if (k > 0 && ((isDirichlet && markers(i, j, k - 1) != AIR) ||
+                  markers(i, j, k - 1) == FLUID))
+    {
+        row.center += c.z;
+    }
+    return row;
+}
+
+template <typename ValueAt>
+static double BuildRHS(size_t i, size_t j, size_t k, const Vector3UZ& size,
+                       const Vector3D& c, const Array3<char>& markers,
+                       bool isDirichlet, const ValueAt& valueAt)
+{
+    double result = valueAt(i, j, k);
+    if (!isDirichlet || markers(i, j, k) != FLUID)
+    {
+        return result;
+    }
+
+    if (i + 1 < size.x && markers(i + 1, j, k) == BOUNDARY)
+    {
+        result += c.x * valueAt(i + 1, j, k);
+    }
+    if (i > 0 && markers(i - 1, j, k) == BOUNDARY)
+    {
+        result += c.x * valueAt(i - 1, j, k);
+    }
+    if (j + 1 < size.y && markers(i, j + 1, k) == BOUNDARY)
+    {
+        result += c.y * valueAt(i, j + 1, k);
+    }
+    if (j > 0 && markers(i, j - 1, k) == BOUNDARY)
+    {
+        result += c.y * valueAt(i, j - 1, k);
+    }
+    if (k + 1 < size.z && markers(i, j, k + 1) == BOUNDARY)
+    {
+        result += c.z * valueAt(i, j, k + 1);
+    }
+    if (k > 0 && markers(i, j, k - 1) == BOUNDARY)
+    {
+        result += c.z * valueAt(i, j, k - 1);
+    }
+    return result;
+}
+
 GridBackwardEulerDiffusionSolver3::GridBackwardEulerDiffusionSolver3(
     BoundaryType boundaryType)
     : m_boundaryType(boundaryType)
@@ -218,74 +323,8 @@ void GridBackwardEulerDiffusionSolver3::BuildMatrix(const Vector3UZ& size,
     // Build linear system
     ParallelForEachIndex(m_system.A.Size(), [this, &size, &isBoundaryType, &c](
                                                 size_t i, size_t j, size_t k) {
-        FDMMatrixRow3& row = m_system.A(i, j, k);
-
-        // Initialize
-        row.center = 1.0;
-        row.right = row.up = row.front = 0.0;
-
-        if (m_markers(i, j, k) == FLUID)
-        {
-            if (i + 1 < size.x)
-            {
-                if ((isBoundaryType && m_markers(i + 1, j, k) != AIR) ||
-                    m_markers(i + 1, j, k) == FLUID)
-                {
-                    row.center += c.x;
-                }
-
-                if (m_markers(i + 1, j, k) == FLUID)
-                {
-                    row.right -= c.x;
-                }
-            }
-
-            if (i > 0 && ((isBoundaryType && m_markers(i - 1, j, k) != AIR) ||
-                          m_markers(i - 1, j, k) == FLUID))
-            {
-                row.center += c.x;
-            }
-
-            if (j + 1 < size.y)
-            {
-                if ((isBoundaryType && m_markers(i, j + 1, k) != AIR) ||
-                    m_markers(i, j + 1, k) == FLUID)
-                {
-                    row.center += c.y;
-                }
-
-                if (m_markers(i, j + 1, k) == FLUID)
-                {
-                    row.up -= c.y;
-                }
-            }
-
-            if (j > 0 && ((isBoundaryType && m_markers(i, j - 1, k) != AIR) ||
-                          m_markers(i, j - 1, k) == FLUID))
-            {
-                row.center += c.y;
-            }
-
-            if (k + 1 < size.z)
-            {
-                if ((isBoundaryType && m_markers(i, j, k + 1) != AIR) ||
-                    m_markers(i, j, k + 1) == FLUID)
-                {
-                    row.center += c.z;
-                }
-
-                if (m_markers(i, j, k + 1) == FLUID)
-                {
-                    row.front -= c.z;
-                }
-            }
-
-            if (k > 0 && ((isBoundaryType && m_markers(i, j, k - 1) != AIR) ||
-                          m_markers(i, j, k - 1) == FLUID))
-            {
-                row.center += c.z;
-            }
-        }
+        m_system.A(i, j, k) =
+            BuildMatrixRow(i, j, k, size, c, m_markers, isBoundaryType);
     });
 }
 
@@ -300,41 +339,11 @@ void GridBackwardEulerDiffusionSolver3::BuildVectors(
     // Build linear system
     ParallelForEachIndex(
         m_system.x.Size(), [this, &f, &size, &c](size_t i, size_t j, size_t k) {
-            m_system.b(i, j, k) = m_system.x(i, j, k) = f(i, j, k);
-
-            if (m_boundaryType == BoundaryType::Dirichlet &&
-                m_markers(i, j, k) == FLUID)
-            {
-                if (i + 1 < size.x && m_markers(i + 1, j, k) == BOUNDARY)
-                {
-                    m_system.b(i, j, k) += c.x * f(i + 1, j, k);
-                }
-
-                if (i > 0 && m_markers(i - 1, j, k) == BOUNDARY)
-                {
-                    m_system.b(i, j, k) += c.x * f(i - 1, j, k);
-                }
-
-                if (j + 1 < size.y && m_markers(i, j + 1, k) == BOUNDARY)
-                {
-                    m_system.b(i, j, k) += c.y * f(i, j + 1, k);
-                }
-
-                if (j > 0 && m_markers(i, j - 1, k) == BOUNDARY)
-                {
-                    m_system.b(i, j, k) += c.y * f(i, j - 1, k);
-                }
-
-                if (k + 1 < size.z && m_markers(i, j, k + 1) == BOUNDARY)
-                {
-                    m_system.b(i, j, k) += c.z * f(i, j, k + 1);
-                }
-
-                if (k > 0 && m_markers(i, j, k - 1) == BOUNDARY)
-                {
-                    m_system.b(i, j, k) += c.z * f(i, j, k - 1);
-                }
-            }
+            m_system.x(i, j, k) = f(i, j, k);
+            m_system.b(i, j, k) = BuildRHS(
+                i, j, k, size, c, m_markers,
+                m_boundaryType == BoundaryType::Dirichlet,
+                [&f](size_t x, size_t y, size_t z) { return f(x, y, z); });
         });
 }
 
@@ -349,41 +358,13 @@ void GridBackwardEulerDiffusionSolver3::BuildVectors(
     // Build linear system
     ParallelForEachIndex(m_system.x.Size(), [this, &f, &component, &size, &c](
                                                 size_t i, size_t j, size_t k) {
-        m_system.b(i, j, k) = m_system.x(i, j, k) = f(i, j, k)[component];
-
-        if (m_boundaryType == BoundaryType::Dirichlet &&
-            m_markers(i, j, k) == FLUID)
-        {
-            if (i + 1 < size.x && m_markers(i + 1, j, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.x * f(i + 1, j, k)[component];
-            }
-
-            if (i > 0 && m_markers(i - 1, j, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.x * f(i - 1, j, k)[component];
-            }
-
-            if (j + 1 < size.y && m_markers(i, j + 1, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.y * f(i, j + 1, k)[component];
-            }
-
-            if (j > 0 && m_markers(i, j - 1, k) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.y * f(i, j - 1, k)[component];
-            }
-
-            if (k + 1 < size.z && m_markers(i, j, k + 1) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.z * f(i, j, k + 1)[component];
-            }
-
-            if (k > 0 && m_markers(i, j, k - 1) == BOUNDARY)
-            {
-                m_system.b(i, j, k) += c.z * f(i, j, k - 1)[component];
-            }
-        }
+        m_system.x(i, j, k) = f(i, j, k)[component];
+        m_system.b(i, j, k) =
+            BuildRHS(i, j, k, size, c, m_markers,
+                     m_boundaryType == BoundaryType::Dirichlet,
+                     [&f, component](size_t x, size_t y, size_t z) {
+                         return f(x, y, z)[component];
+                     });
     });
 }
 }  // namespace CubbyFlow
