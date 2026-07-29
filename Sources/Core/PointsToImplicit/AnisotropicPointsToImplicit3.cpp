@@ -62,12 +62,15 @@ inline std::pair<Vector3D, size_t> ComputeMean(
     double weightSum = 0.0;
     size_t numNeighbors = 0;
 
-    searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector3D& neighbor) {
-        const double weight = Wij((x - neighbor).Length(), r);
-        weightSum += weight;
-        mean += weight * neighbor;
-        ++numNeighbors;
-    });
+    searcher.ForEachNearbyPoint(x, r,
+                                [&x, r, &weightSum, &mean, &numNeighbors](
+                                    size_t, const Vector3D& neighbor) {
+                                    const double weight =
+                                        Wij((x - neighbor).Length(), r);
+                                    weightSum += weight;
+                                    mean += weight * neighbor;
+                                    ++numNeighbors;
+                                });
 
     assert(weightSum > 0.0);
     return { mean / weightSum, numNeighbors };
@@ -80,11 +83,13 @@ inline Matrix3x3D ComputeAnisotropy(const Vector3D& x, const Vector3D& mean,
     auto covariance = Matrix3x3D::MakeScaleMatrix(h * h, h * h, h * h);
     double weightSum = 0.0;
 
-    searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector3D& neighbor) {
-        const double weight = Wij((mean - neighbor).Length(), r);
-        weightSum += weight;
-        covariance += weight * Vvt(neighbor - mean);
-    });
+    searcher.ForEachNearbyPoint(
+        x, r,
+        [&mean, r, &weightSum, &covariance](size_t, const Vector3D& neighbor) {
+            const double weight = Wij((mean - neighbor).Length(), r);
+            weightSum += weight;
+            covariance += weight * Vvt(neighbor - mean);
+        });
 
     covariance /= weightSum;
 
