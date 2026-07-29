@@ -156,15 +156,24 @@ char CoarsenMarker(size_t i, size_t j, size_t k, const Vector3UZ& size,
     return static_cast<char>(ArgMax3(counts[0], counts[1], counts[2]));
 }
 
-void ApplyPressureGradientAt(size_t i, size_t j, size_t k,
-                             const Vector3UZ& size, const Array3<char>& markers,
-                             const ConstArrayView3<double>& u,
-                             const ConstArrayView3<double>& v,
-                             const ConstArrayView3<double>& w,
-                             ArrayView3<double>& u0, ArrayView3<double>& v0,
-                             ArrayView3<double>& w0, const Vector3D& invH,
-                             const FDMVector3& pressure)
+struct PressureGradientData3
 {
+    const Vector3UZ& size;
+    const Array3<char>& markers;
+    const ConstArrayView3<double>& u;
+    const ConstArrayView3<double>& v;
+    const ConstArrayView3<double>& w;
+    ArrayView3<double>& u0;
+    ArrayView3<double>& v0;
+    ArrayView3<double>& w0;
+    const Vector3D& invH;
+    const FDMVector3& pressure;
+};
+
+void ApplyPressureGradientAt(size_t i, size_t j, size_t k,
+                             const PressureGradientData3& data)
+{
+    const auto& [size, markers, u, v, w, u0, v0, w0, invH, pressure] = data;
     if (markers(i, j, k) != FLUID)
     {
         return;
@@ -488,11 +497,11 @@ void GridSinglePhasePressureSolver3::ApplyPressureGradient(
     const FDMVector3& x = GetPressure();
 
     Vector3D invH = 1.0 / input.GridSpacing();
+    const PressureGradientData3 data{ size, m_markers[0], u,  v,    w,
+                                      u0,   v0,           w0, invH, x };
 
-    ParallelForEachIndex(x.Size(), [this, &size, &u0, &u, &invH, &x, &v0, &v,
-                                    &w0, &w](size_t i, size_t j, size_t k) {
-        ApplyPressureGradientAt(i, j, k, size, m_markers[0], u, v, w, u0, v0,
-                                w0, invH, x);
+    ParallelForEachIndex(x.Size(), [&data](size_t i, size_t j, size_t k) {
+        ApplyPressureGradientAt(i, j, k, data);
     });
 }
 }  // namespace CubbyFlow
