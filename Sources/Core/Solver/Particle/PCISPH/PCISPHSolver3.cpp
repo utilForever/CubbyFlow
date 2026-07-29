@@ -18,36 +18,47 @@ namespace CubbyFlow
 // Heuristically chosen
 const double DEFAULT_TIME_STEP_LIMIT_SCALE = 5.0;
 
-void UpdatePressureFromDensityError(size_t i, const Array1<Vector3D>& positions,
-                                    const Array1<Array1<size_t>>& neighborLists,
-                                    const SPHStdKernel3& kernel, double mass,
-                                    double targetDensity, double delta,
-                                    double negativeScale,
-                                    ArrayView1<double> pressures,
-                                    Array1<double>* densities,
-                                    Array1<double>* densityErrors)
+namespace
 {
-    double weightSum = kernel(0.0);
+struct PressureUpdateData3
+{
+    const Array1<Vector3D>& positions;
+    const Array1<Array1<size_t>>& neighborLists;
+    const SPHStdKernel3& kernel;
+    double mass;
+    double targetDensity;
+    double delta;
+    double negativeScale;
+    ArrayView1<double>& pressures;
+    Array1<double>& densities;
+    Array1<double>& densityErrors;
+};
 
-    for (size_t j : neighborLists[i])
+void UpdatePressureFromDensityError(size_t i, const PressureUpdateData3& data)
+{
+    double weightSum = data.kernel(0.0);
+
+    for (size_t j : data.neighborLists[i])
     {
-        weightSum += kernel(positions[j].DistanceTo(positions[i]));
+        weightSum +=
+            data.kernel(data.positions[j].DistanceTo(data.positions[i]));
     }
 
-    const double density = mass * weightSum;
-    double densityError = density - targetDensity;
-    double pressure = delta * densityError;
+    const double density = data.mass * weightSum;
+    double densityError = density - data.targetDensity;
+    double pressure = data.delta * densityError;
 
     if (pressure < 0.0)
     {
-        pressure *= negativeScale;
-        densityError *= negativeScale;
+        pressure *= data.negativeScale;
+        densityError *= data.negativeScale;
     }
 
-    pressures[i] += pressure;
-    (*densities)[i] = density;
-    (*densityErrors)[i] = densityError;
+    data.pressures[i] += pressure;
+    data.densities[i] = density;
+    data.densityErrors[i] = densityError;
 }
+}  // namespace
 
 PCISPHSolver3::PCISPHSolver3()
 {
@@ -129,14 +140,19 @@ void PCISPHSolver3::AccumulatePressureForce(double timeIntervalInSeconds)
 
         // Compute pressure from density error
         const double negativeScale = GetNegativePressureScale();
-        ParallelFor(ZERO_SIZE, numberOfParticles,
-                    [&particles, this, &kernel, &mass, &targetDensity, &delta,
-                     &negativeScale, &p, &ds](size_t i) {
-                        UpdatePressureFromDensityError(
-                            i, m_tempPositions, particles->NeighborLists(),
-                            kernel, mass, targetDensity, delta, negativeScale,
-                            p, &ds, &m_densityErrors);
-                    });
+        const PressureUpdateData3 update{ m_tempPositions,
+                                          particles->NeighborLists(),
+                                          kernel,
+                                          mass,
+                                          targetDensity,
+                                          delta,
+                                          negativeScale,
+                                          p,
+                                          ds,
+                                          m_densityErrors };
+        ParallelFor(ZERO_SIZE, numberOfParticles, [&update](size_t i) {
+            UpdatePressureFromDensityError(i, update);
+        });
 
         // Compute pressure gradient force
         m_pressureForces.Fill(Vector3D{});
