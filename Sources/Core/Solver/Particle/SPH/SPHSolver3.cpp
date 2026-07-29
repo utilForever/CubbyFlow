@@ -19,6 +19,27 @@ namespace CubbyFlow
 constexpr double TIME_STEP_LIMIT_BY_SPEED_FACTOR = 0.4;
 constexpr double TIME_STEP_LIMIT_BY_FORCE_FACTOR = 0.25;
 
+Vector3D SmoothedVelocity(size_t i, const Array1<Array1<size_t>>& neighborLists,
+                          ArrayView1<Vector3D> positions,
+                          ArrayView1<Vector3D> velocities,
+                          ArrayView1<double> densities,
+                          const SPHSpikyKernel3& kernel, double mass)
+{
+    double weightSum = 0.0;
+    Vector3D result;
+    for (size_t j : neighborLists[i])
+    {
+        const double weight =
+            mass / densities[j] * kernel(positions[i].DistanceTo(positions[j]));
+        weightSum += weight;
+        result += weight * velocities[j];
+    }
+    const double selfWeight = mass / densities[i];
+    weightSum += selfWeight;
+    result += selfWeight * velocities[i];
+    return weightSum > 0.0 ? result / weightSum : result;
+}
+
 SPHSolver3::SPHSolver3()
 {
     SetParticleSystemData(std::make_shared<SPHSystemData3>());
@@ -289,24 +310,8 @@ void SPHSolver3::ComputePseudoViscosity(double timeStepInSeconds)
     ParallelFor(ZERO_SIZE, numberOfParticles,
                 [&particles, &x, &mass, &d, &kernel, &v,
                  &smoothedVelocities](size_t i) {
-                    double weightSum = 0.0;
-                    Vector3D smoothedVelocity;
-                    const auto& neighbors = particles->NeighborLists()[i];
-                    for (size_t j : neighbors)
-                    {
-                        const double dist = x[i].DistanceTo(x[j]);
-                        const double wj = mass / d[j] * kernel(dist);
-                        weightSum += wj;
-                        smoothedVelocity += wj * v[j];
-                    }
-                    const double wi = mass / d[i];
-                    weightSum += wi;
-                    smoothedVelocity += wi * v[i];
-                    if (weightSum > 0.0)
-                    {
-                        smoothedVelocity /= weightSum;
-                    }
-                    smoothedVelocities[i] = smoothedVelocity;
+                    smoothedVelocities[i] = SmoothedVelocity(
+                        i, particles->NeighborLists(), x, v, d, kernel, mass);
                 });
 
     double factor = timeStepInSeconds * m_pseudoViscosityCoefficient;
