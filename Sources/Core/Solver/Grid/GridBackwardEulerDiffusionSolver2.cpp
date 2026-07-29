@@ -18,60 +18,77 @@ const char FLUID = 0;
 const char AIR = 1;
 const char BOUNDARY = 2;
 
-static FDMMatrixRow2 BuildMatrixRow(size_t i, size_t j, const Vector2UZ& size,
-                                    const Vector2D& c,
-                                    const Array2<char>& markers,
-                                    bool isDirichlet)
+namespace
 {
-    FDMMatrixRow2 row;
-    row.center = 1.0;
-    row.right = row.up = 0.0;
+struct MatrixRowData2
+{
+    const Vector2UZ& size;
+    const Vector2D& c;
+    const Array2<char>& markers;
+    bool isDirichlet;
+};
 
-    if (markers(i, j) != FLUID)
+bool AddsCenter(char marker, bool isDirichlet)
+{
+    return marker == FLUID || (isDirichlet && marker != AIR);
+}
+
+void AddXTerms(size_t i, size_t j, const MatrixRowData2& data,
+               FDMMatrixRow2* row)
+{
+    if (i + 1 < data.size.x)
+    {
+        const char marker = data.markers(i + 1, j);
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.x;
+        }
+        if (marker == FLUID)
+        {
+            row->right -= data.c.x;
+        }
+    }
+
+    if (i > 0 && AddsCenter(data.markers(i - 1, j), data.isDirichlet))
+    {
+        row->center += data.c.x;
+    }
+}
+
+void AddYTerms(size_t i, size_t j, const MatrixRowData2& data,
+               FDMMatrixRow2* row)
+{
+    if (j + 1 < data.size.y)
+    {
+        const char marker = data.markers(i, j + 1);
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.y;
+        }
+        if (marker == FLUID)
+        {
+            row->up -= data.c.y;
+        }
+    }
+
+    if (j > 0 && AddsCenter(data.markers(i, j - 1), data.isDirichlet))
+    {
+        row->center += data.c.y;
+    }
+}
+
+FDMMatrixRow2 BuildMatrixRow(size_t i, size_t j, const MatrixRowData2& data)
+{
+    FDMMatrixRow2 row{};
+    row.center = 1.0;
+
+    if (data.markers(i, j) != FLUID)
     {
         return row;
     }
 
-    if (i + 1 < size.x)
-    {
-        if ((isDirichlet && markers(i + 1, j) != AIR) ||
-            markers(i + 1, j) == FLUID)
-        {
-            row.center += c.x;
-        }
-
-        if (markers(i + 1, j) == FLUID)
-        {
-            row.right -= c.x;
-        }
-    }
-
-    if (i > 0 && ((isDirichlet && markers(i - 1, j) != AIR) ||
-                  markers(i - 1, j) == FLUID))
-    {
-        row.center += c.x;
-    }
-
-    if (j + 1 < size.y)
-    {
-        if ((isDirichlet && markers(i, j + 1) != AIR) ||
-            markers(i, j + 1) == FLUID)
-        {
-            row.center += c.y;
-        }
-
-        if (markers(i, j + 1) == FLUID)
-        {
-            row.up -= c.y;
-        }
-    }
-
-    if (j > 0 && ((isDirichlet && markers(i, j - 1) != AIR) ||
-                  markers(i, j - 1) == FLUID))
-    {
-        row.center += c.y;
-    }
-
+    AddXTerms(i, j, data, &row);
+    AddYTerms(i, j, data, &row);
     return row;
 }
 
@@ -109,6 +126,7 @@ static double BuildRHS(size_t i, size_t j, const Vector2UZ& size,
 
     return result;
 }
+}  // namespace
 
 GridBackwardEulerDiffusionSolver2::GridBackwardEulerDiffusionSolver2(
     BoundaryType boundaryType)
@@ -267,12 +285,11 @@ void GridBackwardEulerDiffusionSolver2::BuildMatrix(const Vector2UZ& size,
     m_system.A.Resize(size);
 
     bool isBoundaryType = (m_boundaryType == BoundaryType::Dirichlet);
+    const MatrixRowData2 data{ size, c, m_markers, isBoundaryType };
 
     // Build linear system
-    ParallelForEachIndex(m_system.A.Size(), [this, &size, &isBoundaryType, &c](
-                                                size_t i, size_t j) {
-        m_system.A(i, j) =
-            BuildMatrixRow(i, j, size, c, m_markers, isBoundaryType);
+    ParallelForEachIndex(m_system.A.Size(), [this, &data](size_t i, size_t j) {
+        m_system.A(i, j) = BuildMatrixRow(i, j, data);
     });
 }
 

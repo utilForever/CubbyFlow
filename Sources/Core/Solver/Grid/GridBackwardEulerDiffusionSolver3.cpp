@@ -18,80 +18,101 @@ const char FLUID = 0;
 const char AIR = 1;
 const char BOUNDARY = 2;
 
-static FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
-                                    const Vector3UZ& size, const Vector3D& c,
-                                    const Array3<char>& markers,
-                                    bool isDirichlet)
+namespace
 {
-    FDMMatrixRow3 row;
-    row.center = 1.0;
-    row.right = row.up = row.front = 0.0;
+struct MatrixRowData3
+{
+    const Vector3UZ& size;
+    const Vector3D& c;
+    const Array3<char>& markers;
+    bool isDirichlet;
+};
 
-    if (markers(i, j, k) != FLUID)
+bool AddsCenter(char marker, bool isDirichlet)
+{
+    return marker == FLUID || (isDirichlet && marker != AIR);
+}
+
+void AddXTerms(size_t i, size_t j, size_t k, const MatrixRowData3& data,
+               FDMMatrixRow3* row)
+{
+    if (i + 1 < data.size.x)
+    {
+        const char marker = data.markers(i + 1, j, k);
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.x;
+        }
+        if (marker == FLUID)
+        {
+            row->right -= data.c.x;
+        }
+    }
+
+    if (i > 0 && AddsCenter(data.markers(i - 1, j, k), data.isDirichlet))
+    {
+        row->center += data.c.x;
+    }
+}
+
+void AddYTerms(size_t i, size_t j, size_t k, const MatrixRowData3& data,
+               FDMMatrixRow3* row)
+{
+    if (j + 1 < data.size.y)
+    {
+        const char marker = data.markers(i, j + 1, k);
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.y;
+        }
+        if (marker == FLUID)
+        {
+            row->up -= data.c.y;
+        }
+    }
+
+    if (j > 0 && AddsCenter(data.markers(i, j - 1, k), data.isDirichlet))
+    {
+        row->center += data.c.y;
+    }
+}
+
+void AddZTerms(size_t i, size_t j, size_t k, const MatrixRowData3& data,
+               FDMMatrixRow3* row)
+{
+    if (k + 1 < data.size.z)
+    {
+        const char marker = data.markers(i, j, k + 1);
+        if (AddsCenter(marker, data.isDirichlet))
+        {
+            row->center += data.c.z;
+        }
+        if (marker == FLUID)
+        {
+            row->front -= data.c.z;
+        }
+    }
+
+    if (k > 0 && AddsCenter(data.markers(i, j, k - 1), data.isDirichlet))
+    {
+        row->center += data.c.z;
+    }
+}
+
+FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
+                             const MatrixRowData3& data)
+{
+    FDMMatrixRow3 row{};
+    row.center = 1.0;
+
+    if (data.markers(i, j, k) != FLUID)
     {
         return row;
     }
 
-    if (i + 1 < size.x)
-    {
-        if ((isDirichlet && markers(i + 1, j, k) != AIR) ||
-            markers(i + 1, j, k) == FLUID)
-        {
-            row.center += c.x;
-        }
-
-        if (markers(i + 1, j, k) == FLUID)
-        {
-            row.right -= c.x;
-        }
-    }
-
-    if (i > 0 && ((isDirichlet && markers(i - 1, j, k) != AIR) ||
-                  markers(i - 1, j, k) == FLUID))
-    {
-        row.center += c.x;
-    }
-
-    if (j + 1 < size.y)
-    {
-        if ((isDirichlet && markers(i, j + 1, k) != AIR) ||
-            markers(i, j + 1, k) == FLUID)
-        {
-            row.center += c.y;
-        }
-
-        if (markers(i, j + 1, k) == FLUID)
-        {
-            row.up -= c.y;
-        }
-    }
-
-    if (j > 0 && ((isDirichlet && markers(i, j - 1, k) != AIR) ||
-                  markers(i, j - 1, k) == FLUID))
-    {
-        row.center += c.y;
-    }
-
-    if (k + 1 < size.z)
-    {
-        if ((isDirichlet && markers(i, j, k + 1) != AIR) ||
-            markers(i, j, k + 1) == FLUID)
-        {
-            row.center += c.z;
-        }
-
-        if (markers(i, j, k + 1) == FLUID)
-        {
-            row.front -= c.z;
-        }
-    }
-
-    if (k > 0 && ((isDirichlet && markers(i, j, k - 1) != AIR) ||
-                  markers(i, j, k - 1) == FLUID))
-    {
-        row.center += c.z;
-    }
-
+    AddXTerms(i, j, k, data, &row);
+    AddYTerms(i, j, k, data, &row);
+    AddZTerms(i, j, k, data, &row);
     return row;
 }
 
@@ -139,6 +160,7 @@ static double BuildRHS(size_t i, size_t j, size_t k, const Vector3UZ& size,
 
     return result;
 }
+}  // namespace
 
 GridBackwardEulerDiffusionSolver3::GridBackwardEulerDiffusionSolver3(
     BoundaryType boundaryType)
@@ -336,13 +358,13 @@ void GridBackwardEulerDiffusionSolver3::BuildMatrix(const Vector3UZ& size,
     m_system.A.Resize(size);
 
     bool isBoundaryType = (m_boundaryType == BoundaryType::Dirichlet);
+    const MatrixRowData3 data{ size, c, m_markers, isBoundaryType };
 
     // Build linear system
-    ParallelForEachIndex(m_system.A.Size(), [this, &size, &isBoundaryType, &c](
-                                                size_t i, size_t j, size_t k) {
-        m_system.A(i, j, k) =
-            BuildMatrixRow(i, j, k, size, c, m_markers, isBoundaryType);
-    });
+    ParallelForEachIndex(
+        m_system.A.Size(), [this, &data](size_t i, size_t j, size_t k) {
+            m_system.A(i, j, k) = BuildMatrixRow(i, j, k, data);
+        });
 }
 
 void GridBackwardEulerDiffusionSolver3::BuildVectors(
