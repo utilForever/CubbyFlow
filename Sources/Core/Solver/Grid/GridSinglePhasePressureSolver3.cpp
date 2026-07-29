@@ -13,6 +13,8 @@
 #include <Core/Solver/Grid/GridSinglePhasePressureSolver3.hpp>
 #include <Core/Utils/LevelSetUtils.hpp>
 
+#include <array>
+
 namespace CubbyFlow
 {
 const char FLUID = 0;
@@ -122,7 +124,7 @@ char CoarsenMarker(size_t i, size_t j, size_t k, const Vector3UZ& size,
                                           2 * k + 1,
                                           (k + 1 < size.z) ? 2 * k + 2
                                                            : 2 * k + 1 };
-    int counts[3] = { 0, 0, 0 };
+    std::array<int, 3> counts{};
 
     for (size_t z : kIndices)
     {
