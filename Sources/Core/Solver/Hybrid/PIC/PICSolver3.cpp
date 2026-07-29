@@ -14,6 +14,8 @@
 #include <Core/Utils/Logging.hpp>
 #include <Core/Utils/Timer.hpp>
 
+#include <array>
+
 namespace CubbyFlow
 {
 namespace
@@ -32,8 +34,10 @@ void MoveParticle(const FaceCenteredGrid3& flow, double timeIntervalInSeconds,
         pt += dt * flow.Sample(midPt);
     }
 
-    const int lowerFlags[] = { DIRECTION_LEFT, DIRECTION_DOWN, DIRECTION_BACK };
-    const int upperFlags[] = { DIRECTION_RIGHT, DIRECTION_UP, DIRECTION_FRONT };
+    const std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                 DIRECTION_BACK };
+    const std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                 DIRECTION_FRONT };
 
     for (size_t axis = 0; axis < 3; ++axis)
     {
