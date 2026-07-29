@@ -42,6 +42,29 @@ void RelaxRange(const FDMMatrix3& A, const FDMVector3& b, double sorFactor,
         }
     }
 }
+
+void RelaxCompressedRow(size_t i, MatrixCSRD::ConstIndexIterator rowPointers,
+                        MatrixCSRD::ConstIndexIterator columnIndices,
+                        MatrixCSRD::ConstNonZeroIterator nonZeros,
+                        const VectorND& b, double sorFactor, VectorND* x)
+{
+    double residual = 0.0;
+    double diagonal = 1.0;
+    for (size_t jj = rowPointers[i]; jj < rowPointers[i + 1]; ++jj)
+    {
+        const size_t j = columnIndices[jj];
+        if (i == j)
+        {
+            diagonal = nonZeros[jj];
+        }
+        else
+        {
+            residual += nonZeros[jj] * (*x)[j];
+        }
+    }
+    (*x)[i] =
+        (1.0 - sorFactor) * (*x)[i] + sorFactor * (b[i] - residual) / diagonal;
+}
 }  // namespace
 
 FDMGaussSeidelSolver3::FDMGaussSeidelSolver3(unsigned int maxNumberOfIterations,
@@ -188,29 +211,10 @@ void FDMGaussSeidelSolver3::Relax(const MatrixCSRD& A, const VectorND& b,
 
     VectorND& xRef = *x;
 
-    ForEachIndex(b.GetRows(), [&rp, &ci, &nnz, &xRef, &sorFactor,
-                               &b](size_t i) {
-        const size_t rowBegin = rp[i];
-        const size_t rowEnd = rp[i + 1];
-
-        double r = 0.0;
-        double diag = 1.0;
-        for (size_t jj = rowBegin; jj < rowEnd; ++jj)
-        {
-            const size_t j = ci[jj];
-
-            if (i == j)
-            {
-                diag = nnz[jj];
-            }
-            else
-            {
-                r += nnz[jj] * xRef[j];
-            }
-        }
-
-        xRef[i] = (1.0 - sorFactor) * xRef[i] + sorFactor * (b[i] - r) / diag;
-    });
+    ForEachIndex(b.GetRows(),
+                 [&rp, &ci, &nnz, &xRef, &sorFactor, &b](size_t i) {
+                     RelaxCompressedRow(i, rp, ci, nnz, b, sorFactor, &xRef);
+                 });
 }
 
 void FDMGaussSeidelSolver3::RelaxRedBlack(const FDMMatrix3& A,
