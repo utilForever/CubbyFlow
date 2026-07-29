@@ -93,36 +93,43 @@ FDMMatrixRow2 BuildMatrixRow(size_t i, size_t j, const MatrixRowData2& data)
 }
 
 template <typename ValueAt>
-static double BuildRHS(size_t i, size_t j, const Vector2UZ& size,
-                       const Vector2D& c, const Array2<char>& markers,
-                       bool isDirichlet, const ValueAt& valueAt)
+struct RHSData2
 {
-    double result = valueAt(i, j);
+    const Vector2UZ& size;
+    const Vector2D& c;
+    const Array2<char>& markers;
+    bool isDirichlet;
+    const ValueAt& valueAt;
+};
 
-    if (!isDirichlet || markers(i, j) != FLUID)
+template <typename ValueAt>
+double BoundaryContribution(size_t i, size_t j, bool isValid,
+                            double coefficient, const RHSData2<ValueAt>& data)
+{
+    if (!isValid || data.markers(i, j) != BOUNDARY)
+    {
+        return 0.0;
+    }
+
+    return coefficient * data.valueAt(i, j);
+}
+
+template <typename ValueAt>
+double BuildRHS(size_t i, size_t j, const RHSData2<ValueAt>& data)
+{
+    double result = data.valueAt(i, j);
+
+    if (!data.isDirichlet || data.markers(i, j) != FLUID)
     {
         return result;
     }
 
-    if (i + 1 < size.x && markers(i + 1, j) == BOUNDARY)
-    {
-        result += c.x * valueAt(i + 1, j);
-    }
-
-    if (i > 0 && markers(i - 1, j) == BOUNDARY)
-    {
-        result += c.x * valueAt(i - 1, j);
-    }
-
-    if (j + 1 < size.y && markers(i, j + 1) == BOUNDARY)
-    {
-        result += c.y * valueAt(i, j + 1);
-    }
-
-    if (j > 0 && markers(i, j - 1) == BOUNDARY)
-    {
-        result += c.y * valueAt(i, j - 1);
-    }
+    result +=
+        BoundaryContribution(i + 1, j, i + 1 < data.size.x, data.c.x, data);
+    result += BoundaryContribution(i > 0 ? i - 1 : i, j, i > 0, data.c.x, data);
+    result +=
+        BoundaryContribution(i, j + 1, j + 1 < data.size.y, data.c.y, data);
+    result += BoundaryContribution(i, j > 0 ? j - 1 : j, j > 0, data.c.y, data);
 
     return result;
 }
@@ -301,14 +308,16 @@ void GridBackwardEulerDiffusionSolver2::BuildVectors(
     m_system.x.Resize(size, 0.0);
     m_system.b.Resize(size, 0.0);
 
+    const auto valueAt = [&f](size_t x, size_t y) { return f(x, y); };
+    const RHSData2 data{ size, c, m_markers,
+                         m_boundaryType == BoundaryType::Dirichlet, valueAt };
+
     // Build linear system
-    ParallelForEachIndex(m_system.x.Size(), [this, &f, &size, &c](size_t i,
-                                                                  size_t j) {
-        m_system.x(i, j) = f(i, j);
-        m_system.b(i, j) = BuildRHS(
-            i, j, size, c, m_markers, m_boundaryType == BoundaryType::Dirichlet,
-            [&f](size_t x, size_t y) { return f(x, y); });
-    });
+    ParallelForEachIndex(m_system.x.Size(),
+                         [this, &f, &data](size_t i, size_t j) {
+                             m_system.x(i, j) = f(i, j);
+                             m_system.b(i, j) = BuildRHS(i, j, data);
+                         });
 }
 
 void GridBackwardEulerDiffusionSolver2::BuildVectors(
@@ -319,13 +328,17 @@ void GridBackwardEulerDiffusionSolver2::BuildVectors(
     m_system.x.Resize(size, 0.0);
     m_system.b.Resize(size, 0.0);
 
+    const auto valueAt = [&f, component](size_t x, size_t y) {
+        return f(x, y)[component];
+    };
+    const RHSData2 data{ size, c, m_markers,
+                         m_boundaryType == BoundaryType::Dirichlet, valueAt };
+
     // Build linear system
-    ParallelForEachIndex(m_system.x.Size(), [this, &f, &component, &size, &c](
-                                                size_t i, size_t j) {
-        m_system.x(i, j) = f(i, j)[component];
-        m_system.b(i, j) = BuildRHS(
-            i, j, size, c, m_markers, m_boundaryType == BoundaryType::Dirichlet,
-            [&f, component](size_t x, size_t y) { return f(x, y)[component]; });
-    });
+    ParallelForEachIndex(m_system.x.Size(),
+                         [this, &f, component, &data](size_t i, size_t j) {
+                             m_system.x(i, j) = f(i, j)[component];
+                             m_system.b(i, j) = BuildRHS(i, j, data);
+                         });
 }
 }  // namespace CubbyFlow
