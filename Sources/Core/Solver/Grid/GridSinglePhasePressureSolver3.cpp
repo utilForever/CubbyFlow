@@ -71,12 +71,21 @@ void BuildSingleRow(size_t i, size_t j, size_t k, const SingleRowData3& data,
     addNeighbor(k > 0, i, j, k - 1, invHSqr.z, nullptr);
 }
 
-void BuildCompressedRow(size_t i, size_t j, size_t k, const Vector3UZ& size,
-                        const Vector3D& invHSqr,
-                        const ConstArrayView3<char>& markers,
-                        const Array3<size_t>& coordToIndex, MatrixCSRD* A,
-                        VectorND* b, const FaceCenteredGrid3& input)
+struct CompressedRowData3
 {
+    const Vector3UZ& size;
+    const Vector3D& invHSqr;
+    const ConstArrayView3<char>& markers;
+    const Array3<size_t>& coordToIndex;
+    MatrixCSRD* A;
+    VectorND* b;
+    const FaceCenteredGrid3& input;
+};
+
+void BuildCompressedRow(size_t i, size_t j, size_t k,
+                        const CompressedRowData3& data)
+{
+    const auto& [size, invHSqr, markers, coordToIndex, A, b, input] = data;
     const size_t center = markers.Index(i, j, k);
 
     if (markers[center] != FLUID)
@@ -220,11 +229,11 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
             coordToIndex[cIdx] = numRows++;
         }
     });
+    const CompressedRowData3 data{ size, invHSqr, markerAcc, coordToIndex,
+                                   A,    b,       input };
 
-    ForEachIndex(markers.Size(), [&markerAcc, &b, &input, &coordToIndex, &size,
-                                  &invHSqr, &A](size_t i, size_t j, size_t k) {
-        BuildCompressedRow(i, j, k, size, invHSqr, markerAcc, coordToIndex, A,
-                           b, input);
+    ForEachIndex(markers.Size(), [&data](size_t i, size_t j, size_t k) {
+        BuildCompressedRow(i, j, k, data);
     });
 
     x->Resize(b->GetRows(), 0.0);
