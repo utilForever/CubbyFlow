@@ -59,36 +59,57 @@ double RestrictPoint(size_t i, size_t j, const Vector2UZ& size,
     return sum;
 }
 
-void ApplyPressureGradientAt(size_t i, size_t j, const Vector2UZ& size,
-                             const Array2<double>& fluidSDF,
-                             const Array2<double>& uWeights,
-                             const Array2<double>& vWeights,
-                             const ConstArrayView2<double>& u,
-                             const ConstArrayView2<double>& v,
-                             ArrayView2<double>& u0, ArrayView2<double>& v0,
-                             const Vector2D& invH, const FDMVector2& pressure)
+struct PressureGradientData2
 {
-    const double centerPhi = fluidSDF(i, j);
+    const Vector2UZ& size;
+    const Array2<double>& fluidSDF;
+    const Array2<double>& uWeights;
+    const Array2<double>& vWeights;
+    const ConstArrayView2<double>& u;
+    const ConstArrayView2<double>& v;
+    ArrayView2<double>& u0;
+    ArrayView2<double>& v0;
+    const Vector2D& invH;
+    const FDMVector2& pressure;
+};
 
-    if (i + 1 < size.x && uWeights(i + 1, j) > 0.0 &&
-        (IsInsideSDF(centerPhi) || IsInsideSDF(fluidSDF(i + 1, j))))
+double PressureTheta(double centerPhi, double neighborPhi)
+{
+    return std::max(FractionInsideSDF(centerPhi, neighborPhi), 0.01);
+}
+
+void ApplyUGradient(size_t i, size_t j, double centerPhi,
+                    const PressureGradientData2& data)
+{
+    if (i + 1 < data.size.x && data.uWeights(i + 1, j) > 0.0 &&
+        (IsInsideSDF(centerPhi) || IsInsideSDF(data.fluidSDF(i + 1, j))))
     {
-        const double theta =
-            std::max(FractionInsideSDF(centerPhi, fluidSDF(i + 1, j)), 0.01);
-
-        u0(i + 1, j) = u(i + 1, j) +
-                       invH.x / theta * (pressure(i + 1, j) - pressure(i, j));
+        const double theta = PressureTheta(centerPhi, data.fluidSDF(i + 1, j));
+        data.u0(i + 1, j) = data.u(i + 1, j) +
+                            data.invH.x / theta *
+                                (data.pressure(i + 1, j) - data.pressure(i, j));
     }
+}
 
-    if (j + 1 < size.y && vWeights(i, j + 1) > 0.0 &&
-        (IsInsideSDF(centerPhi) || IsInsideSDF(fluidSDF(i, j + 1))))
+void ApplyVGradient(size_t i, size_t j, double centerPhi,
+                    const PressureGradientData2& data)
+{
+    if (j + 1 < data.size.y && data.vWeights(i, j + 1) > 0.0 &&
+        (IsInsideSDF(centerPhi) || IsInsideSDF(data.fluidSDF(i, j + 1))))
     {
-        const double theta =
-            std::max(FractionInsideSDF(centerPhi, fluidSDF(i, j + 1)), 0.01);
-
-        v0(i, j + 1) = v(i, j + 1) +
-                       invH.y / theta * (pressure(i, j + 1) - pressure(i, j));
+        const double theta = PressureTheta(centerPhi, data.fluidSDF(i, j + 1));
+        data.v0(i, j + 1) = data.v(i, j + 1) +
+                            data.invH.y / theta *
+                                (data.pressure(i, j + 1) - data.pressure(i, j));
     }
+}
+
+void ApplyPressureGradientAt(size_t i, size_t j,
+                             const PressureGradientData2& data)
+{
+    const double centerPhi = data.fluidSDF(i, j);
+    ApplyUGradient(i, j, centerPhi, data);
+    ApplyVGradient(i, j, centerPhi, data);
 }
 
 void Restrict(const Array2<double>& finer, Array2<double>* coarser)
@@ -615,11 +636,12 @@ void GridFractionalSinglePhasePressureSolver2::ApplyPressureGradient(
     const FDMVector2& x = GetPressure();
 
     Vector2D invH = 1.0 / input.GridSpacing();
+    const PressureGradientData2 data{
+        size, m_fluidSDF[0], m_uWeights[0], m_vWeights[0], u, v, u0, v0, invH, x
+    };
 
-    ParallelForEachIndex(x.Size(), [this, &size, &u0, &u, &invH, &x, &v0, &v](
-                                       size_t i, size_t j) {
-        ApplyPressureGradientAt(i, j, size, m_fluidSDF[0], m_uWeights[0],
-                                m_vWeights[0], u, v, u0, v0, invH, x);
+    ParallelForEachIndex(x.Size(), [&data](size_t i, size_t j) {
+        ApplyPressureGradientAt(i, j, data);
     });
 }
 }  // namespace CubbyFlow
