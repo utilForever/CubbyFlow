@@ -16,6 +16,42 @@
 
 namespace CubbyFlow
 {
+namespace
+{
+void MoveParticle(const FaceCenteredGrid3& flow, double timeIntervalInSeconds,
+                  unsigned int numSubSteps, int domainBoundaryFlag,
+                  const BoundingBox3D& boundingBox, Vector3D* position,
+                  Vector3D* velocity)
+{
+    Vector3D pt = *position;
+    const double dt = timeIntervalInSeconds / numSubSteps;
+    for (unsigned int t = 0; t < numSubSteps; ++t)
+    {
+        const Vector3D midPt = pt + 0.5 * dt * flow.Sample(pt);
+        pt += dt * flow.Sample(midPt);
+    }
+
+    const int lowerFlags[] = { DIRECTION_LEFT, DIRECTION_DOWN, DIRECTION_BACK };
+    const int upperFlags[] = { DIRECTION_RIGHT, DIRECTION_UP, DIRECTION_FRONT };
+    for (size_t axis = 0; axis < 3; ++axis)
+    {
+        if ((domainBoundaryFlag & lowerFlags[axis]) &&
+            pt[axis] <= boundingBox.lowerCorner[axis])
+        {
+            pt[axis] = boundingBox.lowerCorner[axis];
+            (*velocity)[axis] = 0.0;
+        }
+        if ((domainBoundaryFlag & upperFlags[axis]) &&
+            pt[axis] >= boundingBox.upperCorner[axis])
+        {
+            pt[axis] = boundingBox.upperCorner[axis];
+            (*velocity)[axis] = 0.0;
+        }
+    }
+    *position = pt;
+}
+}  // namespace
+
 PICSolver3::PICSolver3() : PICSolver3{ { 1, 1, 1 }, { 1, 1, 1 }, { 0, 0, 0 } }
 {
     // Do nothing
@@ -224,69 +260,15 @@ void PICSolver3::MoveParticles(double timeIntervalInSeconds)
     const size_t numberOfParticles = m_particles->NumberOfParticles();
     int domainBoundaryFlag = GetClosedDomainBoundaryFlag();
     BoundingBox3D boundingBox = flow->GetBoundingBox();
+    const auto numSubSteps =
+        static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
 
     ParallelFor(ZERO_SIZE, numberOfParticles,
-                [&positions, &velocities, this, &timeIntervalInSeconds, &flow,
-                 &domainBoundaryFlag, &boundingBox](size_t i) {
-                    Vector3D pt0 = positions[i];
-                    Vector3D pt1 = pt0;
-                    Vector3D vel = velocities[i];
-
-                    // Adaptive time-stepping
-                    const unsigned int numSubSteps =
-                        static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
-                    const double dt = timeIntervalInSeconds / numSubSteps;
-                    for (unsigned int t = 0; t < numSubSteps; ++t)
-                    {
-                        Vector3D vel0 = flow->Sample(pt0);
-
-                        // Mid-point rule
-                        Vector3D midPt = pt0 + 0.5 * dt * vel0;
-                        Vector3D midVel = flow->Sample(midPt);
-                        pt1 = pt0 + dt * midVel;
-
-                        pt0 = pt1;
-                    }
-
-                    if ((domainBoundaryFlag & DIRECTION_LEFT) &&
-                        pt1.x <= boundingBox.lowerCorner.x)
-                    {
-                        pt1.x = boundingBox.lowerCorner.x;
-                        vel.x = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
-                        pt1.x >= boundingBox.upperCorner.x)
-                    {
-                        pt1.x = boundingBox.upperCorner.x;
-                        vel.x = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_DOWN) &&
-                        pt1.y <= boundingBox.lowerCorner.y)
-                    {
-                        pt1.y = boundingBox.lowerCorner.y;
-                        vel.y = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_UP) &&
-                        pt1.y >= boundingBox.upperCorner.y)
-                    {
-                        pt1.y = boundingBox.upperCorner.y;
-                        vel.y = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_BACK) &&
-                        pt1.z <= boundingBox.lowerCorner.z)
-                    {
-                        pt1.z = boundingBox.lowerCorner.z;
-                        vel.z = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_FRONT) &&
-                        pt1.z >= boundingBox.upperCorner.z)
-                    {
-                        pt1.z = boundingBox.upperCorner.z;
-                        vel.z = 0.0;
-                    }
-
-                    positions[i] = pt1;
-                    velocities[i] = vel;
+                [&positions, &velocities, &timeIntervalInSeconds, &flow,
+                 &numSubSteps, &domainBoundaryFlag, &boundingBox](size_t i) {
+                    MoveParticle(*flow, timeIntervalInSeconds, numSubSteps,
+                                 domainBoundaryFlag, boundingBox, &positions[i],
+                                 &velocities[i]);
                 });
 
     Collider3Ptr col = GetCollider();

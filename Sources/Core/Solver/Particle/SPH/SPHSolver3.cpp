@@ -291,7 +291,6 @@ void SPHSolver3::ComputePseudoViscosity(double timeStepInSeconds)
                  &smoothedVelocities](size_t i) {
                     double weightSum = 0.0;
                     Vector3D smoothedVelocity;
-
                     const auto& neighbors = particles->NeighborLists()[i];
                     for (size_t j : neighbors)
                     {
@@ -300,16 +299,13 @@ void SPHSolver3::ComputePseudoViscosity(double timeStepInSeconds)
                         weightSum += wj;
                         smoothedVelocity += wj * v[j];
                     }
-
                     const double wi = mass / d[i];
                     weightSum += wi;
                     smoothedVelocity += wi * v[i];
-
                     if (weightSum > 0.0)
                     {
                         smoothedVelocity /= weightSum;
                     }
-
                     smoothedVelocities[i] = smoothedVelocity;
                 });
 

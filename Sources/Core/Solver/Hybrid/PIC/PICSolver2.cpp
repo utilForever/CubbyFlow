@@ -16,6 +16,49 @@
 
 namespace CubbyFlow
 {
+namespace
+{
+void MoveParticle(const FaceCenteredGrid2& flow, double timeIntervalInSeconds,
+                  unsigned int numSubSteps, int domainBoundaryFlag,
+                  const BoundingBox2D& boundingBox, Vector2D* position,
+                  Vector2D* velocity)
+{
+    Vector2D pt = *position;
+    const double dt = timeIntervalInSeconds / numSubSteps;
+    for (unsigned int t = 0; t < numSubSteps; ++t)
+    {
+        const Vector2D midPt = pt + 0.5 * dt * flow.Sample(pt);
+        pt += dt * flow.Sample(midPt);
+    }
+
+    if ((domainBoundaryFlag & DIRECTION_LEFT) &&
+        pt.x <= boundingBox.lowerCorner.x)
+    {
+        pt.x = boundingBox.lowerCorner.x;
+        velocity->x = 0.0;
+    }
+    if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
+        pt.x >= boundingBox.upperCorner.x)
+    {
+        pt.x = boundingBox.upperCorner.x;
+        velocity->x = 0.0;
+    }
+    if ((domainBoundaryFlag & DIRECTION_DOWN) &&
+        pt.y <= boundingBox.lowerCorner.y)
+    {
+        pt.y = boundingBox.lowerCorner.y;
+        velocity->y = 0.0;
+    }
+    if ((domainBoundaryFlag & DIRECTION_UP) &&
+        pt.y >= boundingBox.upperCorner.y)
+    {
+        pt.y = boundingBox.upperCorner.y;
+        velocity->y = 0.0;
+    }
+    *position = pt;
+}
+}  // namespace
+
 PICSolver2::PICSolver2() : PICSolver2{ { 1, 1 }, { 1, 1 }, { 0, 0 } }
 {
     // Do nothing
@@ -200,57 +243,15 @@ void PICSolver2::MoveParticles(double timeIntervalInSeconds)
     const size_t numberOfParticles = m_particles->NumberOfParticles();
     int domainBoundaryFlag = GetClosedDomainBoundaryFlag();
     BoundingBox2D boundingBox = flow->GetBoundingBox();
+    const auto numSubSteps =
+        static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
 
     ParallelFor(ZERO_SIZE, numberOfParticles,
-                [&positions, &velocities, this, &timeIntervalInSeconds, &flow,
-                 &domainBoundaryFlag, &boundingBox](size_t i) {
-                    Vector2D pt0 = positions[i];
-                    Vector2D pt1 = pt0;
-                    Vector2D vel = velocities[i];
-
-                    // Adaptive time-stepping
-                    const unsigned int numSubSteps =
-                        static_cast<unsigned int>(std::max(GetMaxCFL(), 1.0));
-                    const double dt = timeIntervalInSeconds / numSubSteps;
-                    for (unsigned int t = 0; t < numSubSteps; ++t)
-                    {
-                        Vector2D vel0 = flow->Sample(pt0);
-
-                        // Mid-point rule
-                        Vector2D midPt = pt0 + 0.5 * dt * vel0;
-                        Vector2D midVel = flow->Sample(midPt);
-                        pt1 = pt0 + dt * midVel;
-
-                        pt0 = pt1;
-                    }
-
-                    if ((domainBoundaryFlag & DIRECTION_LEFT) &&
-                        pt1.x <= boundingBox.lowerCorner.x)
-                    {
-                        pt1.x = boundingBox.lowerCorner.x;
-                        vel.x = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
-                        pt1.x >= boundingBox.upperCorner.x)
-                    {
-                        pt1.x = boundingBox.upperCorner.x;
-                        vel.x = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_DOWN) &&
-                        pt1.y <= boundingBox.lowerCorner.y)
-                    {
-                        pt1.y = boundingBox.lowerCorner.y;
-                        vel.y = 0.0;
-                    }
-                    if ((domainBoundaryFlag & DIRECTION_UP) &&
-                        pt1.y >= boundingBox.upperCorner.y)
-                    {
-                        pt1.y = boundingBox.upperCorner.y;
-                        vel.y = 0.0;
-                    }
-
-                    positions[i] = pt1;
-                    velocities[i] = vel;
+                [&positions, &velocities, &timeIntervalInSeconds, &flow,
+                 &numSubSteps, &domainBoundaryFlag, &boundingBox](size_t i) {
+                    MoveParticle(*flow, timeIntervalInSeconds, numSubSteps,
+                                 domainBoundaryFlag, boundingBox, &positions[i],
+                                 &velocities[i]);
                 });
 
     Collider2Ptr col = GetCollider();

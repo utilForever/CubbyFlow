@@ -102,7 +102,6 @@ void PCISPHSolver2::AccumulatePressureForce(double timeIntervalInSeconds)
                      &p, &ds](size_t i) {
                         double weightSum = 0.0;
                         const auto& neighbors = particles->NeighborLists()[i];
-
                         for (size_t j : neighbors)
                         {
                             const double dist = m_tempPositions[j].DistanceTo(
@@ -110,17 +109,14 @@ void PCISPHSolver2::AccumulatePressureForce(double timeIntervalInSeconds)
                             weightSum += kernel(dist);
                         }
                         weightSum += kernel(0);
-
                         const double density = mass * weightSum;
                         double densityError = (density - targetDensity);
                         double pressure = delta * densityError;
-
                         if (pressure < 0.0)
                         {
                             pressure *= GetNegativePressureScale();
                             densityError *= GetNegativePressureScale();
                         }
-
                         p[i] += pressure;
                         ds[i] = density;
                         m_densityErrors[i] = densityError;
