@@ -25,6 +25,7 @@ void MoveParticle(const FaceCenteredGrid2& flow, double timeIntervalInSeconds,
 {
     Vector2D pt = *position;
     const double dt = timeIntervalInSeconds / numSubSteps;
+
     for (unsigned int t = 0; t < numSubSteps; ++t)
     {
         const Vector2D midPt = pt + 0.5 * dt * flow.Sample(pt);
@@ -37,24 +38,28 @@ void MoveParticle(const FaceCenteredGrid2& flow, double timeIntervalInSeconds,
         pt.x = boundingBox.lowerCorner.x;
         velocity->x = 0.0;
     }
+
     if ((domainBoundaryFlag & DIRECTION_RIGHT) &&
         pt.x >= boundingBox.upperCorner.x)
     {
         pt.x = boundingBox.upperCorner.x;
         velocity->x = 0.0;
     }
+
     if ((domainBoundaryFlag & DIRECTION_DOWN) &&
         pt.y <= boundingBox.lowerCorner.y)
     {
         pt.y = boundingBox.lowerCorner.y;
         velocity->y = 0.0;
     }
+
     if ((domainBoundaryFlag & DIRECTION_UP) &&
         pt.y >= boundingBox.upperCorner.y)
     {
         pt.y = boundingBox.upperCorner.y;
         velocity->y = 0.0;
     }
+
     *position = pt;
 }
 }  // namespace

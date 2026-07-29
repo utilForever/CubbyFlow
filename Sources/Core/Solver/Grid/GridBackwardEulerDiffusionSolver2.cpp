@@ -26,6 +26,7 @@ static FDMMatrixRow2 BuildMatrixRow(size_t i, size_t j, const Vector2UZ& size,
     FDMMatrixRow2 row;
     row.center = 1.0;
     row.right = row.up = 0.0;
+
     if (markers(i, j) != FLUID)
     {
         return row;
@@ -38,16 +39,19 @@ static FDMMatrixRow2 BuildMatrixRow(size_t i, size_t j, const Vector2UZ& size,
         {
             row.center += c.x;
         }
+
         if (markers(i + 1, j) == FLUID)
         {
             row.right -= c.x;
         }
     }
+
     if (i > 0 && ((isDirichlet && markers(i - 1, j) != AIR) ||
                   markers(i - 1, j) == FLUID))
     {
         row.center += c.x;
     }
+
     if (j + 1 < size.y)
     {
         if ((isDirichlet && markers(i, j + 1) != AIR) ||
@@ -55,16 +59,19 @@ static FDMMatrixRow2 BuildMatrixRow(size_t i, size_t j, const Vector2UZ& size,
         {
             row.center += c.y;
         }
+
         if (markers(i, j + 1) == FLUID)
         {
             row.up -= c.y;
         }
     }
+
     if (j > 0 && ((isDirichlet && markers(i, j - 1) != AIR) ||
                   markers(i, j - 1) == FLUID))
     {
         row.center += c.y;
     }
+
     return row;
 }
 
@@ -74,6 +81,7 @@ static double BuildRHS(size_t i, size_t j, const Vector2UZ& size,
                        bool isDirichlet, const ValueAt& valueAt)
 {
     double result = valueAt(i, j);
+
     if (!isDirichlet || markers(i, j) != FLUID)
     {
         return result;
@@ -83,18 +91,22 @@ static double BuildRHS(size_t i, size_t j, const Vector2UZ& size,
     {
         result += c.x * valueAt(i + 1, j);
     }
+
     if (i > 0 && markers(i - 1, j) == BOUNDARY)
     {
         result += c.x * valueAt(i - 1, j);
     }
+
     if (j + 1 < size.y && markers(i, j + 1) == BOUNDARY)
     {
         result += c.y * valueAt(i, j + 1);
     }
+
     if (j > 0 && markers(i, j - 1) == BOUNDARY)
     {
         result += c.y * valueAt(i, j - 1);
     }
+
     return result;
 }
 

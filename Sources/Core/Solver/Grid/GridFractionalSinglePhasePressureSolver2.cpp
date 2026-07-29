@@ -34,6 +34,7 @@ std::array<size_t, 4> FineIndices(size_t i, size_t size, int kernelSize)
     indices[1] = 2 * i;
     indices[2] = (kernelSize == 3 && i + 1 >= size) ? 2 * i : 2 * i + 1;
     indices[3] = (i + 1 < size) ? 2 * i + 2 : 2 * i + 1;
+
     return indices;
 }
 
@@ -45,6 +46,7 @@ double RestrictPoint(size_t i, size_t j, const Vector2UZ& size,
     const auto iIndices = FineIndices(i, size.x, kernelSize[0]);
     const auto jIndices = FineIndices(j, size.y, kernelSize[1]);
     double sum = 0.0;
+
     for (int y = 0; y < kernelSize[1]; ++y)
     {
         for (int x = 0; x < kernelSize[0]; ++x)
@@ -53,6 +55,7 @@ double RestrictPoint(size_t i, size_t j, const Vector2UZ& size,
                 kernels[0][x] * kernels[1][y] * finer(iIndices[x], jIndices[y]);
         }
     }
+
     return sum;
 }
 
@@ -66,19 +69,23 @@ void ApplyPressureGradientAt(size_t i, size_t j, const Vector2UZ& size,
                              const Vector2D& invH, const FDMVector2& pressure)
 {
     const double centerPhi = fluidSDF(i, j);
+
     if (i + 1 < size.x && uWeights(i + 1, j) > 0.0 &&
         (IsInsideSDF(centerPhi) || IsInsideSDF(fluidSDF(i + 1, j))))
     {
         const double theta =
             std::max(FractionInsideSDF(centerPhi, fluidSDF(i + 1, j)), 0.01);
+
         u0(i + 1, j) = u(i + 1, j) +
                        invH.x / theta * (pressure(i + 1, j) - pressure(i, j));
     }
+
     if (j + 1 < size.y && vWeights(i, j + 1) > 0.0 &&
         (IsInsideSDF(centerPhi) || IsInsideSDF(fluidSDF(i, j + 1))))
     {
         const double theta =
             std::max(FractionInsideSDF(centerPhi, fluidSDF(i, j + 1)), 0.01);
+
         v0(i, j + 1) = v(i, j + 1) +
                        invH.y / theta * (pressure(i, j + 1) - pressure(i, j));
     }
@@ -142,6 +149,7 @@ PressureRow2 BuildPressureRow(
 {
     PressureRow2 row;
     const double centerPhi = fluidSDF(i, j);
+
     if (!IsInsideSDF(centerPhi))
     {
         row.center = 1.0;
@@ -163,6 +171,7 @@ PressureRow2 BuildPressureRow(
             row.center += term / theta;
         }
     };
+
     if (i + 1 < size.x)
     {
         addCoefficient(fluidSDF(i + 1, j), uWeights(i + 1, j) * invHSqr.x, 0);
@@ -172,6 +181,7 @@ PressureRow2 BuildPressureRow(
     {
         row.rhs += input.U(i + 1, j) * invH.x;
     }
+
     if (i > 0)
     {
         addCoefficient(fluidSDF(i - 1, j), uWeights(i, j) * invHSqr.x, 1);
@@ -181,6 +191,7 @@ PressureRow2 BuildPressureRow(
     {
         row.rhs -= input.U(i, j) * invH.x;
     }
+
     if (j + 1 < size.y)
     {
         addCoefficient(fluidSDF(i, j + 1), vWeights(i, j + 1) * invHSqr.y, 2);
@@ -190,6 +201,7 @@ PressureRow2 BuildPressureRow(
     {
         row.rhs += input.V(i, j + 1) * invH.y;
     }
+
     if (j > 0)
     {
         addCoefficient(fluidSDF(i, j - 1), vWeights(i, j) * invHSqr.y, 3);
@@ -205,11 +217,13 @@ PressureRow2 BuildPressureRow(
         (1.0 - uWeights(i, j)) * boundaryVel(uPos(i, j)).x * invH.x +
         (1.0 - vWeights(i, j + 1)) * boundaryVel(vPos(i, j + 1)).y * invH.y -
         (1.0 - vWeights(i, j)) * boundaryVel(vPos(i, j)).y * invH.y;
+
     if (row.center < std::numeric_limits<double>::epsilon())
     {
         row.center = 1.0;
         row.rhs = 0.0;
     }
+
     return row;
 }
 
@@ -226,11 +240,13 @@ void AppendCompressedRow(
     {
         return;
     }
+
     const PressureRow2 data =
         BuildPressureRow(i, j, size, invH, invHSqr, fluidSDF, uWeights,
                          vWeights, uPos, vPos, boundaryVel, input);
     std::vector<double> row{ data.center };
     std::vector<size_t> columns{ coordToIndex(i, j) };
+
     const auto addColumn = [&](size_t direction, size_t x, size_t y) {
         if (data.coupled[direction])
         {
@@ -238,6 +254,7 @@ void AppendCompressedRow(
             columns.push_back(coordToIndex(x, y));
         }
     };
+
     addColumn(0, i + 1, j);
     addColumn(1, i - 1, j);
     addColumn(2, i, j + 1);

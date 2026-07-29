@@ -30,6 +30,7 @@ void BuildSingleRow(size_t i, size_t j, const Vector2UZ& size,
 {
     row->center = row->right = row->up = 0.0;
     *rhs = 0.0;
+
     if (markers(i, j) != FLUID)
     {
         row->center = 1.0;
@@ -37,18 +38,22 @@ void BuildSingleRow(size_t i, size_t j, const Vector2UZ& size,
     }
 
     *rhs = input.DivergenceAtCellCenter(i, j);
+
     const auto addNeighbor = [&](bool valid, size_t x, size_t y, double weight,
                                  double* offDiagonal) {
         if (!valid || markers(x, y) == BOUNDARY)
         {
             return;
         }
+
         row->center += weight;
+
         if (offDiagonal != nullptr && markers(x, y) == FLUID)
         {
             *offDiagonal -= weight;
         }
     };
+
     addNeighbor(i + 1 < size.x, i + 1, j, invHSqr.x, &row->right);
     addNeighbor(i > 0, i - 1, j, invHSqr.x, nullptr);
     addNeighbor(j + 1 < size.y, i, j + 1, invHSqr.y, &row->up);
@@ -62,28 +67,35 @@ void BuildCompressedRow(size_t i, size_t j, const Vector2UZ& size,
                         VectorND* b, const FaceCenteredGrid2& input)
 {
     const size_t center = markers.Index(i, j);
+
     if (markers[center] != FLUID)
     {
         return;
     }
 
     b->AddElement(input.DivergenceAtCellCenter(i, j));
+
     std::vector<double> row(1, 0.0);
     std::vector<size_t> columns(1, coordToIndex[center]);
+
     const auto addNeighbor = [&](bool valid, size_t x, size_t y,
                                  double weight) {
         if (!valid || markers(x, y) == BOUNDARY)
         {
             return;
         }
+
         row[0] += weight;
+
         const size_t neighbor = markers.Index(x, y);
+
         if (markers[neighbor] == FLUID)
         {
             row.push_back(-weight);
             columns.push_back(coordToIndex[neighbor]);
         }
     };
+
     addNeighbor(i + 1 < size.x, i + 1, j, invHSqr.x);
     addNeighbor(i > 0, i - 1, j, invHSqr.x);
     addNeighbor(j + 1 < size.y, i, j + 1, invHSqr.y);
@@ -103,6 +115,7 @@ char CoarsenMarker(size_t i, size_t j, const Vector2UZ& size,
                                           (j + 1 < size.y) ? 2 * j + 2
                                                            : 2 * j + 1 };
     int counts[3] = { 0, 0, 0 };
+
     for (size_t y : jIndices)
     {
         for (size_t x : iIndices)
@@ -110,6 +123,7 @@ char CoarsenMarker(size_t i, size_t j, const Vector2UZ& size,
             ++counts[static_cast<int>(finer(x, y))];
         }
     }
+
     return static_cast<char>(ArgMax3(counts[0], counts[1], counts[2]));
 }
 

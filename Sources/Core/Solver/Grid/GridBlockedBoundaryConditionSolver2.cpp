@@ -27,18 +27,22 @@ static void ConstrainVelocityAt(size_t i, size_t j, const Array2<char>& marker,
     {
         return;
     }
+
     if (i > 0 && marker(i - 1, j) == FLUID)
     {
         u(i, j) = collider.VelocityAt(uPos(i, j)).x;
     }
+
     if (i < size.x - 1 && marker(i + 1, j) == FLUID)
     {
         u(i + 1, j) = collider.VelocityAt(uPos(i + 1, j)).x;
     }
+
     if (j > 0 && marker(i, j - 1) == FLUID)
     {
         v(i, j) = collider.VelocityAt(vPos(i, j)).y;
     }
+
     if (j < size.y - 1 && marker(i, j + 1) == FLUID)
     {
         v(i, j + 1) = collider.VelocityAt(vPos(i, j + 1)).y;

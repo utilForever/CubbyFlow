@@ -30,6 +30,7 @@ void RestrictRange(const FDMVector2& finer, FDMVector2* coarser,
                                                  2 * j, 2 * j + 1,
                                                  (j + 1 < size.y) ? 2 * j + 2
                                                                   : 2 * j + 1 };
+
         for (size_t i = iBegin; i < iEnd; ++i)
         {
             const std::array<size_t, 4> iIndices = {
@@ -37,6 +38,7 @@ void RestrictRange(const FDMVector2& finer, FDMVector2* coarser,
                 (i + 1 < size.x) ? 2 * i + 2 : 2 * i + 1
             };
             double sum = 0.0;
+
             for (size_t y = 0; y < 4; ++y)
             {
                 for (size_t x = 0; x < 4; ++x)
@@ -45,6 +47,7 @@ void RestrictRange(const FDMVector2& finer, FDMVector2* coarser,
                            finer(iIndices[x], jIndices[y]);
                 }
             }
+
             (*coarser)(i, j) = sum;
         }
     }

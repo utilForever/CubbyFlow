@@ -29,26 +29,32 @@ static void ConstrainVelocityAt(size_t i, size_t j, size_t k,
     {
         return;
     }
+
     if (i > 0 && marker(i - 1, j, k) == FLUID)
     {
         u(i, j, k) = collider.VelocityAt(uPos(i, j, k)).x;
     }
+
     if (i < size.x - 1 && marker(i + 1, j, k) == FLUID)
     {
         u(i + 1, j, k) = collider.VelocityAt(uPos(i + 1, j, k)).x;
     }
+
     if (j > 0 && marker(i, j - 1, k) == FLUID)
     {
         v(i, j, k) = collider.VelocityAt(vPos(i, j, k)).y;
     }
+
     if (j < size.y - 1 && marker(i, j + 1, k) == FLUID)
     {
         v(i, j + 1, k) = collider.VelocityAt(vPos(i, j + 1, k)).y;
     }
+
     if (k > 0 && marker(i, j, k - 1) == FLUID)
     {
         w(i, j, k) = collider.VelocityAt(wPos(i, j, k)).z;
     }
+
     if (k < size.z - 1 && marker(i, j, k + 1) == FLUID)
     {
         w(i, j, k + 1) = collider.VelocityAt(wPos(i, j, k + 1)).z;

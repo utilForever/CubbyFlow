@@ -61,6 +61,7 @@ inline std::pair<Vector3D, size_t> ComputeMean(
     Vector3D mean;
     double weightSum = 0.0;
     size_t numNeighbors = 0;
+
     searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector3D& neighbor) {
         const double weight = Wij((x - neighbor).Length(), r);
         weightSum += weight;
@@ -78,21 +79,25 @@ inline Matrix3x3D ComputeAnisotropy(const Vector3D& x, const Vector3D& mean,
 {
     auto covariance = Matrix3x3D::MakeScaleMatrix(h * h, h * h, h * h);
     double weightSum = 0.0;
+
     searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector3D& neighbor) {
         const double weight = Wij((mean - neighbor).Length(), r);
         weightSum += weight;
         covariance += weight * Vvt(neighbor - mean);
     });
+
     covariance /= weightSum;
 
     Matrix3x3D u;
     Vector3D singularValues;
     Matrix3x3D w;
+
     SVD(covariance, u, singularValues, w);
 
     singularValues.x = std::fabs(singularValues.x);
     singularValues.y = std::fabs(singularValues.y);
     singularValues.z = std::fabs(singularValues.z);
+
     const double minSingularValue = singularValues.Max() / 4.0;
     singularValues.x = std::max(singularValues.x, minSingularValue);
     singularValues.y = std::max(singularValues.y, minSingularValue);
@@ -102,6 +107,7 @@ inline Matrix3x3D ComputeAnisotropy(const Vector3D& x, const Vector3D& mean,
         Matrix3x3D::MakeScaleMatrix(1.0 / singularValues);
     const double scale = std::pow(
         singularValues.x * singularValues.y * singularValues.z, 1.0 / 3.0);
+
     return invH * scale * (w * invSigma * u.Transposed());
 }
 

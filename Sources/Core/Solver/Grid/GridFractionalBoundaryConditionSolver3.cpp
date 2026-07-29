@@ -24,6 +24,7 @@ static Vector3D ProjectVelocityToCollider(const Vector3D& point,
 {
     const Vector3D colliderVelocity = collider.VelocityAt(point);
     const Vector3D gradient = colliderSDF.Gradient(point);
+
     if (gradient.LengthSquared() == 0.0)
     {
         return colliderVelocity;
@@ -31,6 +32,7 @@ static Vector3D ProjectVelocityToCollider(const Vector3D& point,
 
     const Vector3D relativeVelocity = velocity.Sample(point) - colliderVelocity;
     const Vector3D normal = gradient.Normalized();
+
     return ProjectAndApplyFriction(relativeVelocity, normal,
                                    collider.GetFrictionCoefficient()) +
            colliderVelocity;

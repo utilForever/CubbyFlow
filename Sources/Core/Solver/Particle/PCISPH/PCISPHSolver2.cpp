@@ -28,18 +28,22 @@ void UpdatePressureFromDensityError(size_t i, const Array1<Vector2D>& positions,
                                     Array1<double>* densityErrors)
 {
     double weightSum = kernel(0.0);
+
     for (size_t j : neighborLists[i])
     {
         weightSum += kernel(positions[j].DistanceTo(positions[i]));
     }
+
     const double density = mass * weightSum;
     double densityError = density - targetDensity;
     double pressure = delta * densityError;
+
     if (pressure < 0.0)
     {
         pressure *= negativeScale;
         densityError *= negativeScale;
     }
+
     pressures[i] += pressure;
     (*densities)[i] = density;
     (*densityErrors)[i] = densityError;

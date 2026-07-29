@@ -35,6 +35,7 @@ void RelaxRange(const FDMMatrix3& A, const FDMVector3& b, double sorFactor,
                     ((k > 0) ? A(i, j, k - 1).front * (*x)(i, j, k - 1) : 0.0) +
                     ((k + 1 < size.z) ? A(i, j, k).front * (*x)(i, j, k + 1)
                                       : 0.0);
+
                 (*x)(i, j, k) =
                     (1.0 - sorFactor) * (*x)(i, j, k) +
                     sorFactor * (b(i, j, k) - r) / A(i, j, k).center;
@@ -50,9 +51,11 @@ void RelaxCompressedRow(size_t i, MatrixCSRD::ConstIndexIterator rowPointers,
 {
     double residual = 0.0;
     double diagonal = 1.0;
+
     for (size_t jj = rowPointers[i]; jj < rowPointers[i + 1]; ++jj)
     {
         const size_t j = columnIndices[jj];
+
         if (i == j)
         {
             diagonal = nonZeros[jj];
@@ -62,6 +65,7 @@ void RelaxCompressedRow(size_t i, MatrixCSRD::ConstIndexIterator rowPointers,
             residual += nonZeros[jj] * (*x)[j];
         }
     }
+
     (*x)[i] =
         (1.0 - sorFactor) * (*x)[i] + sorFactor * (b[i] - residual) / diagonal;
 }

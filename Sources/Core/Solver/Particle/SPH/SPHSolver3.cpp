@@ -27,6 +27,7 @@ Vector3D SmoothedVelocity(size_t i, const Array1<Array1<size_t>>& neighborLists,
 {
     double weightSum = 0.0;
     Vector3D result;
+
     for (size_t j : neighborLists[i])
     {
         const double weight =
@@ -34,9 +35,12 @@ Vector3D SmoothedVelocity(size_t i, const Array1<Array1<size_t>>& neighborLists,
         weightSum += weight;
         result += weight * velocities[j];
     }
+
     const double selfWeight = mass / densities[i];
+
     weightSum += selfWeight;
     result += selfWeight * velocities[i];
+
     return weightSum > 0.0 ? result / weightSum : result;
 }
 

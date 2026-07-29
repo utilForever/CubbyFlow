@@ -18,6 +18,7 @@ Vector3D ClampPosition(const Vector3D& position, const BoundingBox3D& bbox,
                        const Vector3D& halfSpacing, size_t axis)
 {
     Vector3D result = position;
+
     for (size_t i = 0; i < 3; ++i)
     {
         if (i != axis)
@@ -27,6 +28,7 @@ Vector3D ClampPosition(const Vector3D& position, const BoundingBox3D& bbox,
                            bbox.upperCorner[i] - halfSpacing[i]);
         }
     }
+
     return result;
 }
 
@@ -36,13 +38,16 @@ Vector3D SampleGradient(const LinearArraySampler3<double>& sampler,
 {
     std::array<Vector3UZ, 8> indices{};
     std::array<Vector3D, 8> gradWeights{};
+
     sampler.GetCoordinatesAndGradientWeights(position, indices, gradWeights);
 
     Vector3D result;
+
     for (size_t j = 0; j < indices.size(); ++j)
     {
         result += gradWeights[j] * data(indices[j]);
     }
+
     return result;
 }
 }  // namespace

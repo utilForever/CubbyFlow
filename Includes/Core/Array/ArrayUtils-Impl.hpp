@@ -30,6 +30,7 @@ void ExtrapolatePoint(const Array2<char>& valid, const Vector2UZ& size,
 
     T sum{};
     unsigned int count = 0;
+
     const auto add = [&](size_t x, size_t y) {
         if (valid(x, y))
         {
@@ -37,18 +38,22 @@ void ExtrapolatePoint(const Array2<char>& valid, const Vector2UZ& size,
             ++count;
         }
     };
+
     if (i + 1 < size.x)
     {
         add(i + 1, j);
     }
+
     if (i > 0)
     {
         add(i - 1, j);
     }
+
     if (j + 1 < size.y)
     {
         add(i, j + 1);
     }
+
     if (j > 0)
     {
         add(i, j - 1);
@@ -75,6 +80,7 @@ void ExtrapolatePoint(const Array3<char>& valid, const Vector3UZ& size,
 
     T sum{};
     unsigned int count = 0;
+
     const auto add = [&](size_t x, size_t y, size_t z) {
         if (valid(x, y, z))
         {
@@ -82,26 +88,32 @@ void ExtrapolatePoint(const Array3<char>& valid, const Vector3UZ& size,
             ++count;
         }
     };
+
     if (i + 1 < size.x)
     {
         add(i + 1, j, k);
     }
+
     if (i > 0)
     {
         add(i - 1, j, k);
     }
+
     if (j + 1 < size.y)
     {
         add(i, j + 1, k);
     }
+
     if (j > 0)
     {
         add(i, j - 1, k);
     }
+
     if (k + 1 < size.z)
     {
         add(i, j, k + 1);
     }
+
     if (k > 0)
     {
         add(i, j, k - 1);

@@ -30,6 +30,7 @@ void BuildSingleRow(size_t i, size_t j, size_t k, const Vector3UZ& size,
 {
     row->center = row->right = row->up = row->front = 0.0;
     *rhs = 0.0;
+
     if (markers(i, j, k) != FLUID)
     {
         row->center = 1.0;
@@ -37,18 +38,22 @@ void BuildSingleRow(size_t i, size_t j, size_t k, const Vector3UZ& size,
     }
 
     *rhs = input.DivergenceAtCellCenter(i, j, k);
+
     const auto addNeighbor = [&](bool valid, size_t x, size_t y, size_t z,
                                  double weight, double* offDiagonal) {
         if (!valid || markers(x, y, z) == BOUNDARY)
         {
             return;
         }
+
         row->center += weight;
+
         if (offDiagonal != nullptr && markers(x, y, z) == FLUID)
         {
             *offDiagonal -= weight;
         }
     };
+
     addNeighbor(i + 1 < size.x, i + 1, j, k, invHSqr.x, &row->right);
     addNeighbor(i > 0, i - 1, j, k, invHSqr.x, nullptr);
     addNeighbor(j + 1 < size.y, i, j + 1, k, invHSqr.y, &row->up);
@@ -64,28 +69,35 @@ void BuildCompressedRow(size_t i, size_t j, size_t k, const Vector3UZ& size,
                         VectorND* b, const FaceCenteredGrid3& input)
 {
     const size_t center = markers.Index(i, j, k);
+
     if (markers[center] != FLUID)
     {
         return;
     }
 
     b->AddElement(input.DivergenceAtCellCenter(i, j, k));
+
     std::vector<double> row(1, 0.0);
     std::vector<size_t> columns(1, coordToIndex[center]);
+
     const auto addNeighbor = [&](bool valid, size_t x, size_t y, size_t z,
                                  double weight) {
         if (!valid || markers(x, y, z) == BOUNDARY)
         {
             return;
         }
+
         row[0] += weight;
+
         const size_t neighbor = markers.Index(x, y, z);
+
         if (markers[neighbor] == FLUID)
         {
             row.push_back(-weight);
             columns.push_back(coordToIndex[neighbor]);
         }
     };
+
     addNeighbor(i + 1 < size.x, i + 1, j, k, invHSqr.x);
     addNeighbor(i > 0, i - 1, j, k, invHSqr.x);
     addNeighbor(j + 1 < size.y, i, j + 1, k, invHSqr.y);
@@ -111,6 +123,7 @@ char CoarsenMarker(size_t i, size_t j, size_t k, const Vector3UZ& size,
                                           (k + 1 < size.z) ? 2 * k + 2
                                                            : 2 * k + 1 };
     int counts[3] = { 0, 0, 0 };
+
     for (size_t z : kIndices)
     {
         for (size_t y : jIndices)
@@ -121,6 +134,7 @@ char CoarsenMarker(size_t i, size_t j, size_t k, const Vector3UZ& size,
             }
         }
     }
+
     return static_cast<char>(ArgMax3(counts[0], counts[1], counts[2]));
 }
 
@@ -137,16 +151,19 @@ void ApplyPressureGradientAt(size_t i, size_t j, size_t k,
     {
         return;
     }
+
     if (i + 1 < size.x && markers(i + 1, j, k) != BOUNDARY)
     {
         u0(i + 1, j, k) = u(i + 1, j, k) +
                           invH.x * (pressure(i + 1, j, k) - pressure(i, j, k));
     }
+
     if (j + 1 < size.y && markers(i, j + 1, k) != BOUNDARY)
     {
         v0(i, j + 1, k) = v(i, j + 1, k) +
                           invH.y * (pressure(i, j + 1, k) - pressure(i, j, k));
     }
+
     if (k + 1 < size.z && markers(i, j, k + 1) != BOUNDARY)
     {
         w0(i, j, k + 1) = w(i, j, k + 1) +

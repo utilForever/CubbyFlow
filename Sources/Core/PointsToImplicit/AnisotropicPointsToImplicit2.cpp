@@ -60,6 +60,7 @@ inline std::pair<Vector2D, size_t> ComputeMean(
     Vector2D mean;
     double weightSum = 0.0;
     size_t numNeighbors = 0;
+
     searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector2D& neighbor) {
         const double weight = Wij((x - neighbor).Length(), r);
         weightSum += weight;
@@ -77,20 +78,24 @@ inline Matrix2x2D ComputeAnisotropy(const Vector2D& x, const Vector2D& mean,
 {
     auto covariance = Matrix2x2D::MakeScaleMatrix(h * h, h * h);
     double weightSum = 0.0;
+
     searcher.ForEachNearbyPoint(x, r, [&](size_t, const Vector2D& neighbor) {
         const double weight = Wij((mean - neighbor).Length(), r);
         weightSum += weight;
         covariance += weight * Vvt(neighbor - mean);
     });
+
     covariance /= weightSum;
 
     Matrix2x2D u;
     Vector2D singularValues;
     Matrix2x2D w;
+
     SVD(covariance, u, singularValues, w);
 
     singularValues.x = std::fabs(singularValues.x);
     singularValues.y = std::fabs(singularValues.y);
+
     const double minSingularValue = singularValues.Max() / 4.0;
     singularValues.x = std::max(singularValues.x, minSingularValue);
     singularValues.y = std::max(singularValues.y, minSingularValue);

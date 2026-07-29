@@ -25,6 +25,7 @@ void MoveParticle(const FaceCenteredGrid3& flow, double timeIntervalInSeconds,
 {
     Vector3D pt = *position;
     const double dt = timeIntervalInSeconds / numSubSteps;
+
     for (unsigned int t = 0; t < numSubSteps; ++t)
     {
         const Vector3D midPt = pt + 0.5 * dt * flow.Sample(pt);
@@ -33,6 +34,7 @@ void MoveParticle(const FaceCenteredGrid3& flow, double timeIntervalInSeconds,
 
     const int lowerFlags[] = { DIRECTION_LEFT, DIRECTION_DOWN, DIRECTION_BACK };
     const int upperFlags[] = { DIRECTION_RIGHT, DIRECTION_UP, DIRECTION_FRONT };
+
     for (size_t axis = 0; axis < 3; ++axis)
     {
         if ((domainBoundaryFlag & lowerFlags[axis]) &&
@@ -41,6 +43,7 @@ void MoveParticle(const FaceCenteredGrid3& flow, double timeIntervalInSeconds,
             pt[axis] = boundingBox.lowerCorner[axis];
             (*velocity)[axis] = 0.0;
         }
+
         if ((domainBoundaryFlag & upperFlags[axis]) &&
             pt[axis] >= boundingBox.upperCorner[axis])
         {
@@ -48,6 +51,7 @@ void MoveParticle(const FaceCenteredGrid3& flow, double timeIntervalInSeconds,
             (*velocity)[axis] = 0.0;
         }
     }
+
     *position = pt;
 }
 }  // namespace

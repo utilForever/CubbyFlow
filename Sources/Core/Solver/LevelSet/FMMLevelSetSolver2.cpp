@@ -24,6 +24,7 @@ double BoundarySign(const ArrayView2<double>& sdf, const Vector2UZ& size,
                     size_t i, size_t j)
 {
     const bool inside = IsInsideSDF(sdf(i, j));
+
     return ((i > 0 && inside != IsInsideSDF(sdf(i - 1, j))) ||
             (i + 1 < size.x && inside != IsInsideSDF(sdf(i + 1, j))) ||
             (j > 0 && inside != IsInsideSDF(sdf(i, j - 1))) ||

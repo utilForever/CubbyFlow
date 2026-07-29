@@ -25,6 +25,7 @@ double ReinitializedValue(double value, double sign, double dtau,
     const double negativeGradient =
         std::sqrt(Square(std::min(dx[0], 0.0)) + Square(std::max(dx[1], 0.0)) +
                   Square(std::min(dy[0], 0.0)) + Square(std::max(dy[1], 0.0)));
+
     return value - dtau * std::max(sign, 0.0) * (positiveGradient - 1.0) -
            dtau * std::min(sign, 0.0) * (negativeGradient - 1.0);
 }

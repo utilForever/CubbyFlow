@@ -26,6 +26,7 @@ static FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
     FDMMatrixRow3 row;
     row.center = 1.0;
     row.right = row.up = row.front = 0.0;
+
     if (markers(i, j, k) != FLUID)
     {
         return row;
@@ -38,16 +39,19 @@ static FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
         {
             row.center += c.x;
         }
+
         if (markers(i + 1, j, k) == FLUID)
         {
             row.right -= c.x;
         }
     }
+
     if (i > 0 && ((isDirichlet && markers(i - 1, j, k) != AIR) ||
                   markers(i - 1, j, k) == FLUID))
     {
         row.center += c.x;
     }
+
     if (j + 1 < size.y)
     {
         if ((isDirichlet && markers(i, j + 1, k) != AIR) ||
@@ -55,16 +59,19 @@ static FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
         {
             row.center += c.y;
         }
+
         if (markers(i, j + 1, k) == FLUID)
         {
             row.up -= c.y;
         }
     }
+
     if (j > 0 && ((isDirichlet && markers(i, j - 1, k) != AIR) ||
                   markers(i, j - 1, k) == FLUID))
     {
         row.center += c.y;
     }
+
     if (k + 1 < size.z)
     {
         if ((isDirichlet && markers(i, j, k + 1) != AIR) ||
@@ -72,16 +79,19 @@ static FDMMatrixRow3 BuildMatrixRow(size_t i, size_t j, size_t k,
         {
             row.center += c.z;
         }
+
         if (markers(i, j, k + 1) == FLUID)
         {
             row.front -= c.z;
         }
     }
+
     if (k > 0 && ((isDirichlet && markers(i, j, k - 1) != AIR) ||
                   markers(i, j, k - 1) == FLUID))
     {
         row.center += c.z;
     }
+
     return row;
 }
 
@@ -91,6 +101,7 @@ static double BuildRHS(size_t i, size_t j, size_t k, const Vector3UZ& size,
                        bool isDirichlet, const ValueAt& valueAt)
 {
     double result = valueAt(i, j, k);
+
     if (!isDirichlet || markers(i, j, k) != FLUID)
     {
         return result;
@@ -100,26 +111,32 @@ static double BuildRHS(size_t i, size_t j, size_t k, const Vector3UZ& size,
     {
         result += c.x * valueAt(i + 1, j, k);
     }
+
     if (i > 0 && markers(i - 1, j, k) == BOUNDARY)
     {
         result += c.x * valueAt(i - 1, j, k);
     }
+
     if (j + 1 < size.y && markers(i, j + 1, k) == BOUNDARY)
     {
         result += c.y * valueAt(i, j + 1, k);
     }
+
     if (j > 0 && markers(i, j - 1, k) == BOUNDARY)
     {
         result += c.y * valueAt(i, j - 1, k);
     }
+
     if (k + 1 < size.z && markers(i, j, k + 1) == BOUNDARY)
     {
         result += c.z * valueAt(i, j, k + 1);
     }
+
     if (k > 0 && markers(i, j, k - 1) == BOUNDARY)
     {
         result += c.z * valueAt(i, j, k - 1);
     }
+
     return result;
 }
 

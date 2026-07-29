@@ -115,13 +115,16 @@ void VolumeParticleEmitter3::Emit(const ParticleSystemData3Ptr& particles,
                 {
                     return true;
                 }
+
                 if (m_numberOfEmittedParticles >= m_maxNumberOfParticles)
                 {
                     return false;
                 }
+
                 newPositions->Append(candidate);
                 ++m_numberOfEmittedParticles;
                 ++numNewParticles;
+
                 return true;
             });
     }
@@ -151,14 +154,17 @@ void VolumeParticleEmitter3::Emit(const ParticleSystemData3Ptr& particles,
                 {
                     return true;
                 }
+
                 if (m_numberOfEmittedParticles >= m_maxNumberOfParticles)
                 {
                     return false;
                 }
+
                 newPositions->Append(candidate);
                 neighborSearcher.Add(candidate);
                 ++m_numberOfEmittedParticles;
                 ++numNewParticles;
+
                 return true;
             });
     }

@@ -71,6 +71,7 @@ class FDMLinearSystemSolverTestHelper2
     {
         const size_t cIdx = acc.Index(i, j);
         (*coordToIndex)[cIdx] = system->b.GetRows();
+
         double bij = 0.0;
         std::vector<double> row(1, 0.0);
         std::vector<size_t> colIdx(1, cIdx);
@@ -80,14 +81,17 @@ class FDMLinearSystemSolverTestHelper2
             row.push_back(-1.0);
             colIdx.push_back(idx);
         };
+
         if (i > 0)
         {
             addNeighbor(acc.Index(i - 1, j));
         }
+
         if (i + 1 < size.x)
         {
             addNeighbor(acc.Index(i + 1, j));
         }
+
         if (j > 0)
         {
             addNeighbor(acc.Index(i, j - 1));
@@ -96,6 +100,7 @@ class FDMLinearSystemSolverTestHelper2
         {
             bij += 1.0;
         }
+
         if (j + 1 < size.y)
         {
             addNeighbor(acc.Index(i, j + 1));

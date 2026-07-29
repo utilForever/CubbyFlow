@@ -19,9 +19,11 @@ Vector2D ClampPosition(const Vector2D& position, const BoundingBox2D& bbox,
 {
     Vector2D result = position;
     const size_t otherAxis = 1 - axis;
+
     result[otherAxis] = std::clamp(
         result[otherAxis], bbox.lowerCorner[otherAxis] + halfSpacing[otherAxis],
         bbox.upperCorner[otherAxis] - halfSpacing[otherAxis]);
+
     return result;
 }
 
@@ -31,13 +33,16 @@ Vector2D SampleGradient(const LinearArraySampler2<double>& sampler,
 {
     std::array<Vector2UZ, 4> indices{};
     std::array<Vector2D, 4> gradWeights{};
+
     sampler.GetCoordinatesAndGradientWeights(position, indices, gradWeights);
 
     Vector2D result;
+
     for (size_t j = 0; j < indices.size(); ++j)
     {
         result += gradWeights[j] * data(indices[j]);
     }
+
     return result;
 }
 }  // namespace
