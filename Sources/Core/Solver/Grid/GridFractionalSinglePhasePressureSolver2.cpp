@@ -290,32 +290,32 @@ PressureRow2 BuildPressureRow(
 }
 
 template <typename BoundaryVelocityFunc>
-void AppendCompressedRow(
-    size_t i, size_t j, const Vector2UZ& size, const Vector2D& invH,
-    const Vector2D& invHSqr, const Array2<double>& fluidSDF,
-    const Array2<double>& uWeights, const Array2<double>& vWeights,
-    const GridDataPositionFunc<2>& uPos, const GridDataPositionFunc<2>& vPos,
-    const BoundaryVelocityFunc& boundaryVel, const FaceCenteredGrid2& input,
-    const Array2<size_t>& coordToIndex, MatrixCSRD* A, VectorND* b)
+struct CompressedRowData2
 {
-    if (!IsInsideSDF(fluidSDF(i, j)))
+    const PressureRowData2<BoundaryVelocityFunc>& pressure;
+    const Array2<size_t>& coordToIndex;
+    MatrixCSRD* A;
+    VectorND* b;
+};
+
+template <typename BoundaryVelocityFunc>
+void AppendCompressedRow(size_t i, size_t j,
+                         const CompressedRowData2<BoundaryVelocityFunc>& data)
+{
+    if (!IsInsideSDF(data.pressure.fluidSDF(i, j)))
     {
         return;
     }
 
-    const PressureRowData2<BoundaryVelocityFunc> rowData{
-        size,     invH, invHSqr, fluidSDF,    uWeights,
-        vWeights, uPos, vPos,    boundaryVel, input
-    };
-    const PressureRow2 pressureRow = BuildPressureRow(i, j, rowData);
+    const PressureRow2 pressureRow = BuildPressureRow(i, j, data.pressure);
     std::vector<double> row{ pressureRow.center };
-    std::vector<size_t> columns{ coordToIndex(i, j) };
+    std::vector<size_t> columns{ data.coordToIndex(i, j) };
 
     const auto addColumn = [&](size_t direction, size_t x, size_t y) {
         if (pressureRow.coupled[direction])
         {
             row.push_back(pressureRow.offDiagonal[direction]);
-            columns.push_back(coordToIndex(x, y));
+            columns.push_back(data.coordToIndex(x, y));
         }
     };
 
@@ -323,8 +323,8 @@ void AppendCompressedRow(
     addColumn(1, i - 1, j);
     addColumn(2, i, j + 1);
     addColumn(3, i, j - 1);
-    A->AddRow(row, columns);
-    b->AddElement(pressureRow.rhs);
+    data.A->AddRow(row, columns);
+    data.b->AddElement(pressureRow.rhs);
 }
 
 template <typename BoundaryVelocityFunc>
@@ -389,15 +389,17 @@ void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,
             coordToIndex[cIdx] = numRows++;
         }
     });
+    const PressureRowData2<BoundaryVelocityFunc> rowData{
+        size,     invH, invHSqr, fluidSDF,    uWeights,
+        vWeights, uPos, vPos,    boundaryVel, input
+    };
+    const CompressedRowData2<BoundaryVelocityFunc> compressedData{ rowData,
+                                                                   coordToIndex,
+                                                                   A, b };
 
-    ForEachIndex(
-        fluidSDF.Size(),
-        [&fluidSDF, &coordToIndex, &size, &uWeights, &invHSqr, &input, &invH,
-         &vWeights, &boundaryVel, &uPos, &vPos, &A, &b](size_t i, size_t j) {
-            AppendCompressedRow(i, j, size, invH, invHSqr, fluidSDF, uWeights,
-                                vWeights, uPos, vPos, boundaryVel, input,
-                                coordToIndex, A, b);
-        });
+    ForEachIndex(fluidSDF.Size(), [&compressedData](size_t i, size_t j) {
+        AppendCompressedRow(i, j, compressedData);
+    });
 
     x->Resize(b->GetRows(), 0.0);
 }
