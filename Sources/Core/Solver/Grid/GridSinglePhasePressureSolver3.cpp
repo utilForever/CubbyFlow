@@ -25,11 +25,18 @@ const double DEFAULT_TOLERANCE = 1e-6;
 
 namespace
 {
-void BuildSingleRow(size_t i, size_t j, size_t k, const Vector3UZ& size,
-                    const Vector3D& invHSqr, const Array3<char>& markers,
-                    const FaceCenteredGrid3& input, FDMMatrixRow3* row,
-                    double* rhs)
+struct SingleRowData3
 {
+    const Vector3UZ& size;
+    const Vector3D& invHSqr;
+    const Array3<char>& markers;
+    const FaceCenteredGrid3& input;
+};
+
+void BuildSingleRow(size_t i, size_t j, size_t k, const SingleRowData3& data,
+                    FDMMatrixRow3* row, double* rhs)
+{
+    const auto& [size, invHSqr, markers, input] = data;
     *row = {};
     *rhs = 0.0;
 
@@ -180,13 +187,13 @@ void BuildSingleSystem(FDMMatrix3* A, FDMVector3* b,
     Vector3UZ size = input.Resolution();
     const Vector3D invH = 1.0 / input.GridSpacing();
     Vector3D invHSqr = ElemMul(invH, invH);
+    const SingleRowData3 data{ size, invHSqr, markers, input };
 
     // Build linear system
-    ParallelForEachIndex(A->Size(), [&A, &b, &markers, &input, &size, &invHSqr](
-                                        size_t i, size_t j, size_t k) {
-        BuildSingleRow(i, j, k, size, invHSqr, markers, input, &(*A)(i, j, k),
-                       &(*b)(i, j, k));
-    });
+    ParallelForEachIndex(
+        A->Size(), [&A, &b, &data](size_t i, size_t j, size_t k) {
+            BuildSingleRow(i, j, k, data, &(*A)(i, j, k), &(*b)(i, j, k));
+        });
 }
 
 void BuildSingleSystem(MatrixCSRD* A, VectorND* x, VectorND* b,

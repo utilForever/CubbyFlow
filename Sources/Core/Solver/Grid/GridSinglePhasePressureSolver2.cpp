@@ -25,11 +25,18 @@ const double DEFAULT_TOLERANCE = 1e-6;
 
 namespace
 {
-void BuildSingleRow(size_t i, size_t j, const Vector2UZ& size,
-                    const Vector2D& invHSqr, const Array2<char>& markers,
-                    const FaceCenteredGrid2& input, FDMMatrixRow2* row,
-                    double* rhs)
+struct SingleRowData2
 {
+    const Vector2UZ& size;
+    const Vector2D& invHSqr;
+    const Array2<char>& markers;
+    const FaceCenteredGrid2& input;
+};
+
+void BuildSingleRow(size_t i, size_t j, const SingleRowData2& data,
+                    FDMMatrixRow2* row, double* rhs)
+{
+    const auto& [size, invHSqr, markers, input] = data;
     *row = {};
     *rhs = 0.0;
 
@@ -136,11 +143,10 @@ void BuildSingleSystem(FDMMatrix2* A, FDMVector2* b,
     Vector2UZ size = input.Resolution();
     const Vector2D invH = 1.0 / input.GridSpacing();
     Vector2D invHSqr = ElemMul(invH, invH);
+    const SingleRowData2 data{ size, invHSqr, markers, input };
 
-    ParallelForEachIndex(A->Size(), [&A, &b, &markers, &input, &size, &invHSqr](
-                                        size_t i, size_t j) {
-        BuildSingleRow(i, j, size, invHSqr, markers, input, &(*A)(i, j),
-                       &(*b)(i, j));
+    ParallelForEachIndex(A->Size(), [&A, &b, &data](size_t i, size_t j) {
+        BuildSingleRow(i, j, data, &(*A)(i, j), &(*b)(i, j));
     });
 }
 
