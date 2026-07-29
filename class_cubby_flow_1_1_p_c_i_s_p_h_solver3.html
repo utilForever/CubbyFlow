@@ -358,6 +358,11 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a9ab608b5f055d51fbdb5a26220d05532" id="r_a9ab608b5f055d51fbdb5a26220d05532"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_p_c_i_s_p_h_solver3.html#a9ab608b5f055d51fbdb5a26220d05532">OnBeginAdvanceTimeStep</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">timeStepInSeconds</a>) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">override</a></td></tr>
 <tr class="memdesc:a9ab608b5f055d51fbdb5a26220d05532"><td class="mdescLeft">&#160;</td><td class="mdescRight">Performs pre-processing step before the simulation.  <br /></td></tr>
 <tr class="separator:a9ab608b5f055d51fbdb5a26220d05532"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a282fc831561b42b69e0eb9b6812e0f5b" id="r_a282fc831561b42b69e0eb9b6812e0f5b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">virtual</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_p_c_i_s_p_h_solver3.html#a282fc831561b42b69e0eb9b6812e0f5b">AccumulatePressureForce</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">timeStepInSeconds</a>)</td></tr>
+<tr class="separator:a282fc831561b42b69e0eb9b6812e0f5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0fac51896411296a2dfaaa0f82f4ae08" id="r_a0fac51896411296a2dfaaa0f82f4ae08"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_p_c_i_s_p_h_solver3.html#a0fac51896411296a2dfaaa0f82f4ae08">AccumulatePressureForce</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a6c7e5a4d20594fa6e144e3d10fc1c7de">ConstArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a7a0f165a2c76a196c9e23978ff7f2dcb">Vector3D</a> &gt; &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">positions</a>, <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a6c7e5a4d20594fa6e144e3d10fc1c7de">ConstArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> &gt; &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">densities</a>, <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a6c7e5a4d20594fa6e144e3d10fc1c7de">ConstArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> &gt; &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">pressures</a>, <a class="el" href="namespace_cubby_flow.html#a5f79070dc5c03d4845c7e510bd377a3a">ArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a7a0f165a2c76a196c9e23978ff7f2dcb">Vector3D</a> &gt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">pressureForces</a>)</td></tr>
+<tr class="memdesc:a0fac51896411296a2dfaaa0f82f4ae08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accumulates the pressure force to the given <code>pressureForces</code> array.  <br /></td></tr>
+<tr class="separator:a0fac51896411296a2dfaaa0f82f4ae08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_cubby_flow_1_1_s_p_h_solver3"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_cubby_flow_1_1_s_p_h_solver3')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_cubby_flow_1_1_s_p_h_solver3.html">CubbyFlow::SPHSolver3</a></td></tr>
 <tr class="memitem:a7a2445c63d6547d84b1b8ecf0f60ba37 inherit pro_methods_class_cubby_flow_1_1_s_p_h_solver3" id="r_a7a2445c63d6547d84b1b8ecf0f60ba37"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">unsigned</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_s_p_h_solver3.html#a7a2445c63d6547d84b1b8ecf0f60ba37">GetNumberOfSubTimeSteps</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> timeIntervalInSeconds) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">override</a></td></tr>
 <tr class="memdesc:a7a2445c63d6547d84b1b8ecf0f60ba37 inherit pro_methods_class_cubby_flow_1_1_s_p_h_solver3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of sub-time-steps.  <br /></td></tr>
@@ -543,8 +548,58 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a0fac51896411296a2dfaaa0f82f4ae08" name="a0fac51896411296a2dfaaa0f82f4ae08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0fac51896411296a2dfaaa0f82f4ae08">&#9670;&#160;</a></span>AccumulatePressureForce() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a> CubbyFlow::SPHSolver3::AccumulatePressureForce </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a6c7e5a4d20594fa6e144e3d10fc1c7de">ConstArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a7a0f165a2c76a196c9e23978ff7f2dcb">Vector3D</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>positions</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a6c7e5a4d20594fa6e144e3d10fc1c7de">ConstArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>densities</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a6c7e5a4d20594fa6e144e3d10fc1c7de">ConstArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>pressures</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a5f79070dc5c03d4845c7e510bd377a3a">ArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a7a0f165a2c76a196c9e23978ff7f2dcb">Vector3D</a> &gt;&#160;</td>
+          <td class="paramname"><em>pressureForces</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Accumulates the pressure force to the given <code>pressureForces</code> array. </p>
+
+</div>
+</div>
 <a id="a5260800c0ff16e20d310c38ff84fff61" name="a5260800c0ff16e20d310c38ff84fff61"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5260800c0ff16e20d310c38ff84fff61">&#9670;&#160;</a></span>AccumulatePressureForce()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5260800c0ff16e20d310c38ff84fff61">&#9670;&#160;</a></span>AccumulatePressureForce() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -563,6 +618,35 @@ Protected Member Functions</h2></td></tr>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Accumulates the pressure force to the forces array in the particle system. </p>
+
+<p>Reimplemented from <a class="el" href="class_cubby_flow_1_1_s_p_h_solver3.html#a282fc831561b42b69e0eb9b6812e0f5b">CubbyFlow::SPHSolver3</a>.</p>
+
+</div>
+</div>
+<a id="a282fc831561b42b69e0eb9b6812e0f5b" name="a282fc831561b42b69e0eb9b6812e0f5b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a282fc831561b42b69e0eb9b6812e0f5b">&#9670;&#160;</a></span>AccumulatePressureForce() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">virtual</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a> CubbyFlow::SPHSolver3::AccumulatePressureForce </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td>
+          <td class="paramname"><em>timeStepInSeconds</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -777,7 +861,7 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 27 2026 03:58:45 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 29 2026 12:58:25 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>

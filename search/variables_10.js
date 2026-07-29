@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['radius_0',['radius',['../class_cubby_flow_1_1_cylinder3.html#a44f7ab856aba7a7f22662ef22a4b498a',1,'CubbyFlow::Cylinder3::radius'],['../class_cubby_flow_1_1_sphere.html#a1ab7507a7551a9c840a96f868bfb3d36',1,'CubbyFlow::Sphere::radius']]],
-  ['relaxfunc_1',['relaxFunc',['../struct_cubby_flow_1_1_m_g_parameters.html#add8a0fd95918ac7d8b617199537dd433',1,'CubbyFlow::MGParameters']]],
-  ['restrictfunc_2',['restrictFunc',['../struct_cubby_flow_1_1_m_g_parameters.html#aba020056d2ec28a7762281d13b945135',1,'CubbyFlow::MGParameters']]],
-  ['right_3',['right',['../struct_cubby_flow_1_1_f_d_m_matrix_row2.html#a3672a1de1e1e93632c89c723c935611d',1,'CubbyFlow::FDMMatrixRow2::right'],['../struct_cubby_flow_1_1_f_d_m_matrix_row3.html#a7551532e74251184200b90fb9636c565',1,'CubbyFlow::FDMMatrixRow3::right']]]
+  ['speed_5fof_5fsound_5fin_5fwater_0',['SPEED_OF_SOUND_IN_WATER',['../namespace_cubby_flow.html#adb3e9389435cf64f1304e29c1a0bdb64',1,'CubbyFlow']]],
+  ['speed_5fof_5fsound_5fin_5fwater_5ffloat_1',['SPEED_OF_SOUND_IN_WATER_FLOAT',['../namespace_cubby_flow.html#a6d665b518a4b67c1a70cc28e19a4c1a1',1,'CubbyFlow']]]
 ];

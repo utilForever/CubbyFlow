@@ -114,13 +114,13 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno"><a class="line" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html">   21</a></span><span class="keyword">class </span><a class="code hl_class" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html">FDMMGSolver3</a> : <span class="keyword">public</span> <a class="code hl_class" href="class_cubby_flow_1_1_f_d_m_linear_system_solver3.html">FDMLinearSystemSolver3</a></div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html#af4b1fdf034c7cc2db57c0c1ccf244842">   25</a></span>    <a class="code hl_function" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html#af4b1fdf034c7cc2db57c0c1ccf244842">FDMMGSolver3</a>(<span class="keywordtype">size_t</span> maxNumberOfLevels,</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>                 <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfRestrictionIter = 5,</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>                 <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfCorrectionIter = 5,</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>                 <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfCoarsestIter = 20,</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>                 <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfFinalIter = 20,</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>                 <span class="keywordtype">double</span> maxTolerance = 1<a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">e</a>-9, <span class="keywordtype">double</span> <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">sorFactor</a> = 1.5,</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>                 <span class="keywordtype">bool</span> <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">useRedBlackOrdering</a> = <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html#af4b1fdf034c7cc2db57c0c1ccf244842">   25</a></span>    <span class="keyword">explicit</span> <a class="code hl_function" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html#af4b1fdf034c7cc2db57c0c1ccf244842">FDMMGSolver3</a>(<span class="keywordtype">size_t</span> maxNumberOfLevels,</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>                          <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfRestrictionIter = 5,</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>                          <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfCorrectionIter = 5,</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>                          <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfCoarsestIter = 20,</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>                          <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> numberOfFinalIter = 20,</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>                          <span class="keywordtype">double</span> maxTolerance = 1<a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">e</a>-9, <span class="keywordtype">double</span> <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">sorFactor</a> = 1.5,</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>                          <span class="keywordtype">bool</span> <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">useRedBlackOrdering</a> = <span class="keyword">false</span>);</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html#a0c5451fa3cbedc624c49311a767dc662">   34</a></span>    [[<a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">nodiscard</a>]] <span class="keyword">const</span> <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">MGParameters&lt;FDMBLAS3&gt;</a>&amp; <a class="code hl_function" href="class_cubby_flow_1_1_f_d_m_m_g_solver3.html#a0c5451fa3cbedc624c49311a767dc662">GetParams</a>() <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
@@ -169,7 +169,7 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 27 2026 03:58:44 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 29 2026 12:58:24 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>

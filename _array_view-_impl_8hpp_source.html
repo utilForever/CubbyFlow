@@ -200,7 +200,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="foldopen" id="foldopen00080" data-start="{" data-end="}">
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno"><a class="line" href="class_cubby_flow_1_1_array_view.html#ab303a82778a420f6b3d7b17f46f0f4a5">   80</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="class_cubby_flow_1_1_array_view.html#a0c0438431de74e1fc07794a89263cdf1">ArrayView&lt;T, N&gt;::Set</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_cubby_flow_1_1_array_view.html">ArrayView</a>&amp; <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">other</a>)</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>{</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    Base::SetPtrAndSize(<span class="keyword">const_cast&lt;</span><a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">T</a>*<span class="keyword">&gt;</span>(<a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">other</a>.<a class="code hl_function" href="class_cubby_flow_1_1_matrix.html#a6bf345dea05de815f65f1f3827802c3f">data</a>()), <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">other</a>.Size());</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    Base::SetPtrAndSize(<a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">other</a>.m_ptr, <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">other</a>.Size());</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>}</div>
 </div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
@@ -209,7 +209,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="class_cubby_flow_1_1_array_view.html#a6accb73c92e061f89007d4d99c58199a">   86</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="class_cubby_flow_1_1_array_view.html#a6accb73c92e061f89007d4d99c58199a">ArrayView&lt;T, N&gt;::Fill</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">T</a>&amp; <a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">val</a>)</div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>{</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <a class="code hl_function" href="namespace_cubby_flow.html#a086d69addbfd3f31d5c3e2dca683aa83">ForEachIndex</a>(<a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">Vector&lt;size_t, N&gt;</a>{}, m_size,</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>                 [&amp;](<span class="keyword">auto</span>... <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">idx</a>) { this-&gt;At(<a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">idx</a>...) = <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">val</a>; });</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>                 [<span class="keyword">this</span>, &amp;<a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">val</a>](<span class="keyword">auto</span>... <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">idx</a>) { this-&gt;At(<a class="code hl_class" href="class_cubby_flow_1_1_matrix.html">idx</a>...) = <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">val</a>; });</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>}</div>
 </div>
 </div>
@@ -344,7 +344,7 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 27 2026 03:58:44 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 29 2026 12:58:24 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>

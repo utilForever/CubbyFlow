@@ -106,9 +106,12 @@ Inheritance diagram for CubbyFlow::SphericalPointsToImplicit3:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad8cda2791031166566684006ff7d24a3" id="r_ad8cda2791031166566684006ff7d24a3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_spherical_points_to_implicit3.html#ad8cda2791031166566684006ff7d24a3">SphericalPointsToImplicit3</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> radius=1.0, <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">bool</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">isOutputSDF</a>=<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">true</a>)</td></tr>
-<tr class="memdesc:ad8cda2791031166566684006ff7d24a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs the converter with given sphere radius.  <br /></td></tr>
-<tr class="separator:ad8cda2791031166566684006ff7d24a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d8589bc3cf90bb6080aed4ff990b6eb" id="r_a0d8589bc3cf90bb6080aed4ff990b6eb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_spherical_points_to_implicit3.html#a0d8589bc3cf90bb6080aed4ff990b6eb">SphericalPointsToImplicit3</a> ()</td></tr>
+<tr class="memdesc:a0d8589bc3cf90bb6080aed4ff990b6eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs the converter with default parameters.  <br /></td></tr>
+<tr class="separator:a0d8589bc3cf90bb6080aed4ff990b6eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a861e91bbb61342089fc3ce402f914eab" id="r_a861e91bbb61342089fc3ce402f914eab"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_spherical_points_to_implicit3.html#a861e91bbb61342089fc3ce402f914eab">SphericalPointsToImplicit3</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> radius, <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">bool</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">isOutputSDF</a>=<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">true</a>)</td></tr>
+<tr class="memdesc:a861e91bbb61342089fc3ce402f914eab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs the converter with given sphere radius.  <br /></td></tr>
+<tr class="separator:a861e91bbb61342089fc3ce402f914eab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0b2f487dc3620ad68104030e66d69de" id="r_ab0b2f487dc3620ad68104030e66d69de"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_spherical_points_to_implicit3.html#ab0b2f487dc3620ad68104030e66d69de">Convert</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a6c7e5a4d20594fa6e144e3d10fc1c7de">ConstArrayView1</a>&lt; <a class="el" href="namespace_cubby_flow.html#a7a0f165a2c76a196c9e23978ff7f2dcb">Vector3D</a> &gt; &amp;points, <a class="el" href="namespace_cubby_flow.html#a407ff38caabd6f0bcd6d44d367fcb8c5">ScalarGrid3</a> *<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">output</a>) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">override</a></td></tr>
 <tr class="memdesc:ab0b2f487dc3620ad68104030e66d69de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the given points to implicit surface scalar field.  <br /></td></tr>
 <tr class="separator:ab0b2f487dc3620ad68104030e66d69de"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -135,17 +138,47 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>3-D points-to-implicit converter based on simple sphere model. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ad8cda2791031166566684006ff7d24a3" name="ad8cda2791031166566684006ff7d24a3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad8cda2791031166566684006ff7d24a3">&#9670;&#160;</a></span>SphericalPointsToImplicit3()</h2>
+<a id="a0d8589bc3cf90bb6080aed4ff990b6eb" name="a0d8589bc3cf90bb6080aed4ff990b6eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d8589bc3cf90bb6080aed4ff990b6eb">&#9670;&#160;</a></span>SphericalPointsToImplicit3() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">CubbyFlow::SphericalPointsToImplicit3::SphericalPointsToImplicit3 </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs the converter with default parameters. </p>
+
+</div>
+</div>
+<a id="a861e91bbb61342089fc3ce402f914eab" name="a861e91bbb61342089fc3ce402f914eab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a861e91bbb61342089fc3ce402f914eab">&#9670;&#160;</a></span>SphericalPointsToImplicit3() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">CubbyFlow::SphericalPointsToImplicit3::SphericalPointsToImplicit3 </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td>
-          <td class="paramname"><em>radius</em> = <code>1.0</code>, </td>
+          <td class="paramname"><em>radius</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -159,6 +192,11 @@ Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Constructs the converter with given sphere radius. </p>
@@ -218,7 +256,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 27 2026 03:58:45 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 29 2026 12:58:25 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>
