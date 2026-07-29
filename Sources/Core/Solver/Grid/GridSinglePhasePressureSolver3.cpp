@@ -145,8 +145,8 @@ void ApplyPressureGradientAt(size_t i, size_t j, size_t k,
                              const ConstArrayView3<double>& u,
                              const ConstArrayView3<double>& v,
                              const ConstArrayView3<double>& w,
-                             ArrayView3<double> u0, ArrayView3<double> v0,
-                             ArrayView3<double> w0, const Vector3D& invH,
+                             ArrayView3<double>& u0, ArrayView3<double>& v0,
+                             ArrayView3<double>& w0, const Vector3D& invH,
                              const FDMVector3& pressure)
 {
     if (markers(i, j, k) != FLUID)

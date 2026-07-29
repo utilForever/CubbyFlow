@@ -68,8 +68,8 @@ void ApplyPressureGradientAt(
     const Array3<double>& fluidSDF, const Array3<double>& uWeights,
     const Array3<double>& vWeights, const Array3<double>& wWeights,
     const ConstArrayView3<double>& u, const ConstArrayView3<double>& v,
-    const ConstArrayView3<double>& w, ArrayView3<double> u0,
-    ArrayView3<double> v0, ArrayView3<double> w0, const Vector3D& invH,
+    const ConstArrayView3<double>& w, ArrayView3<double>& u0,
+    ArrayView3<double>& v0, ArrayView3<double>& w0, const Vector3D& invH,
     const FDMVector3& pressure)
 {
     const double centerPhi = fluidSDF(i, j, k);

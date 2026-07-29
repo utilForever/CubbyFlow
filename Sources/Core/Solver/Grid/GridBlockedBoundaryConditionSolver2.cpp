@@ -20,8 +20,8 @@ static void ConstrainVelocityAt(size_t i, size_t j, const Array2<char>& marker,
                                 const Vector2UZ& size,
                                 const GridDataPositionFunc<2>& uPos,
                                 const GridDataPositionFunc<2>& vPos,
-                                const Collider2& collider, ArrayView2<double> u,
-                                ArrayView2<double> v)
+                                const Collider2& collider,
+                                ArrayView2<double>& u, ArrayView2<double>& v)
 {
     if (marker(i, j) != COLLIDER)
     {

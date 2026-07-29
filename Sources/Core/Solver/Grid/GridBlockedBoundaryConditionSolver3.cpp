@@ -16,14 +16,12 @@ namespace CubbyFlow
 static const char FLUID = 1;
 static const char COLLIDER = 0;
 
-static void ConstrainVelocityAt(size_t i, size_t j, size_t k,
-                                const Array3<char>& marker,
-                                const Vector3UZ& size,
-                                const GridDataPositionFunc<3>& uPos,
-                                const GridDataPositionFunc<3>& vPos,
-                                const GridDataPositionFunc<3>& wPos,
-                                const Collider3& collider, ArrayView3<double> u,
-                                ArrayView3<double> v, ArrayView3<double> w)
+static void ConstrainVelocityAt(
+    size_t i, size_t j, size_t k, const Array3<char>& marker,
+    const Vector3UZ& size, const GridDataPositionFunc<3>& uPos,
+    const GridDataPositionFunc<3>& vPos, const GridDataPositionFunc<3>& wPos,
+    const Collider3& collider, ArrayView3<double>& u, ArrayView3<double>& v,
+    ArrayView3<double>& w)
 {
     if (marker(i, j, k) != COLLIDER)
     {
