@@ -17,6 +17,25 @@
 
 namespace CubbyFlow
 {
+static Vector3D ProjectVelocityToCollider(const Vector3D& point,
+                                          const FaceCenteredGrid3& velocity,
+                                          const ScalarField3& colliderSDF,
+                                          const Collider3& collider)
+{
+    const Vector3D colliderVelocity = collider.VelocityAt(point);
+    const Vector3D gradient = colliderSDF.Gradient(point);
+    if (gradient.LengthSquared() == 0.0)
+    {
+        return colliderVelocity;
+    }
+
+    const Vector3D relativeVelocity = velocity.Sample(point) - colliderVelocity;
+    const Vector3D normal = gradient.Normalized();
+    return ProjectAndApplyFriction(relativeVelocity, normal,
+                                   collider.GetFrictionCoefficient()) +
+           colliderVelocity;
+}
+
 void GridFractionalBoundaryConditionSolver3::ConstrainVelocity(
     FaceCenteredGrid3* velocity, unsigned int extrapolationDepth)
 {
@@ -121,94 +140,40 @@ void GridFractionalBoundaryConditionSolver3::ConstrainVelocity(
     velocity->ParallelForEachUIndex(
         [&uPos, this, &velocity, &uTemp, &u](const Vector3UZ& idx) {
             const Vector3D pt = uPos(idx);
-
-            if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-            {
-                const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-                const Vector3D vel = velocity->Sample(pt);
-                const Vector3D g = m_colliderSDF->Gradient(pt);
-
-                if (g.LengthSquared() > 0.0)
-                {
-                    const Vector3D n = g.Normalized();
-                    const Vector3D velr = vel - colliderVel;
-                    const Vector3D velt = ProjectAndApplyFriction(
-                        velr, n, GetCollider()->GetFrictionCoefficient());
-                    const Vector3D velp = velt + colliderVel;
-
-                    uTemp(idx) = velp.x;
-                }
-                else
-                {
-                    uTemp(idx) = colliderVel.x;
-                }
-            }
-            else
+            if (!IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
                 uTemp(idx) = u(idx);
+                return;
             }
+            uTemp(idx) = ProjectVelocityToCollider(
+                             pt, *velocity, *m_colliderSDF, *GetCollider())
+                             .x;
         });
 
     velocity->ParallelForEachVIndex(
         [&vPos, this, &velocity, &vTemp, &v](const Vector3UZ& idx) {
             const Vector3D pt = vPos(idx);
-
-            if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-            {
-                const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-                const Vector3D vel = velocity->Sample(pt);
-                const Vector3D g = m_colliderSDF->Gradient(pt);
-
-                if (g.LengthSquared() > 0.0)
-                {
-                    const Vector3D n = g.Normalized();
-                    const Vector3D velr = vel - colliderVel;
-                    const Vector3D velt = ProjectAndApplyFriction(
-                        velr, n, GetCollider()->GetFrictionCoefficient());
-                    const Vector3D velp = velt + colliderVel;
-
-                    vTemp(idx) = velp.y;
-                }
-                else
-                {
-                    vTemp(idx) = colliderVel.y;
-                }
-            }
-            else
+            if (!IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
                 vTemp(idx) = v(idx);
+                return;
             }
+            vTemp(idx) = ProjectVelocityToCollider(
+                             pt, *velocity, *m_colliderSDF, *GetCollider())
+                             .y;
         });
 
     velocity->ParallelForEachWIndex(
         [&wPos, this, &velocity, &wTemp, &w](const Vector3UZ& idx) {
             const Vector3D pt = wPos(idx);
-
-            if (IsInsideSDF(m_colliderSDF->Sample(pt)))
-            {
-                const Vector3D colliderVel = GetCollider()->VelocityAt(pt);
-                const Vector3D vel = velocity->Sample(pt);
-                const Vector3D g = m_colliderSDF->Gradient(pt);
-
-                if (g.LengthSquared() > 0.0)
-                {
-                    const Vector3D n = g.Normalized();
-                    const Vector3D velr = vel - colliderVel;
-                    const Vector3D velt = ProjectAndApplyFriction(
-                        velr, n, GetCollider()->GetFrictionCoefficient());
-                    const Vector3D velp = velt + colliderVel;
-
-                    wTemp(idx) = velp.z;
-                }
-                else
-                {
-                    wTemp(idx) = colliderVel.z;
-                }
-            }
-            else
+            if (!IsInsideSDF(m_colliderSDF->Sample(pt)))
             {
                 wTemp(idx) = w(idx);
+                return;
             }
+            wTemp(idx) = ProjectVelocityToCollider(
+                             pt, *velocity, *m_colliderSDF, *GetCollider())
+                             .z;
         });
 
     // Transfer results
