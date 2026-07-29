@@ -39,10 +39,12 @@ void AddXTerms(size_t i, size_t j, const MatrixRowData2& data,
     if (i + 1 < data.size.x)
     {
         const char marker = data.markers(i + 1, j);
+
         if (AddsCenter(marker, data.isDirichlet))
         {
             row->center += data.c.x;
         }
+
         if (marker == FLUID)
         {
             row->right -= data.c.x;
@@ -61,10 +63,12 @@ void AddYTerms(size_t i, size_t j, const MatrixRowData2& data,
     if (j + 1 < data.size.y)
     {
         const char marker = data.markers(i, j + 1);
+
         if (AddsCenter(marker, data.isDirichlet))
         {
             row->center += data.c.y;
         }
+
         if (marker == FLUID)
         {
             row->up -= data.c.y;
@@ -89,6 +93,7 @@ FDMMatrixRow2 BuildMatrixRow(size_t i, size_t j, const MatrixRowData2& data)
 
     AddXTerms(i, j, data, &row);
     AddYTerms(i, j, data, &row);
+
     return row;
 }
 

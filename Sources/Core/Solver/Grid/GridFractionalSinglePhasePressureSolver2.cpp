@@ -108,6 +108,7 @@ void ApplyPressureGradientAt(size_t i, size_t j,
                              const PressureGradientData2& data)
 {
     const double centerPhi = data.fluidSDF(i, j);
+
     ApplyUGradient(i, j, centerPhi, data);
     ApplyVGradient(i, j, centerPhi, data);
 }
@@ -280,6 +281,7 @@ PressureRow2 BuildPressureRow(
     AddXTerms(i, j, centerPhi, data, &row);
     AddYTerms(i, j, centerPhi, data, &row);
     AddBoundaryVelocity(i, j, data, &row);
+
     if (row.center < std::numeric_limits<double>::epsilon())
     {
         row.center = 1.0;

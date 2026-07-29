@@ -79,6 +79,7 @@ class FDMLinearSystemSolverTestHelper3
     {
         explicit CompressedRow(size_t centerIndex) : columns{ centerIndex }
         {
+            // Do nothing
         }
 
         void AddNeighbor(size_t index)
@@ -101,6 +102,7 @@ class FDMLinearSystemSolverTestHelper3
         {
             row->AddNeighbor(acc.Index(index.x - 1, index.y, index.z));
         }
+
         if (index.x + 1 < size.x)
         {
             row->AddNeighbor(acc.Index(index.x + 1, index.y, index.z));
