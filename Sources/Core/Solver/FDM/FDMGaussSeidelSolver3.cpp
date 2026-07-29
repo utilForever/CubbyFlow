@@ -14,31 +14,50 @@ namespace CubbyFlow
 {
 namespace
 {
-void RelaxRange(const FDMMatrix3& A, const FDMVector3& b, double sorFactor,
-                FDMVector3* x, const Vector3UZ& size, size_t color,
-                size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-                size_t kBegin, size_t kEnd)
+struct RelaxData3
 {
-    for (size_t k = kBegin; k < kEnd; ++k)
-    {
-        for (size_t j = jBegin; j < jEnd; ++j)
-        {
-            for (size_t i = (color + j + k) % 2 + iBegin; i < iEnd; i += 2)
-            {
-                const double r =
-                    ((i > 0) ? A(i - 1, j, k).right * (*x)(i - 1, j, k) : 0.0) +
-                    ((i + 1 < size.x) ? A(i, j, k).right * (*x)(i + 1, j, k)
-                                      : 0.0) +
-                    ((j > 0) ? A(i, j - 1, k).up * (*x)(i, j - 1, k) : 0.0) +
-                    ((j + 1 < size.y) ? A(i, j, k).up * (*x)(i, j + 1, k)
-                                      : 0.0) +
-                    ((k > 0) ? A(i, j, k - 1).front * (*x)(i, j, k - 1) : 0.0) +
-                    ((k + 1 < size.z) ? A(i, j, k).front * (*x)(i, j, k + 1)
-                                      : 0.0);
+    const FDMMatrix3& A;
+    const FDMVector3& b;
+    double sorFactor;
+    FDMVector3* x;
+    Vector3UZ size;
+};
 
-                (*x)(i, j, k) =
-                    (1.0 - sorFactor) * (*x)(i, j, k) +
-                    sorFactor * (b(i, j, k) - r) / A(i, j, k).center;
+double NeighborSum(size_t i, size_t j, size_t k, const RelaxData3& data)
+{
+    return ((i > 0) ? data.A(i - 1, j, k).right * (*data.x)(i - 1, j, k)
+                    : 0.0) +
+           ((i + 1 < data.size.x)
+                ? data.A(i, j, k).right * (*data.x)(i + 1, j, k)
+                : 0.0) +
+           ((j > 0) ? data.A(i, j - 1, k).up * (*data.x)(i, j - 1, k) : 0.0) +
+           ((j + 1 < data.size.y) ? data.A(i, j, k).up * (*data.x)(i, j + 1, k)
+                                  : 0.0) +
+           ((k > 0) ? data.A(i, j, k - 1).front * (*data.x)(i, j, k - 1)
+                    : 0.0) +
+           ((k + 1 < data.size.z)
+                ? data.A(i, j, k).front * (*data.x)(i, j, k + 1)
+                : 0.0);
+}
+
+void RelaxPoint(size_t i, size_t j, size_t k, const RelaxData3& data)
+{
+    const double residual = NeighborSum(i, j, k, data);
+    (*data.x)(i, j, k) =
+        (1.0 - data.sorFactor) * (*data.x)(i, j, k) +
+        data.sorFactor * (data.b(i, j, k) - residual) / data.A(i, j, k).center;
+}
+
+void RelaxRange(const RelaxData3& data, size_t color, const Vector3UZ& begin,
+                const Vector3UZ& end)
+{
+    for (size_t k = begin.z; k < end.z; ++k)
+    {
+        for (size_t j = begin.y; j < end.y; ++j)
+        {
+            for (size_t i = (color + j + k) % 2 + begin.x; i < end.x; i += 2)
+            {
+                RelaxPoint(i, j, k, data);
             }
         }
     }
@@ -227,16 +246,16 @@ void FDMGaussSeidelSolver3::RelaxRedBlack(const FDMMatrix3& A,
 {
     Vector3UZ size = A.Size();
     FDMVector3& xRef = *x;
+    const RelaxData3 data{ A, b, sorFactor, &xRef, size };
 
     for (size_t color = 0; color < 2; ++color)
     {
         ParallelRangeFor(
             ZERO_SIZE, size.x, ZERO_SIZE, size.y, ZERO_SIZE, size.z,
-            [&A, &xRef, &size, &sorFactor, &b, &color](
-                size_t iBegin, size_t iEnd, size_t jBegin, size_t jEnd,
-                size_t kBegin, size_t kEnd) {
-                RelaxRange(A, b, sorFactor, &xRef, size, color, iBegin, iEnd,
-                           jBegin, jEnd, kBegin, kEnd);
+            [&data, color](size_t iBegin, size_t iEnd, size_t jBegin,
+                           size_t jEnd, size_t kBegin, size_t kEnd) {
+                RelaxRange(data, color, { iBegin, jBegin, kBegin },
+                           { iEnd, jEnd, kEnd });
             });
     }
 }
