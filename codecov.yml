@@ -22,11 +22,9 @@ ignore:
 - "Documents/**/*"
 - "Examples/ClaraUtils.hpp"
 - "Examples/**/*"
-- "Includes/API/**/*"
 - "Medias/**/*"
 - "Resources/**/*"
 - "Scripts/**/*"
-- "Sources/API/**/*"
 - "Tests/**/*"
 
 comment:

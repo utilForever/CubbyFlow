@@ -46,6 +46,10 @@ jobs:
       run: cd build && make
     - name: Run Unit Test
       run: /home/runner/work/CubbyFlow/CubbyFlow/build/bin/UnitTests
+    - name: Run Python Test
+      run: |
+        python -m pip install --require-hashes --only-binary :all: -r requirements.txt
+        PYTHONPATH="${GITHUB_WORKSPACE}/build/lib" python -m pytest Tests/PythonTests/
     - name: Collect coverage report
       run: |
         GCOV_TOOL="$(command -v gcov-${{ matrix.version }})"

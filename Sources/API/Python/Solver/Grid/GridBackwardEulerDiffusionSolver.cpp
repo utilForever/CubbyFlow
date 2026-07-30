@@ -62,11 +62,11 @@ void AddGridBackwardEulerDiffusionSolver2(pybind11::module& m)
 
                 if (kwargs.contains("boundarySDF"))
                 {
-                    boundarySDF = kwargs.cast<ScalarField2Ptr>();
+                    boundarySDF = kwargs["boundarySDF"].cast<ScalarField2Ptr>();
                 }
                 if (kwargs.contains("fluidSDF"))
                 {
-                    fluidSDF = kwargs.cast<ScalarField2Ptr>();
+                    fluidSDF = kwargs["fluidSDF"].cast<ScalarField2Ptr>();
                 }
 
                 if (sourceSG != nullptr && destSG != nullptr)
@@ -156,11 +156,11 @@ void AddGridBackwardEulerDiffusionSolver3(pybind11::module& m)
 
                 if (kwargs.contains("boundarySDF"))
                 {
-                    boundarySDF = kwargs.cast<ScalarField3Ptr>();
+                    boundarySDF = kwargs["boundarySDF"].cast<ScalarField3Ptr>();
                 }
                 if (kwargs.contains("fluidSDF"))
                 {
-                    fluidSDF = kwargs.cast<ScalarField3Ptr>();
+                    fluidSDF = kwargs["fluidSDF"].cast<ScalarField3Ptr>();
                 }
 
                 if (sourceSG != nullptr && destSG != nullptr)
