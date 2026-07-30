@@ -157,6 +157,9 @@ def test_face_centered_grid3():
         restored.Sample((0.5, 0.5, 0.5)), (0.5, 0.5, 0.5)
     )
 
+
+def test_face_centered_grid3_set():
+    grid = pyCubbyFlow.FaceCenteredGrid3((2, 2, 2))
     grid.SetU((0, 0, 0), 3)
     grid.SetV((0, 0, 0), 4)
     grid.SetW((0, 0, 0), 5)
