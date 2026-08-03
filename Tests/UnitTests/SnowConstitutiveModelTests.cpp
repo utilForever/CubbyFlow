@@ -204,48 +204,57 @@ void ExpectInvalidStatesRejected()
 }
 }  // namespace
 
-#define EXPECT_FOR_2D_AND_3D(function) \
-    function<2>();                     \
-    function<3>()
+#define RUN_FOR_2D_AND_3D(function) \
+    do                              \
+    {                               \
+        {                           \
+            SCOPED_TRACE("N = 2");  \
+            function<2>();          \
+        }                           \
+        {                           \
+            SCOPED_TRACE("N = 3");  \
+            function<3>();          \
+        }                           \
+    } while (false)
 
 TEST(SnowConstitutiveModel, Identity)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectIdentityStateAndZeroStress);
+    RUN_FOR_2D_AND_3D(ExpectIdentityStateAndZeroStress);
 }
 
 TEST(SnowConstitutiveModel, ElasticDeformation)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectElasticDeformationUnchanged);
+    RUN_FOR_2D_AND_3D(ExpectElasticDeformationUnchanged);
 }
 
 TEST(SnowConstitutiveModel, IncrementAppliedOnLeft)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectIncrementAppliedOnLeft);
+    RUN_FOR_2D_AND_3D(ExpectIncrementAppliedOnLeft);
 }
 
 TEST(SnowConstitutiveModel, RigidRotationStress)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectRigidRotationHasZeroStress);
+    RUN_FOR_2D_AND_3D(ExpectRigidRotationHasZeroStress);
 }
 
 TEST(SnowConstitutiveModel, ElasticStress)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectKnownElasticStress);
+    RUN_FOR_2D_AND_3D(ExpectKnownElasticStress);
 }
 
 TEST(SnowConstitutiveModel, Compression)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectCompressionClamped);
+    RUN_FOR_2D_AND_3D(ExpectCompressionClamped);
 }
 
 TEST(SnowConstitutiveModel, Stretch)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectStretchClamped);
+    RUN_FOR_2D_AND_3D(ExpectStretchClamped);
 }
 
 TEST(SnowConstitutiveModel, PlasticProjection)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectProjectionPreservesTotalDeformation);
+    RUN_FOR_2D_AND_3D(ExpectProjectionPreservesTotalDeformation);
 }
 
 TEST(SnowConstitutiveModel, MultiAxisProjection3D)
@@ -266,17 +275,17 @@ TEST(SnowConstitutiveModel, MultiAxisProjection3D)
 
 TEST(SnowConstitutiveModel, Hardening)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectPlasticCompressionHardens);
+    RUN_FOR_2D_AND_3D(ExpectPlasticCompressionHardens);
 }
 
 TEST(SnowConstitutiveModel, RotatedStretchProjectionAndSoftening)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectRotatedStretchProjectsAndSoftens);
+    RUN_FOR_2D_AND_3D(ExpectRotatedStretchProjectsAndSoftens);
 }
 
 TEST(SnowConstitutiveModel, InvalidState)
 {
-    EXPECT_FOR_2D_AND_3D(ExpectInvalidStatesRejected);
+    RUN_FOR_2D_AND_3D(ExpectInvalidStatesRejected);
 }
 
 TEST(SnowConstitutiveModel, InvalidParameters)
