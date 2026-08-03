@@ -202,6 +202,19 @@ void ExpectInvalidStatesRejected()
         (void)SnowConstitutiveModel<N>{}.ComputeKirchhoffStress(inverted),
         std::invalid_argument);
 }
+
+template <size_t N>
+void ExpectInvalidParametersRejected()
+{
+    EXPECT_THROW(SnowConstitutiveModel<N>{ 0.0 }, std::invalid_argument);
+    EXPECT_THROW((SnowConstitutiveModel<N>{ 1.0, 0.5 }), std::invalid_argument);
+    EXPECT_THROW((SnowConstitutiveModel<N>{ 1.0, 0.2, 1.0 }),
+                 std::invalid_argument);
+    EXPECT_THROW((SnowConstitutiveModel<N>{ 1.0, 0.2, 0.1, -0.1 }),
+                 std::invalid_argument);
+    EXPECT_THROW((SnowConstitutiveModel<N>{ 1.0, 0.2, 0.1, 0.1, -1.0 }),
+                 std::invalid_argument);
+}
 }  // namespace
 
 #define RUN_FOR_2D_AND_3D(function) \
@@ -290,12 +303,5 @@ TEST(SnowConstitutiveModel, InvalidState)
 
 TEST(SnowConstitutiveModel, InvalidParameters)
 {
-    EXPECT_THROW(SnowConstitutiveModel2{ 0.0 }, std::invalid_argument);
-    EXPECT_THROW((SnowConstitutiveModel2{ 1.0, 0.5 }), std::invalid_argument);
-    EXPECT_THROW((SnowConstitutiveModel2{ 1.0, 0.2, 1.0 }),
-                 std::invalid_argument);
-    EXPECT_THROW((SnowConstitutiveModel2{ 1.0, 0.2, 0.1, -0.1 }),
-                 std::invalid_argument);
-    EXPECT_THROW((SnowConstitutiveModel2{ 1.0, 0.2, 0.1, 0.1, -1.0 }),
-                 std::invalid_argument);
+    RUN_FOR_2D_AND_3D(ExpectInvalidParametersRejected);
 }
