@@ -14,6 +14,7 @@
 #include <Core/Math/SVD.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <stdexcept>
 
@@ -25,20 +26,36 @@ SnowConstitutiveModel<N>::SnowConstitutiveModel(double youngsModulus,
                                                 double criticalCompression,
                                                 double criticalStretch,
                                                 double hardeningCoefficient)
-    : m_mu0(youngsModulus / (2.0 * (1.0 + poissonRatio))),
-      m_lambda0(youngsModulus * poissonRatio /
-                ((1.0 + poissonRatio) * (1.0 - 2.0 * poissonRatio))),
+    : m_mu0(0.0),
+      m_lambda0(0.0),
       m_criticalCompression(criticalCompression),
       m_criticalStretch(criticalStretch),
       m_hardeningCoefficient(hardeningCoefficient)
 {
-    if (!std::isfinite(youngsModulus) || youngsModulus <= 0.0 ||
-        !std::isfinite(poissonRatio) || poissonRatio <= -1.0 ||
-        poissonRatio >= 0.5 || !std::isfinite(criticalCompression) ||
-        criticalCompression < 0.0 || criticalCompression >= 1.0 ||
-        !std::isfinite(criticalStretch) || criticalStretch < 0.0 ||
-        !std::isfinite(hardeningCoefficient) || hardeningCoefficient < 0.0 ||
-        !std::isfinite(m_mu0) || !std::isfinite(m_lambda0))
+    const std::array parameterChecks = { std::isfinite(youngsModulus),
+                                         youngsModulus > 0.0,
+                                         std::isfinite(poissonRatio),
+                                         poissonRatio > -1.0,
+                                         poissonRatio < 0.5,
+                                         std::isfinite(criticalCompression),
+                                         criticalCompression >= 0.0,
+                                         criticalCompression < 1.0,
+                                         std::isfinite(criticalStretch),
+                                         criticalStretch >= 0.0,
+                                         std::isfinite(hardeningCoefficient),
+                                         hardeningCoefficient >= 0.0 };
+
+    if (!std::ranges::all_of(parameterChecks,
+                             [](bool isValid) { return isValid; }))
+    {
+        throw std::invalid_argument{ "Invalid snow material parameters." };
+    }
+
+    m_mu0 = youngsModulus / (2.0 * (1.0 + poissonRatio));
+    m_lambda0 = youngsModulus * poissonRatio /
+                ((1.0 + poissonRatio) * (1.0 - 2.0 * poissonRatio));
+
+    if (!std::isfinite(m_mu0) || !std::isfinite(m_lambda0))
     {
         throw std::invalid_argument{ "Invalid snow material parameters." };
     }
