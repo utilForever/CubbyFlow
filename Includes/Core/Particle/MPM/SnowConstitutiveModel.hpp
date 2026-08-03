@@ -96,7 +96,7 @@ class SnowConstitutiveModel final
     static void ValidateDeformation(const MatrixType& matrix);
 
     double m_mu0 = 0.0;
-    double m_lambda0;
+    double m_lambda0 = 0.0;
     double m_criticalCompression;
     double m_criticalStretch;
     double m_hardeningCoefficient;
