@@ -141,8 +141,8 @@ SnowConstitutiveModel<N>::ComputeKirchhoffStress(const State& state) const
 template <size_t N>
 bool SnowConstitutiveModel<N>::IsFinite(const MatrixType& matrix)
 {
-    return std::all_of(matrix.begin(), matrix.end(),
-                       [](double value) { return std::isfinite(value); });
+    return std::ranges::all_of(
+        matrix, [](double value) { return std::isfinite(value); });
 }
 
 template <size_t N>
