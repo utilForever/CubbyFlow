@@ -59,6 +59,24 @@ void ExpectElasticDeformationUnchanged()
 }
 
 template <size_t N>
+void ExpectIncrementAppliedOnLeft()
+{
+    SnowDeformationState<N> state;
+    state.elastic = MakeStretch<N>(1.005);
+
+    const auto updated =
+        SnowConstitutiveModel<N>{}.Update(MakeQuarterTurn<N>(), state);
+
+    MatrixD<N> expected = MatrixD<N>::MakeIdentity();
+    expected(0, 0) = expected(1, 1) = 0.0;
+    expected(0, 1) = -1.0;
+    expected(1, 0) = 1.005;
+
+    EXPECT_TRUE(updated.elastic.IsSimilar(expected, 1e-10));
+    EXPECT_TRUE(updated.plastic.IsSimilar(MatrixD<N>::MakeIdentity(), 1e-10));
+}
+
+template <size_t N>
 void ExpectRigidRotationHasZeroStress()
 {
     SnowDeformationState<N> state;
@@ -196,6 +214,11 @@ TEST(SnowConstitutiveModel, Identity)
 TEST(SnowConstitutiveModel, ElasticDeformation)
 {
     EXPECT_FOR_2D_AND_3D(ExpectElasticDeformationUnchanged);
+}
+
+TEST(SnowConstitutiveModel, IncrementAppliedOnLeft)
+{
+    EXPECT_FOR_2D_AND_3D(ExpectIncrementAppliedOnLeft);
 }
 
 TEST(SnowConstitutiveModel, RigidRotationStress)
