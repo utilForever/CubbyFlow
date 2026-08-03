@@ -30,20 +30,20 @@ SnowConstitutiveModel<N>::SnowConstitutiveModel(double youngsModulus,
       m_criticalStretch(criticalStretch),
       m_hardeningCoefficient(hardeningCoefficient)
 {
-    const std::array parameterChecks = { std::isfinite(youngsModulus),
-                                         youngsModulus > 0.0,
-                                         std::isfinite(poissonRatio),
-                                         poissonRatio > -1.0,
-                                         poissonRatio < 0.5,
-                                         std::isfinite(criticalCompression),
-                                         criticalCompression >= 0.0,
-                                         criticalCompression < 1.0,
-                                         std::isfinite(criticalStretch),
-                                         criticalStretch >= 0.0,
-                                         std::isfinite(hardeningCoefficient),
-                                         hardeningCoefficient >= 0.0 };
-
-    if (!std::ranges::all_of(parameterChecks,
+    if (const std::array parameterChecks = { std::isfinite(youngsModulus),
+                                             youngsModulus > 0.0,
+                                             std::isfinite(poissonRatio),
+                                             poissonRatio > -1.0,
+                                             poissonRatio < 0.5,
+                                             std::isfinite(criticalCompression),
+                                             criticalCompression >= 0.0,
+                                             criticalCompression < 1.0,
+                                             std::isfinite(criticalStretch),
+                                             criticalStretch >= 0.0,
+                                             std::isfinite(
+                                                 hardeningCoefficient),
+                                             hardeningCoefficient >= 0.0 };
+        !std::ranges::all_of(parameterChecks,
                              [](bool isValid) { return isValid; }))
     {
         throw std::invalid_argument{ "Invalid snow material parameters." };
