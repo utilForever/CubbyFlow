@@ -142,6 +142,31 @@ void ExpectPlasticCompressionHardens()
 }
 
 template <size_t N>
+void ExpectRotatedStretchProjectsAndSoftens()
+{
+    const SnowConstitutiveModel<N> model{ 1000.0, 0.2, 0.025, 0.0075, 10.0 };
+    const auto rotation = MakeQuarterTurn<N>();
+    const MatrixD<N> deformation = rotation * MakeStretch<N>(1.1);
+    const MatrixD<N> expectedElastic = rotation * MakeStretch<N>(1.0075);
+    const auto updated = model.Update(deformation, {});
+
+    EXPECT_TRUE(updated.elastic.IsSimilar(expectedElastic, 1e-10));
+    EXPECT_TRUE(
+        (updated.elastic * updated.plastic).IsSimilar(deformation, 1e-10));
+
+    auto unpacked = updated;
+    unpacked.plastic = MatrixD<N>::MakeIdentity();
+
+    const double plasticDeterminant = updated.plastic.Determinant();
+    const auto unpackedStress = model.ComputeKirchhoffStress(unpacked);
+    const auto softenedStress = model.ComputeKirchhoffStress(updated);
+
+    EXPECT_GT(plasticDeterminant, 1.0);
+    EXPECT_NEAR(softenedStress.FrobeniusNorm() / unpackedStress.FrobeniusNorm(),
+                std::exp(10.0 * (1.0 - plasticDeterminant)), 1e-10);
+}
+
+template <size_t N>
 void ExpectInvalidStatesRejected()
 {
     auto nonFinite = MatrixD<N>::MakeIdentity();
@@ -217,6 +242,11 @@ TEST(SnowConstitutiveModel, MultiAxisProjection3D)
 TEST(SnowConstitutiveModel, Hardening)
 {
     EXPECT_FOR_2D_AND_3D(ExpectPlasticCompressionHardens);
+}
+
+TEST(SnowConstitutiveModel, RotatedStretchProjectionAndSoftening)
+{
+    EXPECT_FOR_2D_AND_3D(ExpectRotatedStretchProjectsAndSoftens);
 }
 
 TEST(SnowConstitutiveModel, InvalidState)
