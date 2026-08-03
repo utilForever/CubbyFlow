@@ -1,0 +1,144 @@
+// This code is based on Jet framework.
+// Copyright (c) 2018 Doyub Kim
+// CubbyFlow is voxel-based fluid simulation engine for computer games.
+// Copyright (c) 2020 CubbyFlow Team
+// Core Part: Chris Ohk, Junwoo Hwang, Jihong Sin, Seungwoo Yoo
+// AI Part: Dongheon Cho, Minseo Kim
+// We are making my contributions/submissions to this project solely in our
+// personal capacity and are not conveying any rights to any intellectual
+// property of any third parties.
+
+#ifndef CUBBYFLOW_SNOW_CONSTITUTIVE_MODEL_IMPL_HPP
+#define CUBBYFLOW_SNOW_CONSTITUTIVE_MODEL_IMPL_HPP
+
+#include <Core/Math/SVD.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+
+namespace CubbyFlow
+{
+template <size_t N>
+SnowConstitutiveModel<N>::SnowConstitutiveModel(double youngsModulus,
+                                                double poissonRatio,
+                                                double criticalCompression,
+                                                double criticalStretch,
+                                                double hardeningCoefficient)
+    : m_mu0(youngsModulus / (2.0 * (1.0 + poissonRatio))),
+      m_lambda0(youngsModulus * poissonRatio /
+                ((1.0 + poissonRatio) * (1.0 - 2.0 * poissonRatio))),
+      m_criticalCompression(criticalCompression),
+      m_criticalStretch(criticalStretch),
+      m_hardeningCoefficient(hardeningCoefficient)
+{
+    if (!std::isfinite(youngsModulus) || youngsModulus <= 0.0 ||
+        !std::isfinite(poissonRatio) || poissonRatio <= -1.0 ||
+        poissonRatio >= 0.5 || !std::isfinite(criticalCompression) ||
+        criticalCompression < 0.0 || criticalCompression >= 1.0 ||
+        !std::isfinite(criticalStretch) || criticalStretch < 0.0 ||
+        !std::isfinite(1.0 + criticalStretch) ||
+        !std::isfinite(hardeningCoefficient) || hardeningCoefficient < 0.0 ||
+        !std::isfinite(m_mu0) || !std::isfinite(m_lambda0))
+    {
+        throw std::invalid_argument{ "Invalid snow material parameters." };
+    }
+}
+
+template <size_t N>
+typename SnowConstitutiveModel<N>::State SnowConstitutiveModel<N>::Update(
+    const MatrixType& deformationGradientIncrement, const State& state) const
+{
+    ValidateDeformation(deformationGradientIncrement);
+    ValidateDeformation(state.elastic);
+    ValidateDeformation(state.plastic);
+
+    const MatrixType trialElastic =
+        deformationGradientIncrement * state.elastic;
+    const MatrixType trialTotal = trialElastic * state.plastic;
+
+    ValidateDeformation(trialElastic);
+    ValidateDeformation(trialTotal);
+
+    MatrixType u;
+    Vector<double, N> singularValues;
+    MatrixType v;
+
+    SVD(trialElastic, u, singularValues, v);
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        singularValues[i] =
+            std::clamp(singularValues[i], 1.0 - m_criticalCompression,
+                       1.0 + m_criticalStretch);
+    }
+
+    State result;
+    result.elastic =
+        u * MatrixType::MakeScaleMatrix(singularValues) * v.Transposed();
+    result.plastic = result.elastic.Inverse() * trialTotal;
+
+    ValidateDeformation(result.elastic);
+    ValidateDeformation(result.plastic);
+
+    return result;
+}
+
+template <size_t N>
+typename SnowConstitutiveModel<N>::MatrixType
+SnowConstitutiveModel<N>::ComputeKirchhoffStress(const State& state) const
+{
+    ValidateDeformation(state.elastic);
+    ValidateDeformation(state.plastic);
+
+    MatrixType u;
+    Vector<double, N> singularValues;
+    MatrixType v;
+
+    SVD(state.elastic, u, singularValues, v);
+
+    const MatrixType rotation = u * v.Transposed();
+    const double elasticDeterminant = state.elastic.Determinant();
+    const double hardening =
+        std::exp(m_hardeningCoefficient * (1.0 - state.plastic.Determinant()));
+
+    if (!std::isfinite(hardening))
+    {
+        throw std::invalid_argument{ "Non-finite snow hardening." };
+    }
+
+    const double mu = m_mu0 * hardening;
+    const double lambda = m_lambda0 * hardening;
+    const MatrixType stress =
+        2.0 * mu * (state.elastic - rotation) * state.elastic.Transposed() +
+        lambda * (elasticDeterminant - 1.0) * elasticDeterminant *
+            MatrixType::MakeIdentity();
+
+    if (!IsFinite(stress))
+    {
+        throw std::invalid_argument{ "Non-finite snow stress." };
+    }
+
+    return stress;
+}
+
+template <size_t N>
+bool SnowConstitutiveModel<N>::IsFinite(const MatrixType& matrix)
+{
+    return std::all_of(matrix.begin(), matrix.end(),
+                       [](double value) { return std::isfinite(value); });
+}
+
+template <size_t N>
+void SnowConstitutiveModel<N>::ValidateDeformation(const MatrixType& matrix)
+{
+    const double determinant = matrix.Determinant();
+
+    if (!IsFinite(matrix) || !std::isfinite(determinant) || determinant <= 0.0)
+    {
+        throw std::invalid_argument{ "Invalid snow deformation gradient." };
+    }
+}
+}  // namespace CubbyFlow
+
+#endif
