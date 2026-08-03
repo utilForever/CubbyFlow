@@ -26,7 +26,8 @@ template <size_t N>
 MatrixD<N> MakeQuarterTurn()
 {
     MatrixD<N> result = MatrixD<N>::MakeIdentity();
-    result(0, 0) = result(1, 1) = 0.0;
+    result(0, 0) = 0.0;
+    result(1, 1) = 0.0;
     result(0, 1) = -1.0;
     result(1, 0) = 1.0;
 
