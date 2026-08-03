@@ -214,6 +214,9 @@ void ExpectInvalidParametersRejected()
                  std::invalid_argument);
     EXPECT_THROW((SnowConstitutiveModel<N>{ 1.0, 0.2, 0.1, 0.1, -1.0 }),
                  std::invalid_argument);
+    EXPECT_THROW(
+        (SnowConstitutiveModel<N>{ std::numeric_limits<double>::max(), 0.49 }),
+        std::invalid_argument);
 }
 
 template <size_t N>
