@@ -37,7 +37,6 @@ SnowConstitutiveModel<N>::SnowConstitutiveModel(double youngsModulus,
         poissonRatio >= 0.5 || !std::isfinite(criticalCompression) ||
         criticalCompression < 0.0 || criticalCompression >= 1.0 ||
         !std::isfinite(criticalStretch) || criticalStretch < 0.0 ||
-        !std::isfinite(1.0 + criticalStretch) ||
         !std::isfinite(hardeningCoefficient) || hardeningCoefficient < 0.0 ||
         !std::isfinite(m_mu0) || !std::isfinite(m_lambda0))
     {
