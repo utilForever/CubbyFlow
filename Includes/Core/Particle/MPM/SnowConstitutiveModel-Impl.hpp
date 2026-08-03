@@ -26,8 +26,7 @@ SnowConstitutiveModel<N>::SnowConstitutiveModel(double youngsModulus,
                                                 double criticalCompression,
                                                 double criticalStretch,
                                                 double hardeningCoefficient)
-    : m_mu0(0.0),
-      m_lambda0(0.0),
+    : m_lambda0(0.0),
       m_criticalCompression(criticalCompression),
       m_criticalStretch(criticalStretch),
       m_hardeningCoefficient(hardeningCoefficient)
