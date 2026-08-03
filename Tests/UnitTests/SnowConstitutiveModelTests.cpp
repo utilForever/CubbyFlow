@@ -215,6 +215,34 @@ void ExpectInvalidParametersRejected()
     EXPECT_THROW((SnowConstitutiveModel<N>{ 1.0, 0.2, 0.1, 0.1, -1.0 }),
                  std::invalid_argument);
 }
+
+template <size_t N>
+void ExpectNonFiniteConstitutiveResponsesRejected()
+{
+    SnowDeformationState<N> state;
+    state.elastic = MakeStretch<N>(1.005);
+    state.plastic = MakeStretch<N>(0.5);
+
+    const SnowConstitutiveModel<N> overflowingHardening{ 1000.0, 0.2, 0.025,
+                                                         0.0075, 2000.0 };
+
+    try
+    {
+        (void)overflowingHardening.ComputeKirchhoffStress(state);
+        FAIL() << "Expected non-finite hardening to be rejected.";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_STREQ(error.what(), "Non-finite snow hardening.");
+    }
+
+    const SnowConstitutiveModel<N> overflowingStress{
+        std::numeric_limits<double>::max(), 0.0, 0.025, 0.0075, 2.0
+    };
+
+    EXPECT_THROW((void)overflowingStress.ComputeKirchhoffStress(state),
+                 std::invalid_argument);
+}
 }  // namespace
 
 #define RUN_FOR_2D_AND_3D(function) \
@@ -299,6 +327,11 @@ TEST(SnowConstitutiveModel, RotatedStretchProjectionAndSoftening)
 TEST(SnowConstitutiveModel, InvalidState)
 {
     RUN_FOR_2D_AND_3D(ExpectInvalidStatesRejected);
+}
+
+TEST(SnowConstitutiveModel, NonFiniteConstitutiveResponse)
+{
+    RUN_FOR_2D_AND_3D(ExpectNonFiniteConstitutiveResponsesRejected);
 }
 
 TEST(SnowConstitutiveModel, InvalidParameters)
