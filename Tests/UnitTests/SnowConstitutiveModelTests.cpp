@@ -69,7 +69,8 @@ void ExpectIncrementAppliedOnLeft()
         SnowConstitutiveModel<N>{}.Update(MakeQuarterTurn<N>(), state);
 
     MatrixD<N> expected = MatrixD<N>::MakeIdentity();
-    expected(0, 0) = expected(1, 1) = 0.0;
+    expected(0, 0) = 0.0;
+    expected(1, 1) = 0.0;
     expected(0, 1) = -1.0;
     expected(1, 0) = 1.005;
 
