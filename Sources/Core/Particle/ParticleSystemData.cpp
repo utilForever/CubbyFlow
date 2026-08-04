@@ -117,30 +117,11 @@ template <size_t N>
 ParticleSystemData<N>& ParticleSystemData<N>::operator=(
     const ParticleSystemData& other)
 {
-    if (this == &other)
+    if (this != &other)
     {
-        return *this;
+        *this = ParticleSystemData(other);
     }
 
-    m_radius = other.m_radius;
-    m_mass = other.m_mass;
-    m_positionIdx = other.m_positionIdx;
-    m_velocityIdx = other.m_velocityIdx;
-    m_forceIdx = other.m_forceIdx;
-    m_numberOfParticles = other.m_numberOfParticles;
-
-    for (auto& data : other.m_scalarDataList)
-    {
-        m_scalarDataList.Append(data);
-    }
-
-    for (auto& data : other.m_vectorDataList)
-    {
-        m_vectorDataList.Append(data);
-    }
-
-    m_neighborSearcher = other.m_neighborSearcher->Clone();
-    m_neighborLists = other.m_neighborLists;
     return *this;
 }
 
@@ -446,25 +427,7 @@ void ParticleSystemData<N>::Deserialize(const std::vector<uint8_t>& buffer)
 template <size_t N>
 void ParticleSystemData<N>::Set(const ParticleSystemData& other)
 {
-    m_radius = other.m_radius;
-    m_mass = other.m_mass;
-    m_positionIdx = other.m_positionIdx;
-    m_velocityIdx = other.m_velocityIdx;
-    m_forceIdx = other.m_forceIdx;
-    m_numberOfParticles = other.m_numberOfParticles;
-
-    for (auto& data : other.m_scalarDataList)
-    {
-        m_scalarDataList.Append(data);
-    }
-
-    for (auto& data : other.m_vectorDataList)
-    {
-        m_vectorDataList.Append(data);
-    }
-
-    m_neighborSearcher = other.m_neighborSearcher->Clone();
-    m_neighborLists = other.m_neighborLists;
+    *this = other;
 }
 
 template <size_t N>
