@@ -45,6 +45,13 @@ TEST(SurfaceSet2, Constructors)
               std::dynamic_pointer_cast<Sphere2>(sset4.SurfaceAt(2))->radius);
     EXPECT_EQ(Vector2D(1, 2), sset4.transform.GetTranslation());
     EXPECT_EQ(0.5, sset4.transform.GetOrientation().GetRotation());
+
+    sset3.isNormalFlipped = true;
+    SurfaceSet2 sset5;
+    sset5 = sset3;
+    EXPECT_EQ(Vector2D(1, 2), sset5.transform.GetTranslation());
+    EXPECT_EQ(0.5, sset5.transform.GetOrientation().GetRotation());
+    EXPECT_TRUE(sset5.isNormalFlipped);
 }
 
 TEST(SurfaceSet2, AddSurface)

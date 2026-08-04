@@ -50,6 +50,14 @@ TEST(SurfaceSet3, Constructors)
     EXPECT_EQ(Vector3D(1, 2, 3), sset4.transform.GetTranslation());
     EXPECT_EQ(QuaternionD({ 1, 0, 0 }, 0.5),
               sset4.transform.GetOrientation().GetRotation());
+
+    sset3.isNormalFlipped = true;
+    SurfaceSet3 sset5;
+    sset5 = sset3;
+    EXPECT_EQ(Vector3D(1, 2, 3), sset5.transform.GetTranslation());
+    EXPECT_EQ(QuaternionD({ 1, 0, 0 }, 0.5),
+              sset5.transform.GetOrientation().GetRotation());
+    EXPECT_TRUE(sset5.isNormalFlipped);
 }
 
 TEST(SurfaceSet3, AddSurface)

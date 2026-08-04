@@ -12,6 +12,14 @@ TEST(TriangleMesh3, Constructors)
     EXPECT_EQ(0u, mesh1.NumberOfNormals());
     EXPECT_EQ(0u, mesh1.NumberOfUVs());
     EXPECT_EQ(0u, mesh1.NumberOfTriangles());
+
+    TriangleMesh3 mesh2(
+        Transform3(Vector3D(1, 2, 3), QuaternionD({ 1, 0, 0 }, 0.5)), true);
+    mesh1 = mesh2;
+    EXPECT_EQ(Vector3D(1, 2, 3), mesh1.transform.GetTranslation());
+    EXPECT_EQ(QuaternionD({ 1, 0, 0 }, 0.5),
+              mesh1.transform.GetOrientation().GetRotation());
+    EXPECT_TRUE(mesh1.isNormalFlipped);
 }
 
 TEST(TriangleMesh3, ReadObj)
