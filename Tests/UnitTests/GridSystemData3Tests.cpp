@@ -16,8 +16,10 @@ namespace
 {
 std::vector<uint8_t> MakeGridSystemDataWithSecondVelocity()
 {
-    FaceCenteredGrid3 velocity0({ 2, 3, 4 }, {}, {}, { 1.0, 2.0, 3.0 });
-    FaceCenteredGrid3 velocity1({ 2, 3, 4 }, {}, {}, { 4.0, 5.0, 6.0 });
+    FaceCenteredGrid3 velocity0({ 2, 3, 4 }, { 1.0, 1.0, 1.0 }, {},
+                                { 1.0, 2.0, 3.0 });
+    FaceCenteredGrid3 velocity1({ 2, 3, 4 }, { 1.0, 1.0, 1.0 }, {},
+                                { 4.0, 5.0, 6.0 });
     std::vector<uint8_t> velocityBuffer0;
     std::vector<uint8_t> velocityBuffer1;
     velocity0.Serialize(&velocityBuffer0);
