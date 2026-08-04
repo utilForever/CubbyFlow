@@ -48,6 +48,37 @@ TEST(GridSystemData3, Constructors)
     EXPECT_TRUE(grids2.Velocity() != grids3.Velocity());
 }
 
+TEST(GridSystemData3, CopyAssignment)
+{
+    GridSystemData3 source({ 2, 3, 4 }, { 1.0, 1.0, 1.0 }, {});
+    source.AddScalarData(std::make_shared<CellCenteredScalarGrid3::Builder>());
+    source.AddVectorData(std::make_shared<CellCenteredVectorGrid3::Builder>());
+    source.AddAdvectableScalarData(
+        std::make_shared<VertexCenteredScalarGrid3::Builder>());
+    source.AddAdvectableVectorData(
+        std::make_shared<VertexCenteredVectorGrid3::Builder>());
+
+    GridSystemData3 destination({ 1, 1, 1 }, { 1.0, 1.0, 1.0 }, {});
+    destination.AddScalarData(
+        std::make_shared<VertexCenteredScalarGrid3::Builder>());
+    destination.AddVectorData(
+        std::make_shared<VertexCenteredVectorGrid3::Builder>());
+    destination.AddAdvectableScalarData(
+        std::make_shared<CellCenteredScalarGrid3::Builder>());
+    destination.AddAdvectableVectorData(
+        std::make_shared<CellCenteredVectorGrid3::Builder>());
+
+    destination = source;
+
+    EXPECT_EQ(source.NumberOfScalarData(), destination.NumberOfScalarData());
+    EXPECT_EQ(source.NumberOfVectorData(), destination.NumberOfVectorData());
+    EXPECT_EQ(source.NumberOfAdvectableScalarData(),
+              destination.NumberOfAdvectableScalarData());
+    EXPECT_EQ(source.NumberOfAdvectableVectorData(),
+              destination.NumberOfAdvectableVectorData());
+    EXPECT_NE(source.Velocity(), destination.Velocity());
+}
+
 TEST(GridSystemData3, Serialize)
 {
     std::vector<uint8_t> buffer;
