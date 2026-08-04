@@ -55,6 +55,20 @@ TEST(VertexCenteredVectorGrid2, Constructors)
     });
 }
 
+TEST(VertexCenteredVectorGrid2, CopySemantics)
+{
+    VertexCenteredVectorGrid2 source({ 2, 2 }, { 1.0, 2.0 }, { 3.0, 4.0 },
+                                     { 5.0, 6.0 });
+    VertexCenteredVectorGrid2 copied(source);
+    VertexCenteredVectorGrid2 assigned;
+    assigned = source;
+
+    source.Fill({ 7.0, 8.0 });
+
+    EXPECT_EQ(Vector2D(5.0, 6.0), copied.Sample(copied.DataOrigin()));
+    EXPECT_EQ(Vector2D(5.0, 6.0), assigned.Sample(assigned.DataOrigin()));
+}
+
 TEST(VertexCenteredVectorGrid2, Swap)
 {
     VertexCenteredVectorGrid2 grid1({ 5, 4 }, { 1.0, 2.0 }, { 3.0, 4.0 },

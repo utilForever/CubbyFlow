@@ -72,6 +72,20 @@ TEST(VertexCenteredVectorGrid3, Constructors)
     });
 }
 
+TEST(VertexCenteredVectorGrid3, CopySemantics)
+{
+    VertexCenteredVectorGrid3 source({ 2, 2, 2 }, { 1.0, 2.0, 3.0 },
+                                     { 4.0, 5.0, 6.0 }, { 7.0, 8.0, 9.0 });
+    VertexCenteredVectorGrid3 copied(source);
+    VertexCenteredVectorGrid3 assigned;
+    assigned = source;
+
+    source.Fill({ 1.0, 2.0, 3.0 });
+
+    EXPECT_EQ(Vector3D(7.0, 8.0, 9.0), copied.Sample(copied.DataOrigin()));
+    EXPECT_EQ(Vector3D(7.0, 8.0, 9.0), assigned.Sample(assigned.DataOrigin()));
+}
+
 TEST(VertexCenteredVectorGrid3, Swap)
 {
     VertexCenteredVectorGrid3 grid1({ 5, 4, 3 }, { 1.0, 2.0, 3.0 },

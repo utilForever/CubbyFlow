@@ -23,34 +23,25 @@ CellCenteredVectorGrid<N>::CellCenteredVectorGrid(
 template <size_t N>
 CellCenteredVectorGrid<N>::CellCenteredVectorGrid(
     const CellCenteredVectorGrid& other)
-    : CollocatedVectorGrid<N>{ other }
 {
-    // Do nothing
+    Set(other);
 }
 
 template <size_t N>
 CellCenteredVectorGrid<N>::CellCenteredVectorGrid(
-    CellCenteredVectorGrid&& other) noexcept
-    : CollocatedVectorGrid<N>{ std::move(other) }
-{
-    // Do nothing
-}
+    CellCenteredVectorGrid&& other) noexcept = default;
 
 template <size_t N>
 CellCenteredVectorGrid<N>& CellCenteredVectorGrid<N>::operator=(
     const CellCenteredVectorGrid& other)
 {
-    CollocatedVectorGrid<N>::operator=(other);
+    Set(other);
     return *this;
 }
 
 template <size_t N>
 CellCenteredVectorGrid<N>& CellCenteredVectorGrid<N>::operator=(
-    CellCenteredVectorGrid&& other) noexcept
-{
-    CollocatedVectorGrid<N>::operator=(std::move(other));
-    return *this;
-}
+    CellCenteredVectorGrid&& other) noexcept = default;
 
 template <size_t N>
 Vector<size_t, N> CellCenteredVectorGrid<N>::DataSize() const
