@@ -2,6 +2,8 @@
 
 #include <Core/Grid/VertexCenteredScalarGrid.hpp>
 
+#include <utility>
+
 using namespace CubbyFlow;
 
 TEST(VertexCenteredScalarGrid2, Constructors)
@@ -48,6 +50,23 @@ TEST(VertexCenteredScalarGrid2, Constructors)
     EXPECT_DOUBLE_EQ(4.0, grid3.DataOrigin().y);
     grid3.ForEachDataPointIndex(
         [&grid3](size_t i, size_t j) { EXPECT_DOUBLE_EQ(5.0, grid3(i, j)); });
+}
+
+TEST(VertexCenteredScalarGrid2, MoveSemantics)
+{
+    VertexCenteredScalarGrid2 source({ 2, 2 }, { 1.0, 2.0 }, { 3.0, 4.0 }, 5.0);
+    VertexCenteredScalarGrid2 moved(std::move(source));
+
+    EXPECT_EQ(Vector2UZ(2, 2), moved.Resolution());
+    EXPECT_DOUBLE_EQ(5.0, moved(0, 0));
+    EXPECT_DOUBLE_EQ(5.0, moved.Sample(moved.DataOrigin()));
+
+    VertexCenteredScalarGrid2 assigned;
+    assigned = std::move(moved);
+
+    EXPECT_EQ(Vector2UZ(2, 2), assigned.Resolution());
+    EXPECT_DOUBLE_EQ(5.0, assigned(0, 0));
+    EXPECT_DOUBLE_EQ(5.0, assigned.Sample(assigned.DataOrigin()));
 }
 
 TEST(VertexCenteredScalarGrid2, Swap)
