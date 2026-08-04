@@ -28,32 +28,18 @@ BoundingBox<T, N>::BoundingBox(const VectorType& point1,
 }
 
 template <typename T, size_t N>
-BoundingBox<T, N>::BoundingBox(const BoundingBox& other)
-    : lowerCorner(other.lowerCorner), upperCorner(other.upperCorner)
-{
-    // Do nothing
-}
+BoundingBox<T, N>::BoundingBox(const BoundingBox& other) = default;
 
 template <typename T, size_t N>
-BoundingBox<T, N>::BoundingBox(BoundingBox&& other) noexcept
-    : lowerCorner(std::move(other.lowerCorner)),
-      upperCorner(std::move(other.upperCorner))
-{
-    // Do nothing
-}
+BoundingBox<T, N>::BoundingBox(BoundingBox&& other) noexcept = default;
 
 template <typename T, size_t N>
 BoundingBox<T, N>& BoundingBox<T, N>::operator=(const BoundingBox& other) =
     default;
 
 template <typename T, size_t N>
-BoundingBox<T, N>& BoundingBox<T, N>::operator=(BoundingBox&& other) noexcept
-{
-    lowerCorner = std::move(other.lowerCorner);
-    upperCorner = std::move(other.upperCorner);
-
-    return *this;
-}
+BoundingBox<T, N>& BoundingBox<T, N>::operator=(BoundingBox&& other) noexcept =
+    default;
 
 template <typename T, size_t N>
 T BoundingBox<T, N>::Width() const

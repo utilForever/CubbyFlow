@@ -22,11 +22,7 @@ Surface<N>::Surface(const Transform<N>& _transform, bool _isNormalFlipped)
 }
 
 template <size_t N>
-Surface<N>::Surface(const Surface& other)
-    : transform(other.transform), isNormalFlipped(other.isNormalFlipped)
-{
-    // Do nothing
-}
+Surface<N>::Surface(const Surface& other) = default;
 
 template <size_t N>
 Surface<N>::Surface(Surface&& other) noexcept

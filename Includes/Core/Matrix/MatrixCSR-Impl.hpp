@@ -94,10 +94,7 @@ MatrixCSR<T>::MatrixCSR(const MatrixExpression<T, R, C, ME>& other, T epsilon)
 }
 
 template <typename T>
-MatrixCSR<T>::MatrixCSR(const MatrixCSR& other)
-{
-    Set(other);
-}
+MatrixCSR<T>::MatrixCSR(const MatrixCSR& other) = default;
 
 template <typename T>
 MatrixCSR<T>::MatrixCSR(MatrixCSR&& other) noexcept
@@ -110,12 +107,7 @@ MatrixCSR<T>::MatrixCSR(MatrixCSR&& other) noexcept
 }
 
 template <typename T>
-MatrixCSR<T>& MatrixCSR<T>::operator=(const MatrixCSR& other)
-{
-    Set(other);
-
-    return *this;
-}
+MatrixCSR<T>& MatrixCSR<T>::operator=(const MatrixCSR& other) = default;
 
 template <typename T>
 MatrixCSR<T>& MatrixCSR<T>::operator=(MatrixCSR&& other) noexcept

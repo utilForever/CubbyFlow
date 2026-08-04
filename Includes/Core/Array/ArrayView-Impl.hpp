@@ -42,33 +42,17 @@ ArrayView<T, N>::ArrayView(Array<T, N>& other) : ArrayView()
 }
 
 template <typename T, size_t N>
-ArrayView<T, N>::ArrayView(const ArrayView& other)
-{
-    Set(other);
-}
+ArrayView<T, N>::ArrayView(const ArrayView& other) = default;
 
 template <typename T, size_t N>
-ArrayView<T, N>::ArrayView(ArrayView&& other) noexcept : ArrayView()
-{
-    *this = std::move(other);
-}
+ArrayView<T, N>::ArrayView(ArrayView&& other) noexcept = default;
 
 template <typename T, size_t N>
-ArrayView<T, N>& ArrayView<T, N>::operator=(const ArrayView& other)
-{
-    Set(other);
-
-    return *this;
-}
+ArrayView<T, N>& ArrayView<T, N>::operator=(const ArrayView& other) = default;
 
 template <typename T, size_t N>
-ArrayView<T, N>& ArrayView<T, N>::operator=(ArrayView&& other) noexcept
-{
-    Base::SetPtrAndSize(other.data(), other.Size());
-    other.SetPtrAndSize(nullptr, Vector<size_t, N>{});
-
-    return *this;
-}
+ArrayView<T, N>& ArrayView<T, N>::operator=(ArrayView&& other) noexcept =
+    default;
 
 template <typename T, size_t N>
 void ArrayView<T, N>::Set(Array<T, N>& other)
@@ -124,16 +108,10 @@ ArrayView<const T, N>::ArrayView(const ArrayView<T, N>& other)
 }
 
 template <typename T, size_t N>
-ArrayView<const T, N>::ArrayView(const ArrayView<const T, N>& other)
-{
-    Set(other);
-}
+ArrayView<const T, N>::ArrayView(const ArrayView<const T, N>& other) = default;
 
 template <typename T, size_t N>
-ArrayView<const T, N>::ArrayView(ArrayView&& other) noexcept : ArrayView()
-{
-    *this = std::move(other);
-}
+ArrayView<const T, N>::ArrayView(ArrayView&& other) noexcept = default;
 
 template <typename T, size_t N>
 ArrayView<const T, N>& ArrayView<const T, N>::operator=(
@@ -146,22 +124,11 @@ ArrayView<const T, N>& ArrayView<const T, N>::operator=(
 
 template <typename T, size_t N>
 ArrayView<const T, N>& ArrayView<const T, N>::operator=(
-    const ArrayView<const T, N>& other)
-{
-    Set(other);
-
-    return *this;
-}
+    const ArrayView<const T, N>& other) = default;
 
 template <typename T, size_t N>
 ArrayView<const T, N>& ArrayView<const T, N>::operator=(
-    ArrayView<const T, N>&& other) noexcept
-{
-    Base::SetPtrAndSize(other.data(), other.Size());
-    other.SetPtrAndSize(nullptr, Vector<size_t, N>{});
-
-    return *this;
-}
+    ArrayView<const T, N>&& other) noexcept = default;
 
 template <typename T, size_t N>
 void ArrayView<const T, N>::Set(const Array<T, N>& other)

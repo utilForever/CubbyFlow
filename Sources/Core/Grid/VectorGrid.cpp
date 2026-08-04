@@ -57,31 +57,16 @@ struct GetFlatbuffersVectorGrid<3>
 };
 
 template <size_t N>
-VectorGrid<N>::VectorGrid(const VectorGrid& other) : Grid<N>{ other }
-{
-    // Do nothing
-}
+VectorGrid<N>::VectorGrid(const VectorGrid& other) = default;
 
 template <size_t N>
-VectorGrid<N>::VectorGrid(VectorGrid&& other) noexcept
-    : Grid<N>{ std::move(other) }
-{
-    // Do nothing
-}
+VectorGrid<N>::VectorGrid(VectorGrid&& other) noexcept = default;
 
 template <size_t N>
-VectorGrid<N>& VectorGrid<N>::operator=(const VectorGrid& other)
-{
-    Grid<N>::operator=(other);
-    return *this;
-}
+VectorGrid<N>& VectorGrid<N>::operator=(const VectorGrid& other) = default;
 
 template <size_t N>
-VectorGrid<N>& VectorGrid<N>::operator=(VectorGrid&& other) noexcept
-{
-    Grid<N>::operator=(std::move(other));
-    return *this;
-}
+VectorGrid<N>& VectorGrid<N>::operator=(VectorGrid&& other) noexcept = default;
 
 template <size_t N>
 void VectorGrid<N>::Clear()

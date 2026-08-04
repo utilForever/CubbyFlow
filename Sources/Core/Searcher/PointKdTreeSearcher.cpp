@@ -20,35 +20,20 @@
 namespace CubbyFlow
 {
 template <size_t N>
-PointKdTreeSearcher<N>::PointKdTreeSearcher(const PointKdTreeSearcher& other)
-    : m_tree(other.m_tree)
-{
-    // Do nothing
-}
+PointKdTreeSearcher<N>::PointKdTreeSearcher(const PointKdTreeSearcher& other) =
+    default;
 
 template <size_t N>
 PointKdTreeSearcher<N>::PointKdTreeSearcher(
-    PointKdTreeSearcher&& other) noexcept
-    : m_tree(std::move(other.m_tree))
-{
-    // Do nothing
-}
+    PointKdTreeSearcher&& other) noexcept = default;
 
 template <size_t N>
 PointKdTreeSearcher<N>& PointKdTreeSearcher<N>::operator=(
-    const PointKdTreeSearcher& other)
-{
-    m_tree = other.m_tree;
-    return *this;
-}
+    const PointKdTreeSearcher& other) = default;
 
 template <size_t N>
 PointKdTreeSearcher<N>& PointKdTreeSearcher<N>::operator=(
-    PointKdTreeSearcher&& other) noexcept
-{
-    m_tree = std::move(other.m_tree);
-    return *this;
-}
+    PointKdTreeSearcher&& other) noexcept = default;
 
 template <size_t N>
 void PointKdTreeSearcher<N>::Build(
