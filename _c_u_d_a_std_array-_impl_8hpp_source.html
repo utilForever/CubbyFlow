@@ -161,7 +161,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>}</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keywordtype">size_t</span> N&gt;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray&lt;T, N&gt;</a>&amp; <a class="code hl_function" href="class_cubby_flow_1_1_matrix.html#a35d4be97ed713d61877829c94f5a273b">CUDAStdArray&lt;T, N&gt;::operator=</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray</a>&amp; <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">other</a>)</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray&lt;T, N&gt;</a>&amp; <a class="code hl_function" href="class_cubby_flow_1_1_matrix.html#a44da04c4018e0b138d266da54a8e8b88">CUDAStdArray&lt;T, N&gt;::operator=</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray</a>&amp; <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">other</a>)</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>{</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a>; ++i)</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    {</div>
@@ -172,7 +172,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>}</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keywordtype">size_t</span> N&gt;</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray&lt;T, N&gt;</a>&amp; <a class="code hl_function" href="class_cubby_flow_1_1_matrix.html#a35d4be97ed713d61877829c94f5a273b">CUDAStdArray&lt;T, N&gt;::operator=</a>(<a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray</a>&amp;&amp; <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">other</a>) <span class="keyword">noexcept</span></div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray&lt;T, N&gt;</a>&amp; <a class="code hl_function" href="class_cubby_flow_1_1_matrix.html#a44da04c4018e0b138d266da54a8e8b88">CUDAStdArray&lt;T, N&gt;::operator=</a>(<a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CUDAStdArray</a>&amp;&amp; <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">other</a>) <span class="keyword">noexcept</span></div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>{</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; <a class="code hl_typedef" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a>; ++i)</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    {</div>
@@ -258,11 +258,11 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aclass_cubby_flow_1_1_matrix_html_a02e388888742583329dea35daeab203e"><div class="ttname"><a href="class_cubby_flow_1_1_matrix.html#a02e388888742583329dea35daeab203e">CubbyFlow::Matrix::Reference</a></div><div class="ttdeci">T &amp; Reference</div><div class="ttdef"><b>Definition</b> Matrix.hpp:40</div></div>
 <div class="ttc" id="aclass_cubby_flow_1_1_matrix_html_a3587d69c996b7201cf9e57b4857f0f40"><div class="ttname"><a href="class_cubby_flow_1_1_matrix.html#a3587d69c996b7201cf9e57b4857f0f40">CubbyFlow::Matrix::Fill</a></div><div class="ttdeci">void Fill(const T &amp;val)</div><div class="ttdef"><b>Definition</b> Matrix-Impl.hpp:226</div></div>
-<div class="ttc" id="aclass_cubby_flow_1_1_matrix_html_a35d4be97ed713d61877829c94f5a273b"><div class="ttname"><a href="class_cubby_flow_1_1_matrix.html#a35d4be97ed713d61877829c94f5a273b">CubbyFlow::Matrix::operator=</a></div><div class="ttdeci">Matrix &amp; operator=(const Matrix &amp;other)</div><div class="ttdef"><b>Definition</b> Matrix.hpp:81</div></div>
+<div class="ttc" id="aclass_cubby_flow_1_1_matrix_html_a44da04c4018e0b138d266da54a8e8b88"><div class="ttname"><a href="class_cubby_flow_1_1_matrix.html#a44da04c4018e0b138d266da54a8e8b88">CubbyFlow::Matrix::operator=</a></div><div class="ttdeci">Matrix &amp; operator=(const Matrix &amp;)=default</div></div>
 <div class="ttc" id="aclass_cubby_flow_1_1_matrix_html_ab33d6b65f4bcd11710235ddda78144c3"><div class="ttname"><a href="class_cubby_flow_1_1_matrix.html#ab33d6b65f4bcd11710235ddda78144c3">CubbyFlow::Matrix::operator[]</a></div><div class="ttdeci">Reference operator[](size_t i)</div><div class="ttdef"><b>Definition</b> Matrix-Impl.hpp:311</div></div>
 <div class="ttc" id="aclass_cubby_flow_1_1_matrix_html_ada02eeb73d364cfbf0313c818a13a2b5"><div class="ttname"><a href="class_cubby_flow_1_1_matrix.html#ada02eeb73d364cfbf0313c818a13a2b5">CubbyFlow::Matrix::ConstReference</a></div><div class="ttdeci">const T &amp; ConstReference</div><div class="ttdef"><b>Definition</b> Matrix.hpp:41</div></div>
 <div class="ttc" id="anamespace_cubby_flow_html"><div class="ttname"><a href="namespace_cubby_flow.html">CubbyFlow</a></div><div class="ttdef"><b>Definition</b> pybind11Utils.hpp:22</div></div>
-<div class="ttc" id="anamespace_cubby_flow_html_a9932602cee20e55ad02e8aa269e86f3c"><div class="ttname"><a href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CubbyFlow::Vector</a></div><div class="ttdeci">Matrix&lt; T, Rows, 1 &gt; Vector</div><div class="ttdef"><b>Definition</b> Matrix.hpp:719</div></div>
+<div class="ttc" id="anamespace_cubby_flow_html_a9932602cee20e55ad02e8aa269e86f3c"><div class="ttname"><a href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">CubbyFlow::Vector</a></div><div class="ttdeci">Matrix&lt; T, Rows, 1 &gt; Vector</div><div class="ttdef"><b>Definition</b> Matrix.hpp:648</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- HTML footer for doxygen 1.8.8-->
 <!-- start footer part -->
@@ -272,7 +272,7 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Aug 3 2026 13:39:33 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 5 2026 00:09:07 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>
