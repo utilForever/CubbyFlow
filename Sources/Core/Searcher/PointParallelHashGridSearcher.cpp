@@ -37,17 +37,7 @@ PointParallelHashGridSearcher<N>::PointParallelHashGridSearcher(
 
 template <size_t N>
 PointParallelHashGridSearcher<N>::PointParallelHashGridSearcher(
-    const PointParallelHashGridSearcher& other)
-    : m_gridSpacing(other.m_gridSpacing),
-      m_resolution(other.m_resolution),
-      m_points(other.m_points),
-      m_keys(other.m_keys),
-      m_startIndexTable(other.m_startIndexTable),
-      m_endIndexTable(other.m_endIndexTable),
-      m_sortedIndices(other.m_sortedIndices)
-{
-    // Do nothing
-}
+    const PointParallelHashGridSearcher& other) = default;
 
 template <size_t N>
 PointParallelHashGridSearcher<N>::PointParallelHashGridSearcher(
@@ -65,17 +55,7 @@ PointParallelHashGridSearcher<N>::PointParallelHashGridSearcher(
 
 template <size_t N>
 PointParallelHashGridSearcher<N>& PointParallelHashGridSearcher<N>::operator=(
-    const PointParallelHashGridSearcher& other)
-{
-    m_gridSpacing = other.m_gridSpacing;
-    m_resolution = other.m_resolution;
-    m_points = other.m_points;
-    m_keys = other.m_keys;
-    m_startIndexTable = other.m_startIndexTable;
-    m_endIndexTable = other.m_endIndexTable;
-    m_sortedIndices = other.m_sortedIndices;
-    return *this;
-}
+    const PointParallelHashGridSearcher& other) = default;
 
 template <size_t N>
 PointParallelHashGridSearcher<N>& PointParallelHashGridSearcher<N>::operator=(

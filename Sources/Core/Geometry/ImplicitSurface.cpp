@@ -22,32 +22,18 @@ ImplicitSurface<N>::ImplicitSurface(const Transform<N>& _transform,
 }
 
 template <size_t N>
-ImplicitSurface<N>::ImplicitSurface(const ImplicitSurface& other)
-    : Surface<N>{ other }
-{
-    // Do nothing
-}
+ImplicitSurface<N>::ImplicitSurface(const ImplicitSurface& other) = default;
 
 template <size_t N>
-ImplicitSurface<N>::ImplicitSurface(ImplicitSurface&& other) noexcept
-    : Surface<N>{ std::move(other) }
-{
-    // Do nothing
-}
+ImplicitSurface<N>::ImplicitSurface(ImplicitSurface&& other) noexcept = default;
 
 template <size_t N>
-ImplicitSurface<N>& ImplicitSurface<N>::operator=(const ImplicitSurface& other)
-{
-    Surface<N>::operator=(other);
-    return *this;
-}
+ImplicitSurface<N>& ImplicitSurface<N>::operator=(
+    const ImplicitSurface& other) = default;
 
 template <size_t N>
-ImplicitSurface<N>& ImplicitSurface<N>::operator=(ImplicitSurface&& other) noexcept
-{
-    Surface<N>::operator=(std::move(other));
-    return *this;
-}
+ImplicitSurface<N>& ImplicitSurface<N>::operator=(
+    ImplicitSurface&& other) noexcept = default;
 
 template <size_t N>
 double ImplicitSurface<N>::SignedDistance(

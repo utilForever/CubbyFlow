@@ -73,9 +73,11 @@ ScalarGrid<N>::ScalarGrid(const ScalarGrid& other) : Grid<N>{ other }
 
 template <size_t N>
 ScalarGrid<N>::ScalarGrid(ScalarGrid&& other) noexcept
-    : Grid<N>{ std::move(other) }, m_data(std::move(other.m_data))
+    : Grid<N>{ std::move(other) },
+      m_data(std::move(other.m_data)),
+      m_linearSampler(std::move(other.m_linearSampler))
 {
-    // Do nothing
+    m_sampler = m_linearSampler.Functor();
 }
 
 template <size_t N>
@@ -89,6 +91,9 @@ template <size_t N>
 ScalarGrid<N>& ScalarGrid<N>::operator=(ScalarGrid&& other) noexcept
 {
     Grid<N>::operator=(std::move(other));
+    m_data = std::move(other.m_data);
+    m_linearSampler = std::move(other.m_linearSampler);
+    m_sampler = m_linearSampler.Functor();
     return *this;
 }
 

@@ -115,6 +115,7 @@ TriangleMesh3::TriangleMesh3(const TriangleMesh3& other) : Surface3{ other }
 
 TriangleMesh3& TriangleMesh3::operator=(const TriangleMesh3& other)
 {
+    Surface3::operator=(other);
     Set(other);
     return *this;
 }

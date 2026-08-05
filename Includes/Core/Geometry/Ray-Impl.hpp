@@ -27,29 +27,16 @@ Ray<T, N>::Ray(const VectorType& newOrigin, const VectorType& newDirection)
 }
 
 template <typename T, size_t N>
-Ray<T, N>::Ray(const Ray& other)
-    : origin(other.origin), direction(other.direction)
-{
-    // Do nothing
-}
+Ray<T, N>::Ray(const Ray& other) = default;
 
 template <typename T, size_t N>
-Ray<T, N>::Ray(Ray&& other) noexcept
-    : origin(std::move(other.origin)), direction(std::move(other.direction))
-{
-    // Do nothing
-}
+Ray<T, N>::Ray(Ray&& other) noexcept = default;
 
 template <typename T, size_t N>
 Ray<T, N>& Ray<T, N>::operator=(const Ray& other) = default;
 
 template <typename T, size_t N>
-Ray<T, N>& Ray<T, N>::operator=(Ray&& other) noexcept
-{
-    origin = std::move(other.origin);
-    direction = std::move(other.direction);
-    return *this;
-}
+Ray<T, N>& Ray<T, N>::operator=(Ray&& other) noexcept = default;
 
 template <typename T, size_t N>
 typename Ray<T, N>::VectorType Ray<T, N>::PointAt(T t) const

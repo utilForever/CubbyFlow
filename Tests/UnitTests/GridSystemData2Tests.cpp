@@ -1,12 +1,59 @@
+#include "../../Sources/Core/Flatbuffers/generated/GridSystemData2_generated.h"
 #include "gtest/gtest.h"
 
 #include <Core/Grid/CellCenteredScalarGrid.hpp>
 #include <Core/Grid/CellCenteredVectorGrid.hpp>
+#include <Core/Grid/FaceCenteredGrid.hpp>
 #include <Core/Grid/GridSystemData.hpp>
 #include <Core/Grid/VertexCenteredScalarGrid.hpp>
 #include <Core/Grid/VertexCenteredVectorGrid.hpp>
 
+#include <utility>
+
 using namespace CubbyFlow;
+
+namespace
+{
+std::vector<uint8_t> MakeGridSystemDataWithSecondVelocity()
+{
+    FaceCenteredGrid2 velocity0({ 2, 3 }, { 1.0, 1.0 }, {}, { 1.0, 2.0 });
+    FaceCenteredGrid2 velocity1({ 2, 3 }, { 1.0, 1.0 }, {}, { 3.0, 4.0 });
+    std::vector<uint8_t> velocityBuffer0;
+    std::vector<uint8_t> velocityBuffer1;
+    velocity0.Serialize(&velocityBuffer0);
+    velocity1.Serialize(&velocityBuffer1);
+
+    flatbuffers::FlatBufferBuilder builder(1024);
+    std::vector<flatbuffers::Offset<fbs::VectorGridSerialized2>> velocities;
+    velocities.push_back(fbs::CreateVectorGridSerialized2Direct(
+        builder, velocity0.TypeName().c_str(), &velocityBuffer0));
+    velocities.push_back(fbs::CreateVectorGridSerialized2Direct(
+        builder, velocity1.TypeName().c_str(), &velocityBuffer1));
+
+    std::vector<flatbuffers::Offset<fbs::ScalarGridSerialized2>> scalars;
+    std::vector<flatbuffers::Offset<fbs::VectorGridSerialized2>> vectors;
+    const auto emptyScalars = builder.CreateVector(scalars);
+    const auto emptyVectors = builder.CreateVector(vectors);
+    const auto advectableVectors = builder.CreateVector(velocities);
+    const fbs::Vector2UZ resolution(2, 3);
+    const fbs::Vector2D gridSpacing(1.0, 1.0);
+    const fbs::Vector2D origin(0.0, 0.0);
+    const auto data = fbs::CreateGridSystemData2(
+        builder, &resolution, &gridSpacing, &origin, 1, emptyScalars,
+        emptyVectors, emptyScalars, advectableVectors);
+    builder.Finish(data);
+
+    return { builder.GetBufferPointer(),
+             builder.GetBufferPointer() + builder.GetSize() };
+}
+
+void ExpectSecondVelocity(const GridSystemData2& grids)
+{
+    EXPECT_EQ(1u, grids.VelocityIndex());
+    EXPECT_EQ(grids.AdvectableVectorDataAt(1), grids.Velocity());
+    EXPECT_DOUBLE_EQ(3.0, grids.Velocity()->U(0, 0));
+}
+}  // namespace
 
 TEST(GridSystemData2, Constructors)
 {
@@ -37,6 +84,58 @@ TEST(GridSystemData2, Constructors)
     EXPECT_EQ(4.5, grids3.Origin().y);
 
     EXPECT_TRUE(grids2.Velocity() != grids3.Velocity());
+}
+
+TEST(GridSystemData2, CopyAssignment)
+{
+    GridSystemData2 source({ 2, 3 }, { 1.0, 1.0 }, {});
+    source.AddScalarData(std::make_shared<CellCenteredScalarGrid2::Builder>());
+    source.AddVectorData(std::make_shared<CellCenteredVectorGrid2::Builder>());
+    source.AddAdvectableScalarData(
+        std::make_shared<VertexCenteredScalarGrid2::Builder>());
+    source.AddAdvectableVectorData(
+        std::make_shared<VertexCenteredVectorGrid2::Builder>());
+
+    GridSystemData2 destination({ 1, 1 }, { 1.0, 1.0 }, {});
+    destination.AddScalarData(
+        std::make_shared<VertexCenteredScalarGrid2::Builder>());
+    destination.AddVectorData(
+        std::make_shared<VertexCenteredVectorGrid2::Builder>());
+    destination.AddAdvectableScalarData(
+        std::make_shared<CellCenteredScalarGrid2::Builder>());
+    destination.AddAdvectableVectorData(
+        std::make_shared<CellCenteredVectorGrid2::Builder>());
+
+    destination = source;
+
+    EXPECT_EQ(source.NumberOfScalarData(), destination.NumberOfScalarData());
+    EXPECT_EQ(source.NumberOfVectorData(), destination.NumberOfVectorData());
+    EXPECT_EQ(source.NumberOfAdvectableScalarData(),
+              destination.NumberOfAdvectableScalarData());
+    EXPECT_EQ(source.NumberOfAdvectableVectorData(),
+              destination.NumberOfAdvectableVectorData());
+    EXPECT_NE(source.Velocity(), destination.Velocity());
+}
+
+TEST(GridSystemData2, PreservesDeserializedVelocityIndex)
+{
+    GridSystemData2 source;
+    source.Deserialize(MakeGridSystemDataWithSecondVelocity());
+    ExpectSecondVelocity(source);
+
+    GridSystemData2 copied(source);
+    ExpectSecondVelocity(copied);
+
+    GridSystemData2 assigned;
+    assigned = source;
+    ExpectSecondVelocity(assigned);
+
+    GridSystemData2 moved(std::move(copied));
+    ExpectSecondVelocity(moved);
+
+    GridSystemData2 moveAssigned;
+    moveAssigned = std::move(assigned);
+    ExpectSecondVelocity(moveAssigned);
 }
 
 TEST(GridSystemData2, Serialize)

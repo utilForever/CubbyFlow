@@ -41,25 +41,9 @@ template <size_t N>
 GridSystemData<N>::GridSystemData(const GridSystemData& other)
     : m_resolution(other.m_resolution),
       m_gridSpacing(other.m_gridSpacing),
-      m_origin(other.m_origin)
+      m_origin(other.m_origin),
+      m_velocityIdx(other.m_velocityIdx)
 {
-    for (auto& data : m_scalarDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-    for (auto& data : m_vectorDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-    for (auto& data : m_advectableScalarDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-    for (auto& data : m_advectableVectorDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-
     for (auto& data : other.m_scalarDataList)
     {
         m_scalarDataList.push_back(data->Clone());
@@ -77,104 +61,31 @@ GridSystemData<N>::GridSystemData(const GridSystemData& other)
         m_advectableVectorDataList.push_back(data->Clone());
     }
 
-    assert(m_advectableVectorDataList.size() > 0);
+    assert(m_velocityIdx < m_advectableVectorDataList.size());
 
     m_velocity = std::dynamic_pointer_cast<FaceCenteredGrid<N>>(
-        m_advectableVectorDataList[0]);
+        m_advectableVectorDataList[m_velocityIdx]);
 
     assert(m_velocity != nullptr);
 }
 
 template <size_t N>
-GridSystemData<N>::GridSystemData(GridSystemData&& other) noexcept
-    : m_resolution(std::move(other.m_resolution)),
-      m_gridSpacing(std::move(other.m_gridSpacing)),
-      m_origin(std::move(other.m_origin)),
-      m_scalarDataList(std::move(other.m_scalarDataList)),
-      m_vectorDataList(std::move(other.m_vectorDataList)),
-      m_advectableScalarDataList(std::move(other.m_advectableScalarDataList)),
-      m_advectableVectorDataList(std::move(other.m_advectableVectorDataList))
-{
-    m_velocity = std::dynamic_pointer_cast<FaceCenteredGrid<N>>(
-        m_advectableVectorDataList[0]);
-    assert(m_velocity != nullptr);
-}
+GridSystemData<N>::GridSystemData(GridSystemData&& other) noexcept = default;
 
 template <size_t N>
 GridSystemData<N>& GridSystemData<N>::operator=(const GridSystemData& other)
 {
-    if (this == &other)
+    if (this != &other)
     {
-        return *this;
+        *this = GridSystemData(other);
     }
 
-    m_resolution = other.m_resolution;
-    m_gridSpacing = other.m_gridSpacing;
-    m_origin = other.m_origin;
-
-    for (auto& data : m_scalarDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-    for (auto& data : m_vectorDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-    for (auto& data : m_advectableScalarDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-    for (auto& data : m_advectableVectorDataList)
-    {
-        data->Resize(other.m_resolution, other.m_gridSpacing, other.m_origin);
-    }
-
-    for (auto& data : other.m_scalarDataList)
-    {
-        m_scalarDataList.push_back(data->Clone());
-    }
-    for (auto& data : other.m_vectorDataList)
-    {
-        m_vectorDataList.push_back(data->Clone());
-    }
-    for (auto& data : other.m_advectableScalarDataList)
-    {
-        m_advectableScalarDataList.push_back(data->Clone());
-    }
-    for (auto& data : other.m_advectableVectorDataList)
-    {
-        m_advectableVectorDataList.push_back(data->Clone());
-    }
-
-    assert(m_advectableVectorDataList.size() > 0);
-
-    m_velocity = std::dynamic_pointer_cast<FaceCenteredGrid<N>>(
-        m_advectableVectorDataList[0]);
-
-    assert(m_velocity != nullptr);
-
-    m_velocityIdx = 0;
     return *this;
 }
 
 template <size_t N>
-GridSystemData<N>& GridSystemData<N>::operator=(GridSystemData&& other) noexcept
-{
-    m_resolution = std::move(other.m_resolution);
-    m_gridSpacing = std::move(other.m_gridSpacing);
-    m_origin = std::move(other.m_origin);
-    m_scalarDataList = std::move(other.m_scalarDataList);
-    m_vectorDataList = std::move(other.m_vectorDataList);
-    m_advectableScalarDataList = std::move(other.m_advectableScalarDataList);
-    m_advectableVectorDataList = std::move(other.m_advectableVectorDataList);
-
-    m_velocity = std::dynamic_pointer_cast<FaceCenteredGrid<N>>(
-        m_advectableVectorDataList[0]);
-    assert(m_advectableVectorDataList.size() > 0);
-
-    m_velocityIdx = 0;
-    return *this;
-}
+GridSystemData<N>& GridSystemData<N>::operator=(
+    GridSystemData&& other) noexcept = default;
 
 template <size_t N>
 void GridSystemData<N>::Resize(const Vector<size_t, N>& resolution,

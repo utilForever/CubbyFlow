@@ -32,11 +32,7 @@ Sphere<N>::Sphere(const Vector<double, N>& _center, double _radius,
 }
 
 template <size_t N>
-Sphere<N>::Sphere(const Sphere& other)
-    : Surface<N>{ other }, center(other.center), radius(other.radius)
-{
-    // Do nothing
-}
+Sphere<N>::Sphere(const Sphere& other) = default;
 
 template <size_t N>
 Sphere<N>::Sphere(Sphere&& other) noexcept
@@ -48,13 +44,7 @@ Sphere<N>::Sphere(Sphere&& other) noexcept
 }
 
 template <size_t N>
-Sphere<N>& Sphere<N>::operator=(const Sphere& other)
-{
-    center = other.center;
-    radius = other.radius;
-    Surface<N>::operator=(other);
-    return *this;
-}
+Sphere<N>& Sphere<N>::operator=(const Sphere& other) = default;
 
 template <size_t N>
 Sphere<N>& Sphere<N>::operator=(Sphere&& other) noexcept

@@ -950,32 +950,17 @@ Matrix<T, MATRIX_SIZE_DYNAMIC, MATRIX_SIZE_DYNAMIC>::Matrix(size_t rows,
 }
 
 template <typename T>
-Matrix<T, MATRIX_SIZE_DYNAMIC, MATRIX_SIZE_DYNAMIC>::Matrix(const Matrix& other)
-    : m_elements(other.m_elements), m_rows(other.m_rows), m_cols(other.m_cols)
-{
-    // Do nothing
-}
+Matrix<T, MATRIX_SIZE_DYNAMIC, MATRIX_SIZE_DYNAMIC>::Matrix(
+    const Matrix& other) = default;
 
 template <typename T>
 Matrix<T, MATRIX_SIZE_DYNAMIC, MATRIX_SIZE_DYNAMIC>::Matrix(
-    Matrix&& other) noexcept
-    : m_elements(std::move(other.m_elements)),
-      m_rows(other.m_rows),
-      m_cols(other.m_cols)
-{
-    // Do nothing
-}
+    Matrix&& other) noexcept = default;
 
 template <typename T>
 Matrix<T, MATRIX_SIZE_DYNAMIC, MATRIX_SIZE_DYNAMIC>&
 Matrix<T, MATRIX_SIZE_DYNAMIC, MATRIX_SIZE_DYNAMIC>::operator=(
-    const Matrix& other)
-{
-    m_elements = other.m_elements;
-    m_rows = other.m_rows;
-    m_cols = other.m_cols;
-    return *this;
-}
+    const Matrix& other) = default;
 
 template <typename T>
 Matrix<T, MATRIX_SIZE_DYNAMIC, MATRIX_SIZE_DYNAMIC>&
@@ -1174,34 +1159,18 @@ Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::Matrix(size_t rows, ConstPointer ptr)
 }
 
 template <typename T>
-Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::Matrix(const Matrix& other)
-    : m_elements(other.m_elements)
-{
-    // Do nothing
-}
+Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::Matrix(const Matrix& other) = default;
 
 template <typename T>
-Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::Matrix(Matrix&& other) noexcept
-    : m_elements(std::move(other.m_elements))
-{
-    // Do nothing
-}
+Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::Matrix(Matrix&& other) noexcept = default;
 
 template <typename T>
 Matrix<T, MATRIX_SIZE_DYNAMIC, 1>& Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::operator=(
-    const Matrix& other)
-{
-    m_elements = other.m_elements;
-    return *this;
-}
+    const Matrix& other) = default;
 
 template <typename T>
 Matrix<T, MATRIX_SIZE_DYNAMIC, 1>& Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::operator=(
-    Matrix&& other) noexcept
-{
-    m_elements = std::move(other.m_elements);
-    return *this;
-}
+    Matrix&& other) noexcept = default;
 
 template <typename T>
 void Matrix<T, MATRIX_SIZE_DYNAMIC, 1>::Fill(const T& val)

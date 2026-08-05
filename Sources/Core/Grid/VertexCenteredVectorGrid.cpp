@@ -23,34 +23,25 @@ VertexCenteredVectorGrid<N>::VertexCenteredVectorGrid(
 template <size_t N>
 VertexCenteredVectorGrid<N>::VertexCenteredVectorGrid(
     const VertexCenteredVectorGrid& other)
-    : CollocatedVectorGrid<N>{ other }
 {
-    // Do nothing
+    Set(other);
 }
 
 template <size_t N>
 VertexCenteredVectorGrid<N>::VertexCenteredVectorGrid(
-    VertexCenteredVectorGrid&& other) noexcept
-    : CollocatedVectorGrid<N>{ std::move(other) }
-{
-    // Do nothing
-}
+    VertexCenteredVectorGrid&& other) noexcept = default;
 
 template <size_t N>
 VertexCenteredVectorGrid<N>& VertexCenteredVectorGrid<N>::operator=(
     const VertexCenteredVectorGrid& other)
 {
-    CollocatedVectorGrid<N>::operator=(other);
+    Set(other);
     return *this;
 }
 
 template <size_t N>
 VertexCenteredVectorGrid<N>& VertexCenteredVectorGrid<N>::operator=(
-    VertexCenteredVectorGrid&& other) noexcept
-{
-    CollocatedVectorGrid<N>::operator=(std::move(other));
-    return *this;
-}
+    VertexCenteredVectorGrid&& other) noexcept = default;
 
 template <size_t N>
 Vector<size_t, N> VertexCenteredVectorGrid<N>::DataSize() const

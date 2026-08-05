@@ -31,38 +31,16 @@ Plane<N>::Plane(const Vector<double, N>& _normal,
 }
 
 template <size_t N>
-Plane<N>::Plane(const Plane& other)
-    : Surface<N>{ other }, normal(other.normal), point(other.point)
-{
-    // Do nothing
-}
+Plane<N>::Plane(const Plane& other) = default;
 
 template <size_t N>
-Plane<N>::Plane(Plane&& other) noexcept
-    : Surface<N>{ std::move(other) },
-      normal(std::move(other.normal)),
-      point(std::move(other.point))
-{
-    // Do nothing
-}
+Plane<N>::Plane(Plane&& other) noexcept = default;
 
 template <size_t N>
-Plane<N>& Plane<N>::operator=(const Plane& other)
-{
-    normal = other.normal;
-    point = other.point;
-    Surface<N>::operator=(other);
-    return *this;
-}
+Plane<N>& Plane<N>::operator=(const Plane& other) = default;
 
 template <size_t N>
-Plane<N>& Plane<N>::operator=(Plane&& other) noexcept
-{
-    normal = std::move(other.normal);
-    point = std::move(other.point);
-    Surface<N>::operator=(std::move(other));
-    return *this;
-}
+Plane<N>& Plane<N>::operator=(Plane&& other) noexcept = default;
 
 template <size_t N>
 bool Plane<N>::IsBounded() const

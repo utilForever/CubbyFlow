@@ -57,30 +57,16 @@ Quaternion<T>::Quaternion(const Matrix3x3<T>& m33)
 }
 
 template <typename T>
-Quaternion<T>::Quaternion(const Quaternion& other)
-{
-    Set(other);
-}
+Quaternion<T>::Quaternion(const Quaternion& other) = default;
 
 template <typename T>
-Quaternion<T>::Quaternion(Quaternion&& other) noexcept
-{
-    Set(other);
-}
+Quaternion<T>::Quaternion(Quaternion&& other) noexcept = default;
 
 template <typename T>
-Quaternion<T>& Quaternion<T>::operator=(const Quaternion& other)
-{
-    Set(other);
-    return *this;
-}
+Quaternion<T>& Quaternion<T>::operator=(const Quaternion& other) = default;
 
 template <typename T>
-Quaternion<T>& Quaternion<T>::operator=(Quaternion&& other) noexcept
-{
-    Set(other);
-    return *this;
-}
+Quaternion<T>& Quaternion<T>::operator=(Quaternion&& other) noexcept = default;
 
 template <typename T>
 void Quaternion<T>::Set(const Quaternion& other)

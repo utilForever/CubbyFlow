@@ -67,28 +67,13 @@ class Matrix final
 
     ~Matrix() = default;
 
-    constexpr Matrix(const Matrix& other) : m_elements(other.m_elements)
-    {
-        // Do nothing
-    }
+    constexpr Matrix(const Matrix&) = default;
 
-    constexpr Matrix(Matrix&& other) noexcept
-        : m_elements(std::move(other.m_elements))
-    {
-        // Do nothing
-    }
+    constexpr Matrix(Matrix&&) noexcept = default;
 
-    Matrix& operator=(const Matrix& other)
-    {
-        m_elements = other.m_elements;
-        return *this;
-    }
+    Matrix& operator=(const Matrix&) = default;
 
-    Matrix& operator=(Matrix&& other) noexcept
-    {
-        m_elements = std::move(other.m_elements);
-        return *this;
-    }
+    Matrix& operator=(Matrix&&) noexcept = default;
 
     void Fill(const T& val);
 
@@ -155,27 +140,13 @@ class Matrix<T, 1, 1> final : public MatrixExpression<T, 1, 1, Matrix<T, 1, 1>>,
 
     ~Matrix() = default;
 
-    constexpr Matrix(const Matrix& other) : x(other.x)
-    {
-        // Do nothing
-    }
+    constexpr Matrix(const Matrix&) = default;
 
-    constexpr Matrix(Matrix&& other) noexcept : x(std::move(other.x))
-    {
-        // Do nothing
-    }
+    constexpr Matrix(Matrix&&) noexcept = default;
 
-    Matrix& operator=(const Matrix& other)
-    {
-        x = other.x;
-        return *this;
-    }
+    Matrix& operator=(const Matrix&) = default;
 
-    Matrix& operator=(Matrix&& other) noexcept
-    {
-        x = std::move(other.x);
-        return *this;
-    }
+    Matrix& operator=(Matrix&&) noexcept = default;
 
     void Fill(const T& val);
 
@@ -245,30 +216,13 @@ class Matrix<T, 2, 1> final : public MatrixExpression<T, 2, 1, Matrix<T, 2, 1>>,
 
     ~Matrix() = default;
 
-    constexpr Matrix(const Matrix& other) : x(other.x), y(other.y)
-    {
-        // Do nothing
-    }
+    constexpr Matrix(const Matrix&) = default;
 
-    constexpr Matrix(Matrix&& other) noexcept
-        : x(std::move(other.x)), y(std::move(other.y))
-    {
-        // Do nothing
-    }
+    constexpr Matrix(Matrix&&) noexcept = default;
 
-    Matrix& operator=(const Matrix& other)
-    {
-        x = other.x;
-        y = other.y;
-        return *this;
-    }
+    Matrix& operator=(const Matrix&) = default;
 
-    Matrix& operator=(Matrix&& other) noexcept
-    {
-        x = std::move(other.x);
-        y = std::move(other.y);
-        return *this;
-    }
+    Matrix& operator=(Matrix&&) noexcept = default;
 
     void Fill(const T& val);
 
@@ -431,38 +385,13 @@ class Matrix<T, 4, 1> final : public MatrixExpression<T, 4, 1, Matrix<T, 4, 1>>,
 
     ~Matrix() = default;
 
-    constexpr Matrix(const Matrix& other)
-        : x(other.x), y(other.y), z(other.z), w(other.w)
-    {
-        // Do nothing
-    }
+    constexpr Matrix(const Matrix&) = default;
 
-    constexpr Matrix(Matrix&& other) noexcept
-        : x(std::move(other.x)),
-          y(std::move(other.y)),
-          z(std::move(other.z)),
-          w(std::move(other.w))
-    {
-        // Do nothing
-    }
+    constexpr Matrix(Matrix&&) noexcept = default;
 
-    Matrix& operator=(const Matrix& other)
-    {
-        x = other.x;
-        y = other.y;
-        z = other.z;
-        w = other.w;
-        return *this;
-    }
+    Matrix& operator=(const Matrix&) = default;
 
-    Matrix& operator=(Matrix&& other) noexcept
-    {
-        x = std::move(other.x);
-        y = std::move(other.y);
-        z = std::move(other.z);
-        w = std::move(other.w);
-        return *this;
-    }
+    Matrix& operator=(Matrix&&) noexcept = default;
 
     void Fill(const T& val);
 

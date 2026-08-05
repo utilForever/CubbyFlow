@@ -39,6 +39,29 @@ TEST(ParticleSystemData3, Constructors)
     }
 }
 
+TEST(ParticleSystemData3, CopyAssignmentAndSet)
+{
+    ParticleSystemData3 source(2);
+    EXPECT_EQ(0u, source.AddScalarData());
+    EXPECT_EQ(3u, source.AddVectorData());
+
+    ParticleSystemData3 assigned(1);
+    EXPECT_EQ(0u, assigned.AddScalarData());
+    EXPECT_EQ(3u, assigned.AddVectorData());
+    assigned = source;
+
+    EXPECT_EQ(1u, assigned.AddScalarData());
+    EXPECT_EQ(4u, assigned.AddVectorData());
+
+    ParticleSystemData3 set(1);
+    EXPECT_EQ(0u, set.AddScalarData());
+    EXPECT_EQ(3u, set.AddVectorData());
+    set.Set(source);
+
+    EXPECT_EQ(1u, set.AddScalarData());
+    EXPECT_EQ(4u, set.AddVectorData());
+}
+
 TEST(ParticleSystemData3, Resize)
 {
     ParticleSystemData3 particleSystem;

@@ -32,14 +32,7 @@ PointHashGridSearcher<N>::PointHashGridSearcher(
 
 template <size_t N>
 PointHashGridSearcher<N>::PointHashGridSearcher(
-    const PointHashGridSearcher& other)
-    : m_gridSpacing(other.m_gridSpacing),
-      m_resolution(other.m_resolution),
-      m_points(other.m_points),
-      m_buckets(other.m_buckets)
-{
-    // Do nothing
-}
+    const PointHashGridSearcher& other) = default;
 
 template <size_t N>
 PointHashGridSearcher<N>::PointHashGridSearcher(
@@ -54,14 +47,7 @@ PointHashGridSearcher<N>::PointHashGridSearcher(
 
 template <size_t N>
 PointHashGridSearcher<N>& PointHashGridSearcher<N>::operator=(
-    const PointHashGridSearcher& other)
-{
-    m_gridSpacing = other.m_gridSpacing;
-    m_resolution = other.m_resolution;
-    m_points = other.m_points;
-    m_buckets = other.m_buckets;
-    return *this;
-}
+    const PointHashGridSearcher& other) = default;
 
 template <size_t N>
 PointHashGridSearcher<N>& PointHashGridSearcher<N>::operator=(

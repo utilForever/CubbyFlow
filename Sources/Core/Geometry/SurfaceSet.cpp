@@ -53,6 +53,7 @@ SurfaceSet<N>::SurfaceSet(SurfaceSet&& other) noexcept
 template <size_t N>
 SurfaceSet<N>& SurfaceSet<N>::operator=(const SurfaceSet& other)
 {
+    Surface<N>::operator=(other);
     m_surfaces = other.m_surfaces;
     m_unboundedSurfaces = other.m_unboundedSurfaces;
 
@@ -64,6 +65,7 @@ SurfaceSet<N>& SurfaceSet<N>::operator=(const SurfaceSet& other)
 template <size_t N>
 SurfaceSet<N>& SurfaceSet<N>::operator=(SurfaceSet&& other) noexcept
 {
+    Surface<N>::operator=(std::move(other));
     m_surfaces = std::move(other.m_surfaces);
     m_unboundedSurfaces = std::move(other.m_unboundedSurfaces);
 

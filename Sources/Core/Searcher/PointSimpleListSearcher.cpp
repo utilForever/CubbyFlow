@@ -18,35 +18,19 @@ namespace CubbyFlow
 {
 template <size_t N>
 PointSimpleListSearcher<N>::PointSimpleListSearcher(
-    const PointSimpleListSearcher& other)
-    : m_points(other.m_points)
-{
-    // Do nothing
-}
+    const PointSimpleListSearcher& other) = default;
 
 template <size_t N>
 PointSimpleListSearcher<N>::PointSimpleListSearcher(
-    PointSimpleListSearcher&& other) noexcept
-    : m_points(std::move(other.m_points))
-{
-    // Do nothing
-}
+    PointSimpleListSearcher&& other) noexcept = default;
 
 template <size_t N>
 PointSimpleListSearcher<N>& PointSimpleListSearcher<N>::operator=(
-    const PointSimpleListSearcher& other)
-{
-    m_points = other.m_points;
-    return *this;
-}
+    const PointSimpleListSearcher& other) = default;
 
 template <size_t N>
 PointSimpleListSearcher<N>& PointSimpleListSearcher<N>::operator=(
-    PointSimpleListSearcher&& other) noexcept
-{
-    m_points = std::move(other.m_points);
-    return *this;
-}
+    PointSimpleListSearcher&& other) noexcept = default;
 
 template <size_t N>
 void PointSimpleListSearcher<N>::Build(
