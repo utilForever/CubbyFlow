@@ -128,6 +128,17 @@ class MPMSystemData final : public ParticleSystemData<N>
     void TransferFromGridToParticles();
 
  private:
+    [[nodiscard]] static Vector<size_t, N> FoldIndex(
+        const Vector<ssize_t, N>& index, const Vector<size_t, N>& dataSize);
+
+    [[nodiscard]] static bool IsFinite(const Vector<double, N>& value);
+
+    static void ValidateGridParameters(const Vector<size_t, N>& resolution,
+                                       const Vector<double, N>& gridSpacing,
+                                       const Vector<double, N>& gridOrigin);
+
+    void ValidateGridState() const;
+
     Array1<double> m_particleMasses;
     Array1<double> m_initialVolumes;
     Array1<DeformationState> m_deformationStates;

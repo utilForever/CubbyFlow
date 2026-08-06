@@ -12,6 +12,8 @@
 
 #include <Core/Particle/MPM/MPMSystemData.hpp>
 
+#include <limits>
+
 using namespace CubbyFlow;
 
 namespace
@@ -28,7 +30,6 @@ void ExpectParticleStateResizes()
     data.InitialVolumes()[0] = 0.5;
     data.SetMass(2.5);
     data.AddParticle(Vector<double, N>::MakeConstant(0.25));
-
     ASSERT_EQ(data.NumberOfParticles(), 2u);
     EXPECT_DOUBLE_EQ(data.ParticleMasses()[0], 1.25);
     EXPECT_DOUBLE_EQ(data.ParticleMasses()[1], 2.5);
@@ -73,6 +74,7 @@ void ExpectStencilPartitionAndGradient()
 
     double weightSum = 0.0;
     Vector<double, N> gradientSum;
+
     for (const auto& entry : stencil)
     {
         weightSum += entry.weight;
@@ -84,14 +86,110 @@ void ExpectStencilPartitionAndGradient()
 
     constexpr double epsilon = 1e-6;
     auto shifted = position;
+
     shifted[0] += epsilon;
+
     const auto shiftedStencil = CubicBSplineKernel<N>::GetStencil(
         shifted, spacing, Vector<double, N>{});
+
     for (size_t i = 0; i < stencil.size(); ++i)
     {
         EXPECT_NEAR((shiftedStencil[i].weight - stencil[i].weight) / epsilon,
                     stencil[i].gradient[0], 1e-5);
     }
+}
+
+template <size_t N>
+void ExpectStencilRejectsUnrepresentableCoordinates()
+{
+    const auto zero = Vector<double, N>{};
+    const auto unit = Vector<double, N>::MakeConstant(1.0);
+    const auto largest =
+        Vector<double, N>::MakeConstant(std::numeric_limits<double>::max());
+    const auto lowest =
+        Vector<double, N>::MakeConstant(std::numeric_limits<double>::lowest());
+
+    EXPECT_THROW((void)CubicBSplineKernel<N>::GetStencil(unit, zero, {}),
+                 std::invalid_argument);
+    EXPECT_THROW((void)CubicBSplineKernel<N>::GetStencil(largest, unit, {}),
+                 std::invalid_argument);
+    EXPECT_THROW((void)CubicBSplineKernel<N>::GetStencil(largest, unit, lowest),
+                 std::invalid_argument);
+}
+
+template <size_t N>
+void ExpectParticleToGridConservation(const Vector<double, N>& firstPosition)
+{
+    MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(4),
+                           Vector<double, N>::MakeConstant(1.0),
+                           {},
+                           2 };
+    data.Positions()[0] = firstPosition;
+    data.Positions()[1] = Vector<double, N>::MakeConstant(2.25);
+    data.Velocities()[0] = Vector<double, N>::MakeConstant(2.0);
+    data.Velocities()[1] = Vector<double, N>::MakeConstant(-1.0);
+    data.ParticleMasses()[0] = 2.0;
+    data.ParticleMasses()[1] = 3.0;
+
+    data.TransferFromParticlesToGrid();
+
+    double gridMass = 0.0;
+    Vector<double, N> gridMomentum;
+
+    data.GridMass().ForEachDataPointIndex([&](const Vector<size_t, N>& index) {
+        const double mass = data.GridMass()(index);
+        gridMass += mass;
+        gridMomentum += mass * data.GridVelocities()(index);
+        EXPECT_TRUE(data.GridVelocities()(index).IsSimilar(
+            data.GridVelocitiesBeforeUpdate()(index), 1e-12));
+    });
+
+    EXPECT_NEAR(gridMass, 5.0, 1e-11);
+    EXPECT_TRUE(
+        gridMomentum.IsSimilar(Vector<double, N>::MakeConstant(1.0), 1e-11));
+}
+
+template <size_t N>
+void ExpectGridToParticleBlend(double factor, double expected,
+                               const Vector<double, N>& position,
+                               bool useDefault = false)
+{
+    MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(4),
+                           Vector<double, N>::MakeConstant(1.0),
+                           {},
+                           1 };
+    data.Positions()[0] = position;
+    data.Velocities()[0] = Vector<double, N>::MakeConstant(10.0);
+
+    data.GridVelocitiesBeforeUpdate().Fill(Vector<double, N>::MakeConstant(1.0),
+                                           ExecutionPolicy::Serial);
+    data.GridVelocities().Fill(Vector<double, N>::MakeConstant(3.0),
+                               ExecutionPolicy::Serial);
+
+    if (!useDefault)
+    {
+        data.SetFLIPBlendingFactor(factor);
+    }
+
+    data.TransferFromGridToParticles();
+
+    EXPECT_TRUE(data.Velocities()[0].IsSimilar(
+        Vector<double, N>::MakeConstant(expected), 1e-12));
+}
+
+template <size_t N>
+void ExpectRejectsDivergentGridState()
+{
+    MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(4) };
+    data.GridMass().Clear();
+    EXPECT_THROW(data.TransferFromParticlesToGrid(), std::invalid_argument);
+
+    data.ResizeGrid(Vector<size_t, N>::MakeConstant(4),
+                    Vector<double, N>::MakeConstant(1.0), {});
+    data.GridVelocitiesBeforeUpdate().Resize(
+        Vector<size_t, N>::MakeConstant(2),
+        Vector<double, N>::MakeConstant(1.0), {});
+    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
 }
 }  // namespace
 
@@ -110,6 +208,12 @@ TEST(CubicBSplineKernel, Stencil)
     ExpectStencilPartitionAndGradient<3>();
 }
 
+TEST(CubicBSplineKernel, RejectsUnrepresentableCoordinates)
+{
+    ExpectStencilRejectsUnrepresentableCoordinates<2>();
+    ExpectStencilRejectsUnrepresentableCoordinates<3>();
+}
+
 TEST(MPMSystemData, ParticleStateResizes)
 {
     ExpectParticleStateResizes<2>();
@@ -120,4 +224,79 @@ TEST(MPMSystemData, GridStateResizes)
 {
     ExpectGridStateResizes<2>();
     ExpectGridStateResizes<3>();
+}
+
+TEST(MPMSystemData, ParticleToGridConservesMassAndMomentum)
+{
+    ExpectParticleToGridConservation<2>(Vector2D::MakeConstant(1.25));
+    ExpectParticleToGridConservation<3>(Vector3D::MakeConstant(1.25));
+    ExpectParticleToGridConservation<2>(Vector2D{});
+    ExpectParticleToGridConservation<3>(Vector3D{});
+}
+
+TEST(MPMSystemData, GridToParticleBlendsPICAndFLIP)
+{
+    ExpectGridToParticleBlend<2>(0.0, 3.0, Vector2D::MakeConstant(1.25));
+    ExpectGridToParticleBlend<3>(0.0, 3.0, Vector3D::MakeConstant(1.25));
+    ExpectGridToParticleBlend<2>(1.0, 12.0, Vector2D{});
+    ExpectGridToParticleBlend<3>(1.0, 12.0, Vector3D{});
+    ExpectGridToParticleBlend<2>(0.95, 11.55, Vector2D::MakeConstant(1.25),
+                                 true);
+    ExpectGridToParticleBlend<3>(0.95, 11.55, Vector3D::MakeConstant(1.25),
+                                 true);
+}
+
+TEST(MPMSystemData, EmptyTransfersAreSafe)
+{
+    MPMSystemData2 data2;
+    MPMSystemData3 data3;
+
+    EXPECT_NO_THROW(data2.TransferFromParticlesToGrid());
+    EXPECT_NO_THROW(data2.TransferFromGridToParticles());
+    EXPECT_NO_THROW(data3.TransferFromParticlesToGrid());
+    EXPECT_NO_THROW(data3.TransferFromGridToParticles());
+}
+
+TEST(MPMSystemData, RejectsDivergentGridState)
+{
+    ExpectRejectsDivergentGridState<2>();
+    ExpectRejectsDivergentGridState<3>();
+}
+
+TEST(MPMSystemData, RejectsInvalidInput)
+{
+    MPMSystemData2 data{ Vector2UZ::MakeConstant(2) };
+    const Vector2UZ zeroResolution{};
+    const Vector2D unitSpacing = Vector2D::MakeConstant(1.0);
+    const Vector2D negativeSpacing{ -1.0, 1.0 };
+    const Vector2UZ overflowingResolution =
+        Vector2UZ::MakeConstant(std::numeric_limits<size_t>::max());
+
+    EXPECT_THROW(data.ResizeGrid(zeroResolution, unitSpacing, {}),
+                 std::invalid_argument);
+    EXPECT_THROW(
+        data.ResizeGrid(Vector2UZ::MakeConstant(2), negativeSpacing, {}),
+        std::invalid_argument);
+    EXPECT_THROW(data.ResizeGrid(overflowingResolution, unitSpacing, {}),
+                 std::invalid_argument);
+    EXPECT_THROW(data.SetFLIPBlendingFactor(-0.1), std::invalid_argument);
+    EXPECT_THROW(data.SetFLIPBlendingFactor(1.1), std::invalid_argument);
+    EXPECT_THROW(
+        data.SetFLIPBlendingFactor(std::numeric_limits<double>::quiet_NaN()),
+        std::invalid_argument);
+
+    data.Resize(1);
+    data.ParticleMasses()[0] = 0.0;
+    EXPECT_THROW(data.TransferFromParticlesToGrid(), std::invalid_argument);
+    data.ParticleMasses()[0] = 1.0;
+    data.Positions()[0].x = std::numeric_limits<double>::infinity();
+    EXPECT_THROW(data.TransferFromParticlesToGrid(), std::invalid_argument);
+    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
+
+    data.Positions()[0] = Vector2D{};
+    data.Velocities()[0] = Vector2D{};
+    data.GridVelocities().Fill(
+        Vector2D{ std::numeric_limits<double>::infinity(), 0.0 },
+        ExecutionPolicy::Serial);
+    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
 }
