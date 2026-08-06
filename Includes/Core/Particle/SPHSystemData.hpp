@@ -35,6 +35,7 @@ class SPHSystemData : public ParticleSystemData<N>
     using Base::Positions;
     using Base::ScalarDataAt;
     using Base::Serialize;
+    using Base::Set;
 
     //! Constructs empty SPH system.
     SPHSystemData();

@@ -66,7 +66,6 @@ class CubicBSplineKernel final
 //!
 //! \note Serialization preserves only the inherited particle-system state;
 //! MPM-specific particle and grid state is reset after deserialization.
-//! \note Python bindings for MPM system data are deferred.
 //!
 template <size_t N>
 class MPMSystemData final : public ParticleSystemData<N>

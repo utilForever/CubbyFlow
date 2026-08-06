@@ -72,7 +72,7 @@ ParticleSystemData<N>::ParticleSystemData(size_t numberOfParticles)
         Vector<size_t, N>::MakeConstant(DEFAULT_HASH_GRID_RESOLUTION),
         2.0 * m_radius);
 
-    Resize(numberOfParticles);
+    ParticleSystemData<N>::Resize(numberOfParticles);
 }
 
 template <size_t N>
