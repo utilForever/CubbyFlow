@@ -11,8 +11,102 @@
 #ifndef CUBBYFLOW_MPM_SYSTEM_DATA_IMPL_HPP
 #define CUBBYFLOW_MPM_SYSTEM_DATA_IMPL_HPP
 
+#include <Core/Utils/IterationUtils.hpp>
+
+#include <cmath>
+#include <stdexcept>
+
 namespace CubbyFlow
 {
+template <size_t N>
+double CubicBSplineKernel<N>::Weight(double x)
+{
+    const double ax = std::abs(x);
+    if (ax < 1.0)
+    {
+        return 0.5 * ax * ax * ax - ax * ax + 2.0 / 3.0;
+    }
+    if (ax < 2.0)
+    {
+        const double d = 2.0 - ax;
+        return d * d * d / 6.0;
+    }
+    return 0.0;
+}
+
+template <size_t N>
+double CubicBSplineKernel<N>::Gradient(double x)
+{
+    const double ax = std::abs(x);
+    if (ax < 1.0)
+    {
+        return x * (1.5 * ax - 2.0);
+    }
+    if (ax < 2.0)
+    {
+        const double d = 2.0 - ax;
+        return -0.5 * d * d * std::copysign(1.0, x);
+    }
+    return 0.0;
+}
+
+template <size_t N>
+typename CubicBSplineKernel<N>::Stencil CubicBSplineKernel<N>::GetStencil(
+    const Vector<double, N>& position, const Vector<double, N>& gridSpacing,
+    const Vector<double, N>& dataOrigin)
+{
+    Vector<double, N> normalized;
+    Vector<ssize_t, N> firstIndex;
+    for (size_t axis = 0; axis < N; ++axis)
+    {
+        if (!std::isfinite(position[axis]) ||
+            !std::isfinite(gridSpacing[axis]) ||
+            !std::isfinite(dataOrigin[axis]) || gridSpacing[axis] <= 0.0)
+        {
+            throw std::invalid_argument("Invalid cubic B-spline input.");
+        }
+
+        normalized[axis] =
+            (position[axis] - dataOrigin[axis]) / gridSpacing[axis];
+        firstIndex[axis] =
+            static_cast<ssize_t>(std::floor(normalized[axis])) - 1;
+    }
+
+    std::array<Entry, STENCIL_SIZE> result;
+    size_t flatIndex = 0;
+    ForEachIndex(Vector<size_t, N>::MakeConstant(4), [&](auto... rawIndices) {
+        const Vector<size_t, N> offset{ rawIndices... };
+        Entry& entry = result[flatIndex++];
+        std::array<double, N> axisWeights;
+        entry.weight = 1.0;
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            entry.index[axis] =
+                firstIndex[axis] + static_cast<ssize_t>(offset[axis]);
+            axisWeights[axis] = Weight(normalized[axis] -
+                                       static_cast<double>(entry.index[axis]));
+            entry.weight *= axisWeights[axis];
+        }
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            entry.gradient[axis] =
+                Gradient(normalized[axis] -
+                         static_cast<double>(entry.index[axis])) /
+                gridSpacing[axis];
+            for (size_t other = 0; other < N; ++other)
+            {
+                if (other != axis)
+                {
+                    entry.gradient[axis] *= axisWeights[other];
+                }
+            }
+        }
+    });
+    return result;
+}
+
 template <size_t N>
 MPMSystemData<N>::MPMSystemData(const Vector<size_t, N>& resolution,
                                 const Vector<double, N>& gridSpacing,

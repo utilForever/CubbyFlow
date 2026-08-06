@@ -62,7 +62,53 @@ void ExpectGridStateResizes()
         EXPECT_DOUBLE_EQ(data.GridMass().Origin()[axis], origin[axis]);
     }
 }
+
+template <size_t N>
+void ExpectStencilPartitionAndGradient()
+{
+    const Vector<double, N> spacing = Vector<double, N>::MakeConstant(0.5);
+    const Vector<double, N> position = Vector<double, N>::MakeConstant(1.125);
+    const auto stencil = CubicBSplineKernel<N>::GetStencil(position, spacing,
+                                                           Vector<double, N>{});
+
+    double weightSum = 0.0;
+    Vector<double, N> gradientSum;
+    for (const auto& entry : stencil)
+    {
+        weightSum += entry.weight;
+        gradientSum += entry.gradient;
+    }
+
+    EXPECT_NEAR(weightSum, 1.0, 1e-12);
+    EXPECT_NEAR(gradientSum.Length(), 0.0, 1e-12);
+
+    constexpr double epsilon = 1e-6;
+    auto shifted = position;
+    shifted[0] += epsilon;
+    const auto shiftedStencil = CubicBSplineKernel<N>::GetStencil(
+        shifted, spacing, Vector<double, N>{});
+    for (size_t i = 0; i < stencil.size(); ++i)
+    {
+        EXPECT_NEAR((shiftedStencil[i].weight - stencil[i].weight) / epsilon,
+                    stencil[i].gradient[0], 1e-5);
+    }
+}
 }  // namespace
+
+TEST(CubicBSplineKernel, Values)
+{
+    EXPECT_NEAR(CubicBSplineKernel<2>::Weight(0.0), 2.0 / 3.0, 1e-12);
+    EXPECT_NEAR(CubicBSplineKernel<2>::Weight(1.0), 1.0 / 6.0, 1e-12);
+    EXPECT_DOUBLE_EQ(CubicBSplineKernel<2>::Weight(2.0), 0.0);
+    EXPECT_NEAR(CubicBSplineKernel<2>::Gradient(0.5), -0.625, 1e-12);
+    EXPECT_NEAR(CubicBSplineKernel<2>::Gradient(-0.5), 0.625, 1e-12);
+}
+
+TEST(CubicBSplineKernel, Stencil)
+{
+    ExpectStencilPartitionAndGradient<2>();
+    ExpectStencilPartitionAndGradient<3>();
+}
 
 TEST(MPMSystemData, ParticleStateResizes)
 {

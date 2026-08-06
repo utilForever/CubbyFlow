@@ -16,8 +16,39 @@
 #include <Core/Particle/MPM/SnowConstitutiveModel.hpp>
 #include <Core/Particle/ParticleSystemData.hpp>
 
+#include <array>
+
 namespace CubbyFlow
 {
+//!
+//! \brief Tensor-product cubic B-spline interpolation kernel.
+//!
+template <size_t N>
+class CubicBSplineKernel final
+{
+ public:
+    static_assert(N == 2 || N == 3, "MPM supports only 2-D and 3-D.");
+
+    static constexpr size_t STENCIL_SIZE = N == 2 ? 16 : 64;
+
+    struct Entry
+    {
+        Vector<ssize_t, N> index;
+        double weight = 0.0;
+        Vector<double, N> gradient;
+    };
+
+    using Stencil = std::array<Entry, STENCIL_SIZE>;
+
+    [[nodiscard]] static double Weight(double x);
+
+    [[nodiscard]] static double Gradient(double x);
+
+    [[nodiscard]] static Stencil GetStencil(
+        const Vector<double, N>& position, const Vector<double, N>& gridSpacing,
+        const Vector<double, N>& dataOrigin);
+};
+
 //!
 //! \brief N-D material point method particle and grid state.
 //!
