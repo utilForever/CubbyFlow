@@ -19,6 +19,34 @@ using namespace CubbyFlow;
 namespace
 {
 template <size_t N>
+void DirtyMPMState(MPMSystemData<N>& data)
+{
+    data.ParticleMasses()[0] = 7.0;
+    data.InitialVolumes()[0] = 8.0;
+    data.DeformationStates()[0].elastic(0, 0) = 9.0;
+    data.GridMass().Fill(10.0, ExecutionPolicy::Serial);
+    data.GridVelocities().Fill(Vector<double, N>::MakeConstant(11.0),
+                               ExecutionPolicy::Serial);
+    data.GridVelocitiesBeforeUpdate().Fill(
+        Vector<double, N>::MakeConstant(12.0), ExecutionPolicy::Serial);
+}
+
+template <size_t N>
+void ExpectMPMStateReset(const MPMSystemData<N>& data)
+{
+    const Vector<size_t, N> zeroIndex{};
+    const Vector<double, N> zero{};
+    const auto identity = Matrix<double, N, N>::MakeIdentity();
+
+    EXPECT_DOUBLE_EQ(data.ParticleMasses()[0], data.Mass());
+    EXPECT_DOUBLE_EQ(data.InitialVolumes()[0], 0.0);
+    EXPECT_TRUE(data.DeformationStates()[0].elastic.IsSimilar(identity));
+    EXPECT_DOUBLE_EQ(data.GridMass()(zeroIndex), 0.0);
+    EXPECT_TRUE(data.GridVelocities()(zeroIndex).IsSimilar(zero));
+    EXPECT_TRUE(data.GridVelocitiesBeforeUpdate()(zeroIndex).IsSimilar(zero));
+}
+
+template <size_t N>
 void ExpectParticleStateResizes()
 {
     MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(4),
@@ -51,6 +79,8 @@ void ExpectBaseSetResizesMPMState()
                            {},
                            1 };
     ParticleSystemData<N> source{ 3 };
+    source.SetMass(4.0);
+    DirtyMPMState(data);
 
     data.Set(source);
 
@@ -58,12 +88,14 @@ void ExpectBaseSetResizesMPMState()
     EXPECT_EQ(data.ParticleMasses().Length(), 3u);
     EXPECT_EQ(data.InitialVolumes().Length(), 3u);
     EXPECT_EQ(data.DeformationStates().Length(), 3u);
+    ExpectMPMStateReset(data);
 }
 
 template <size_t N>
 void ExpectBaseDeserializeResizesMPMState()
 {
     ParticleSystemData<N> source{ 3 };
+    source.SetMass(4.0);
     std::vector<uint8_t> buffer;
     source.Serialize(&buffer);
 
@@ -71,12 +103,14 @@ void ExpectBaseDeserializeResizesMPMState()
                            Vector<double, N>::MakeConstant(1.0),
                            {},
                            1 };
+    DirtyMPMState(data);
     data.Deserialize(buffer);
 
     EXPECT_EQ(data.NumberOfParticles(), 3u);
     EXPECT_EQ(data.ParticleMasses().Length(), 3u);
     EXPECT_EQ(data.InitialVolumes().Length(), 3u);
     EXPECT_EQ(data.DeformationStates().Length(), 3u);
+    ExpectMPMStateReset(data);
 }
 
 template <size_t N>

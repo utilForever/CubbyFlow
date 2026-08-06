@@ -179,6 +179,20 @@ void MPMSystemData<N>::Resize(size_t newNumberOfParticles)
 }
 
 template <size_t N>
+void MPMSystemData<N>::Deserialize(const std::vector<uint8_t>& buffer)
+{
+    Base::Deserialize(buffer);
+    ResetMPMState();
+}
+
+template <size_t N>
+void MPMSystemData<N>::Set(const ParticleSystemData<N>& other)
+{
+    Base::Set(other);
+    ResetMPMState();
+}
+
+template <size_t N>
 void MPMSystemData<N>::ResizeGrid(const Vector<size_t, N>& resolution,
                                   const Vector<double, N>& gridSpacing,
                                   const Vector<double, N>& gridOrigin)
@@ -266,7 +280,7 @@ VertexCenteredVectorGrid<N>& MPMSystemData<N>::GridVelocitiesBeforeUpdate()
 }
 
 template <size_t N>
-double MPMSystemData<N>::GetFLIPBlendingFactor() const
+double MPMSystemData<N>::FLIPBlendingFactor() const
 {
     return m_flipBlendingFactor;
 }
@@ -318,7 +332,7 @@ void MPMSystemData<N>::TransferFromParticlesToGrid()
                 continue;
             }
 
-            const auto index = FoldIndex(entry.index, dataSize);
+            const auto index = ClampIndex(entry.index, dataSize);
             const double mass = entry.weight * m_particleMasses[i];
 
             m_gridMass(index) += mass;
@@ -380,7 +394,7 @@ void MPMSystemData<N>::TransferFromGridToParticles()
                 continue;
             }
 
-            const auto index = FoldIndex(entry.index, dataSize);
+            const auto index = ClampIndex(entry.index, dataSize);
             picVelocity += entry.weight * m_gridVelocities(index);
             flipDelta += entry.weight * (m_gridVelocities(index) -
                                          m_gridVelocitiesBeforeUpdate(index));
@@ -396,8 +410,8 @@ void MPMSystemData<N>::TransferFromGridToParticles()
 }
 
 template <size_t N>
-Vector<size_t, N> MPMSystemData<N>::FoldIndex(const Vector<ssize_t, N>& index,
-                                              const Vector<size_t, N>& dataSize)
+Vector<size_t, N> MPMSystemData<N>::ClampIndex(
+    const Vector<ssize_t, N>& index, const Vector<size_t, N>& dataSize)
 {
     Vector<size_t, N> result;
 
@@ -465,6 +479,18 @@ void MPMSystemData<N>::ValidateGridState() const
     {
         throw std::invalid_argument("MPM grids must have matching geometry.");
     }
+}
+
+template <size_t N>
+void MPMSystemData<N>::ResetMPMState()
+{
+    m_particleMasses.Fill(Base::Mass());
+    m_initialVolumes.Fill(0.0);
+    m_deformationStates.Fill(DeformationState{});
+    m_gridMass.Fill(0.0, ExecutionPolicy::Serial);
+    m_gridVelocities.Fill(Vector<double, N>{}, ExecutionPolicy::Serial);
+    m_gridVelocitiesBeforeUpdate.Fill(Vector<double, N>{},
+                                      ExecutionPolicy::Serial);
 }
 }  // namespace CubbyFlow
 

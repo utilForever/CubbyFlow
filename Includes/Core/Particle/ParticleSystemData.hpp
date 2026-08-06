@@ -231,7 +231,7 @@ class ParticleSystemData : public Serializable
     void Deserialize(const std::vector<uint8_t>& buffer) override;
 
     //! Copies from other particle system data.
-    void Set(const ParticleSystemData& other);
+    virtual void Set(const ParticleSystemData& other);
 
  protected:
     template <size_t M = N>

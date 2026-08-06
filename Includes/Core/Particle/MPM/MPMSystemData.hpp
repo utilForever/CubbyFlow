@@ -64,6 +64,10 @@ class CubicBSplineKernel final
 //!
 //! \brief N-D material point method particle and grid state.
 //!
+//! \note Serialization preserves only the inherited particle-system state;
+//! MPM-specific particle and grid state is reset after deserialization.
+//! \note Python bindings for MPM system data are deferred.
+//!
 template <size_t N>
 class MPMSystemData final : public ParticleSystemData<N>
 {
@@ -84,6 +88,12 @@ class MPMSystemData final : public ParticleSystemData<N>
 
     //! Resizes particle state, initializing new MPM attributes.
     void Resize(size_t newNumberOfParticles) override;
+
+    //! Deserializes inherited particle state and resets MPM-specific state.
+    void Deserialize(const std::vector<uint8_t>& buffer) override;
+
+    //! Copies inherited particle state and resets MPM-specific state.
+    void Set(const ParticleSystemData<N>& other) override;
 
     //! Resizes the background grid without changing particle state.
     void ResizeGrid(const Vector<size_t, N>& resolution,
@@ -128,7 +138,7 @@ class MPMSystemData final : public ParticleSystemData<N>
     [[nodiscard]] VertexCenteredVectorGrid<N>& GridVelocitiesBeforeUpdate();
 
     //! Returns the FLIP fraction used for grid-to-particle transfer.
-    [[nodiscard]] double GetFLIPBlendingFactor() const;
+    [[nodiscard]] double FLIPBlendingFactor() const;
 
     //! Sets the FLIP fraction used for grid-to-particle transfer.
     void SetFLIPBlendingFactor(double factor);
@@ -142,7 +152,7 @@ class MPMSystemData final : public ParticleSystemData<N>
     void TransferFromGridToParticles();
 
  private:
-    [[nodiscard]] static Vector<size_t, N> FoldIndex(
+    [[nodiscard]] static Vector<size_t, N> ClampIndex(
         const Vector<ssize_t, N>& index, const Vector<size_t, N>& dataSize);
 
     [[nodiscard]] static bool IsFinite(const Vector<double, N>& value);
@@ -152,6 +162,8 @@ class MPMSystemData final : public ParticleSystemData<N>
                                        const Vector<double, N>& gridOrigin);
 
     void ValidateGridState() const;
+
+    void ResetMPMState();
 
     Array1<double> m_particleMasses;
     Array1<double> m_initialVolumes;
