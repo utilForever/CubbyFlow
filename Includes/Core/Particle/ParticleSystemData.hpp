@@ -86,7 +86,7 @@ class ParticleSystemData : public Serializable
     //!
     //! \param[in]  newNumberOfParticles    New number of particles.
     //!
-    void Resize(size_t newNumberOfParticles);
+    virtual void Resize(size_t newNumberOfParticles);
 
     //! Returns the number of particles.
     [[nodiscard]] size_t NumberOfParticles() const;
