@@ -47,6 +47,18 @@ class CubicBSplineKernel final
     [[nodiscard]] static Stencil GetStencil(
         const Vector<double, N>& position, const Vector<double, N>& gridSpacing,
         const Vector<double, N>& dataOrigin);
+
+ private:
+    static void GetStencilCoordinates(const Vector<double, N>& position,
+                                      const Vector<double, N>& gridSpacing,
+                                      const Vector<double, N>& dataOrigin,
+                                      Vector<double, N>* normalized,
+                                      Vector<ssize_t, N>* firstIndex);
+
+    [[nodiscard]] static Entry GetStencilEntry(
+        const Vector<size_t, N>& offset, const Vector<double, N>& normalized,
+        const Vector<ssize_t, N>& firstIndex,
+        const Vector<double, N>& gridSpacing);
 };
 
 //!
@@ -122,9 +134,11 @@ class MPMSystemData final : public ParticleSystemData<N>
     void SetFLIPBlendingFactor(double factor);
 
     //! Transfers particle mass and momentum to the background grid.
+    //! Stencil nodes outside the finite grid are clamped to its boundary.
     void TransferFromParticlesToGrid();
 
     //! Transfers updated background-grid velocities to particles.
+    //! Stencil nodes outside the finite grid are clamped to its boundary.
     void TransferFromGridToParticles();
 
  private:
@@ -153,6 +167,12 @@ using MPMSystemData2 = MPMSystemData<2>;
 
 //! 3-D material point method system data.
 using MPMSystemData3 = MPMSystemData<3>;
+
+//! Shared pointer type of MPMSystemData2.
+using MPMSystemData2Ptr = std::shared_ptr<MPMSystemData2>;
+
+//! Shared pointer type of MPMSystemData3.
+using MPMSystemData3Ptr = std::shared_ptr<MPMSystemData3>;
 }  // namespace CubbyFlow
 
 #include <Core/Particle/MPM/MPMSystemData-Impl.hpp>

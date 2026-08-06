@@ -59,13 +59,11 @@ double CubicBSplineKernel<N>::Gradient(double x)
 }
 
 template <size_t N>
-CubicBSplineKernel<N>::Stencil CubicBSplineKernel<N>::GetStencil(
+void CubicBSplineKernel<N>::GetStencilCoordinates(
     const Vector<double, N>& position, const Vector<double, N>& gridSpacing,
-    const Vector<double, N>& dataOrigin)
+    const Vector<double, N>& dataOrigin, Vector<double, N>* normalized,
+    Vector<ssize_t, N>* firstIndex)
 {
-    Vector<double, N> normalized;
-    Vector<ssize_t, N> firstIndex;
-
     for (size_t axis = 0; axis < N; ++axis)
     {
         if (!std::isfinite(position[axis]) ||
@@ -75,26 +73,75 @@ CubicBSplineKernel<N>::Stencil CubicBSplineKernel<N>::GetStencil(
             throw std::invalid_argument("Invalid cubic B-spline input.");
         }
 
-        normalized[axis] =
+        (*normalized)[axis] =
             (position[axis] - dataOrigin[axis]) / gridSpacing[axis];
 
         const double lowestIndex = std::nextafter(
             static_cast<double>(std::numeric_limits<ssize_t>::lowest()) + 1.0,
             0.0);
-        const double highestIndex = std::nextafter(
-            static_cast<double>(std::numeric_limits<ssize_t>::max()) - 2.0,
-            0.0);
-
-        if (!std::isfinite(normalized[axis]) ||
-            normalized[axis] < lowestIndex || normalized[axis] > highestIndex)
+        if (const double highestIndex = std::nextafter(
+                static_cast<double>(std::numeric_limits<ssize_t>::max()) - 2.0,
+                0.0);
+            !std::isfinite((*normalized)[axis]) ||
+            (*normalized)[axis] < lowestIndex ||
+            (*normalized)[axis] > highestIndex)
         {
             throw std::invalid_argument(
                 "Cubic B-spline index is out of range.");
         }
 
-        firstIndex[axis] =
-            static_cast<ssize_t>(std::floor(normalized[axis])) - 1;
+        (*firstIndex)[axis] =
+            static_cast<ssize_t>(std::floor((*normalized)[axis])) - 1;
     }
+}
+
+template <size_t N>
+CubicBSplineKernel<N>::Entry CubicBSplineKernel<N>::GetStencilEntry(
+    const Vector<size_t, N>& offset, const Vector<double, N>& normalized,
+    const Vector<ssize_t, N>& firstIndex, const Vector<double, N>& gridSpacing)
+{
+    Entry entry;
+    std::array<double, N> axisWeights;
+
+    entry.weight = 1.0;
+
+    for (size_t axis = 0; axis < N; ++axis)
+    {
+        entry.index[axis] =
+            firstIndex[axis] + static_cast<ssize_t>(offset[axis]);
+        axisWeights[axis] =
+            Weight(normalized[axis] - static_cast<double>(entry.index[axis]));
+        entry.weight *= axisWeights[axis];
+    }
+
+    for (size_t axis = 0; axis < N; ++axis)
+    {
+        entry.gradient[axis] =
+            Gradient(normalized[axis] -
+                     static_cast<double>(entry.index[axis])) /
+            gridSpacing[axis];
+
+        for (size_t other = 0; other < N; ++other)
+        {
+            if (other != axis)
+            {
+                entry.gradient[axis] *= axisWeights[other];
+            }
+        }
+    }
+
+    return entry;
+}
+
+template <size_t N>
+CubicBSplineKernel<N>::Stencil CubicBSplineKernel<N>::GetStencil(
+    const Vector<double, N>& position, const Vector<double, N>& gridSpacing,
+    const Vector<double, N>& dataOrigin)
+{
+    Vector<double, N> normalized;
+    Vector<ssize_t, N> firstIndex;
+    GetStencilCoordinates(position, gridSpacing, dataOrigin, &normalized,
+                          &firstIndex);
 
     std::array<Entry, STENCIL_SIZE> result;
     size_t flatIndex = 0;
@@ -103,36 +150,8 @@ CubicBSplineKernel<N>::Stencil CubicBSplineKernel<N>::GetStencil(
                  [&result, &flatIndex, &normalized, &firstIndex,
                   &gridSpacing](auto... rawIndices) {
                      const Vector<size_t, N> offset{ rawIndices... };
-                     Entry& entry = result[flatIndex++];
-                     std::array<double, N> axisWeights;
-
-                     entry.weight = 1.0;
-
-                     for (size_t axis = 0; axis < N; ++axis)
-                     {
-                         entry.index[axis] = firstIndex[axis] +
-                                             static_cast<ssize_t>(offset[axis]);
-                         axisWeights[axis] =
-                             Weight(normalized[axis] -
-                                    static_cast<double>(entry.index[axis]));
-                         entry.weight *= axisWeights[axis];
-                     }
-
-                     for (size_t axis = 0; axis < N; ++axis)
-                     {
-                         entry.gradient[axis] =
-                             Gradient(normalized[axis] -
-                                      static_cast<double>(entry.index[axis])) /
-                             gridSpacing[axis];
-
-                         for (size_t other = 0; other < N; ++other)
-                         {
-                             if (other != axis)
-                             {
-                                 entry.gradient[axis] *= axisWeights[other];
-                             }
-                         }
-                     }
+                     result[flatIndex++] = GetStencilEntry(
+                         offset, normalized, firstIndex, gridSpacing);
                  });
 
     return result;
@@ -307,7 +326,7 @@ void MPMSystemData<N>::TransferFromParticlesToGrid()
         }
     }
 
-    m_gridMass.ForEachDataPointIndex([&](const Vector<size_t, N>& index) {
+    m_gridMass.ForEachDataPointIndex([this](const Vector<size_t, N>& index) {
         const double mass = m_gridMass(index);
         if (mass > 0.0)
         {
@@ -333,6 +352,15 @@ void MPMSystemData<N>::TransferFromGridToParticles()
             throw std::invalid_argument("Invalid MPM particle state.");
         }
     }
+
+    m_gridVelocities.ForEachDataPointIndex(
+        [this](const Vector<size_t, N>& index) {
+            if (!IsFinite(m_gridVelocities(index)) ||
+                !IsFinite(m_gridVelocitiesBeforeUpdate(index)))
+            {
+                throw std::invalid_argument("Invalid MPM grid velocity.");
+            }
+        });
 
     const auto dataSize = m_gridVelocities.DataSize();
     const auto gridSpacing = m_gridVelocities.GridSpacing();
@@ -362,11 +390,6 @@ void MPMSystemData<N>::TransferFromGridToParticles()
         const Vector<double, N> result =
             (1.0 - m_flipBlendingFactor) * picVelocity +
             m_flipBlendingFactor * flipVelocity;
-
-        if (!IsFinite(result))
-        {
-            throw std::invalid_argument("Invalid MPM grid velocity.");
-        }
 
         velocities[i] = result;
     }

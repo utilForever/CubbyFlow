@@ -44,6 +44,42 @@ void ExpectParticleStateResizes()
 }
 
 template <size_t N>
+void ExpectBaseSetResizesMPMState()
+{
+    MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(2),
+                           Vector<double, N>::MakeConstant(1.0),
+                           {},
+                           1 };
+    ParticleSystemData<N> source{ 3 };
+
+    data.Set(source);
+
+    EXPECT_EQ(data.NumberOfParticles(), 3u);
+    EXPECT_EQ(data.ParticleMasses().Length(), 3u);
+    EXPECT_EQ(data.InitialVolumes().Length(), 3u);
+    EXPECT_EQ(data.DeformationStates().Length(), 3u);
+}
+
+template <size_t N>
+void ExpectBaseDeserializeResizesMPMState()
+{
+    ParticleSystemData<N> source{ 3 };
+    std::vector<uint8_t> buffer;
+    source.Serialize(&buffer);
+
+    MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(2),
+                           Vector<double, N>::MakeConstant(1.0),
+                           {},
+                           1 };
+    data.Deserialize(buffer);
+
+    EXPECT_EQ(data.NumberOfParticles(), 3u);
+    EXPECT_EQ(data.ParticleMasses().Length(), 3u);
+    EXPECT_EQ(data.InitialVolumes().Length(), 3u);
+    EXPECT_EQ(data.DeformationStates().Length(), 3u);
+}
+
+template <size_t N>
 void ExpectGridStateResizes()
 {
     MPMSystemData<N> data;
@@ -136,13 +172,14 @@ void ExpectParticleToGridConservation(const Vector<double, N>& firstPosition)
     double gridMass = 0.0;
     Vector<double, N> gridMomentum;
 
-    data.GridMass().ForEachDataPointIndex([&](const Vector<size_t, N>& index) {
-        const double mass = data.GridMass()(index);
-        gridMass += mass;
-        gridMomentum += mass * data.GridVelocities()(index);
-        EXPECT_TRUE(data.GridVelocities()(index).IsSimilar(
-            data.GridVelocitiesBeforeUpdate()(index), 1e-12));
-    });
+    data.GridMass().ForEachDataPointIndex(
+        [&data, &gridMass, &gridMomentum](const Vector<size_t, N>& index) {
+            const double mass = data.GridMass()(index);
+            gridMass += mass;
+            gridMomentum += mass * data.GridVelocities()(index);
+            EXPECT_TRUE(data.GridVelocities()(index).IsSimilar(
+                data.GridVelocitiesBeforeUpdate()(index), 1e-12));
+        });
 
     EXPECT_NEAR(gridMass, 5.0, 1e-11);
     EXPECT_TRUE(
@@ -191,6 +228,73 @@ void ExpectRejectsDivergentGridState()
         Vector<double, N>::MakeConstant(1.0), {});
     EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
 }
+
+template <size_t N>
+void ExpectInvalidGridLeavesParticleVelocitiesUnchanged()
+{
+    MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(8),
+                           Vector<double, N>::MakeConstant(1.0),
+                           {},
+                           2 };
+    data.Positions()[0] = Vector<double, N>::MakeConstant(1.0);
+    data.Positions()[1] = Vector<double, N>::MakeConstant(7.0);
+    data.Velocities()[0] = Vector<double, N>::MakeConstant(10.0);
+    data.Velocities()[1] = Vector<double, N>::MakeConstant(20.0);
+    data.GridVelocitiesBeforeUpdate().Fill(Vector<double, N>::MakeConstant(1.0),
+                                           ExecutionPolicy::Serial);
+    data.GridVelocities().Fill(Vector<double, N>::MakeConstant(2.0),
+                               ExecutionPolicy::Serial);
+
+    auto invalidVelocity = Vector<double, N>{};
+    invalidVelocity[0] = std::numeric_limits<double>::infinity();
+    data.GridVelocities()(Vector<size_t, N>::MakeConstant(7)) = invalidVelocity;
+
+    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
+    EXPECT_TRUE(data.Velocities()[0].IsSimilar(
+        Vector<double, N>::MakeConstant(10.0), 1e-12));
+    EXPECT_TRUE(data.Velocities()[1].IsSimilar(
+        Vector<double, N>::MakeConstant(20.0), 1e-12));
+}
+
+template <size_t N>
+void ExpectRejectsInvalidInput()
+{
+    MPMSystemData<N> data{ Vector<size_t, N>::MakeConstant(2) };
+    const Vector<size_t, N> zeroResolution{};
+    const auto unitSpacing = Vector<double, N>::MakeConstant(1.0);
+    auto negativeSpacing = unitSpacing;
+    negativeSpacing[0] = -1.0;
+    const auto overflowingResolution =
+        Vector<size_t, N>::MakeConstant(std::numeric_limits<size_t>::max());
+
+    EXPECT_THROW(data.ResizeGrid(zeroResolution, unitSpacing, {}),
+                 std::invalid_argument);
+    EXPECT_THROW(data.ResizeGrid(Vector<size_t, N>::MakeConstant(2),
+                                 negativeSpacing, {}),
+                 std::invalid_argument);
+    EXPECT_THROW(data.ResizeGrid(overflowingResolution, unitSpacing, {}),
+                 std::invalid_argument);
+    EXPECT_THROW(data.SetFLIPBlendingFactor(-0.1), std::invalid_argument);
+    EXPECT_THROW(data.SetFLIPBlendingFactor(1.1), std::invalid_argument);
+    EXPECT_THROW(
+        data.SetFLIPBlendingFactor(std::numeric_limits<double>::quiet_NaN()),
+        std::invalid_argument);
+
+    data.Resize(1);
+    data.ParticleMasses()[0] = 0.0;
+    EXPECT_THROW(data.TransferFromParticlesToGrid(), std::invalid_argument);
+    data.ParticleMasses()[0] = 1.0;
+    data.Positions()[0][0] = std::numeric_limits<double>::infinity();
+    EXPECT_THROW(data.TransferFromParticlesToGrid(), std::invalid_argument);
+    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
+
+    data.Positions()[0] = Vector<double, N>{};
+    data.Velocities()[0] = Vector<double, N>{};
+    auto invalidGridVelocity = Vector<double, N>{};
+    invalidGridVelocity[0] = std::numeric_limits<double>::infinity();
+    data.GridVelocities().Fill(invalidGridVelocity, ExecutionPolicy::Serial);
+    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
+}
 }  // namespace
 
 TEST(CubicBSplineKernel, Values)
@@ -218,6 +322,18 @@ TEST(MPMSystemData, ParticleStateResizes)
 {
     ExpectParticleStateResizes<2>();
     ExpectParticleStateResizes<3>();
+}
+
+TEST(MPMSystemData, BaseSetResizesMPMState)
+{
+    ExpectBaseSetResizesMPMState<2>();
+    ExpectBaseSetResizesMPMState<3>();
+}
+
+TEST(MPMSystemData, BaseDeserializeResizesMPMState)
+{
+    ExpectBaseDeserializeResizesMPMState<2>();
+    ExpectBaseDeserializeResizesMPMState<3>();
 }
 
 TEST(MPMSystemData, GridStateResizes)
@@ -263,40 +379,14 @@ TEST(MPMSystemData, RejectsDivergentGridState)
     ExpectRejectsDivergentGridState<3>();
 }
 
+TEST(MPMSystemData, InvalidGridLeavesParticleVelocitiesUnchanged)
+{
+    ExpectInvalidGridLeavesParticleVelocitiesUnchanged<2>();
+    ExpectInvalidGridLeavesParticleVelocitiesUnchanged<3>();
+}
+
 TEST(MPMSystemData, RejectsInvalidInput)
 {
-    MPMSystemData2 data{ Vector2UZ::MakeConstant(2) };
-    const Vector2UZ zeroResolution{};
-    const Vector2D unitSpacing = Vector2D::MakeConstant(1.0);
-    const Vector2D negativeSpacing{ -1.0, 1.0 };
-    const Vector2UZ overflowingResolution =
-        Vector2UZ::MakeConstant(std::numeric_limits<size_t>::max());
-
-    EXPECT_THROW(data.ResizeGrid(zeroResolution, unitSpacing, {}),
-                 std::invalid_argument);
-    EXPECT_THROW(
-        data.ResizeGrid(Vector2UZ::MakeConstant(2), negativeSpacing, {}),
-        std::invalid_argument);
-    EXPECT_THROW(data.ResizeGrid(overflowingResolution, unitSpacing, {}),
-                 std::invalid_argument);
-    EXPECT_THROW(data.SetFLIPBlendingFactor(-0.1), std::invalid_argument);
-    EXPECT_THROW(data.SetFLIPBlendingFactor(1.1), std::invalid_argument);
-    EXPECT_THROW(
-        data.SetFLIPBlendingFactor(std::numeric_limits<double>::quiet_NaN()),
-        std::invalid_argument);
-
-    data.Resize(1);
-    data.ParticleMasses()[0] = 0.0;
-    EXPECT_THROW(data.TransferFromParticlesToGrid(), std::invalid_argument);
-    data.ParticleMasses()[0] = 1.0;
-    data.Positions()[0].x = std::numeric_limits<double>::infinity();
-    EXPECT_THROW(data.TransferFromParticlesToGrid(), std::invalid_argument);
-    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
-
-    data.Positions()[0] = Vector2D{};
-    data.Velocities()[0] = Vector2D{};
-    data.GridVelocities().Fill(
-        Vector2D{ std::numeric_limits<double>::infinity(), 0.0 },
-        ExecutionPolicy::Serial);
-    EXPECT_THROW(data.TransferFromGridToParticles(), std::invalid_argument);
+    ExpectRejectsInvalidInput<2>();
+    ExpectRejectsInvalidInput<3>();
 }

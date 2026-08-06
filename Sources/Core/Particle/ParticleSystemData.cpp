@@ -422,12 +422,14 @@ void ParticleSystemData<N>::Deserialize(const std::vector<uint8_t>& buffer)
         GetFlatbuffersParticleSystemData<N>::GetParticleSystemData(
             buffer.data());
     Deserialize(fbsParticleSystemData, *this);
+    Resize(NumberOfParticles());
 }
 
 template <size_t N>
 void ParticleSystemData<N>::Set(const ParticleSystemData& other)
 {
     *this = other;
+    Resize(NumberOfParticles());
 }
 
 template <size_t N>
