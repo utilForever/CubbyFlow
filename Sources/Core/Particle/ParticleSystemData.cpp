@@ -72,7 +72,7 @@ ParticleSystemData<N>::ParticleSystemData(size_t numberOfParticles)
         Vector<size_t, N>::MakeConstant(DEFAULT_HASH_GRID_RESOLUTION),
         2.0 * m_radius);
 
-    Resize(numberOfParticles);
+    ParticleSystemData<N>::Resize(numberOfParticles);
 }
 
 template <size_t N>
@@ -422,12 +422,14 @@ void ParticleSystemData<N>::Deserialize(const std::vector<uint8_t>& buffer)
         GetFlatbuffersParticleSystemData<N>::GetParticleSystemData(
             buffer.data());
     Deserialize(fbsParticleSystemData, *this);
+    Resize(NumberOfParticles());
 }
 
 template <size_t N>
 void ParticleSystemData<N>::Set(const ParticleSystemData& other)
 {
     *this = other;
+    Resize(NumberOfParticles());
 }
 
 template <size_t N>

@@ -86,7 +86,7 @@ class ParticleSystemData : public Serializable
     //!
     //! \param[in]  newNumberOfParticles    New number of particles.
     //!
-    void Resize(size_t newNumberOfParticles);
+    virtual void Resize(size_t newNumberOfParticles);
 
     //! Returns the number of particles.
     [[nodiscard]] size_t NumberOfParticles() const;
@@ -231,7 +231,7 @@ class ParticleSystemData : public Serializable
     void Deserialize(const std::vector<uint8_t>& buffer) override;
 
     //! Copies from other particle system data.
-    void Set(const ParticleSystemData& other);
+    virtual void Set(const ParticleSystemData& other);
 
  protected:
     template <size_t M = N>

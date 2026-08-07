@@ -89,7 +89,9 @@ void AddSPHSystemData2(pybind11::module& m)
              R"pbdoc(
 			Builds neighbor lists with kernel radius.
 		)pbdoc")
-        .def("Set", &SPHSystemData2::Set,
+        .def("Set",
+             static_cast<void (SPHSystemData2::*)(const SPHSystemData2&)>(
+                 &SPHSystemData2::Set),
              R"pbdoc(
 			Copies from other SPH system data.
 		)pbdoc");
@@ -169,7 +171,9 @@ void AddSPHSystemData3(pybind11::module& m)
              R"pbdoc(
 			Builds neighbor lists with kernel radius.
 		)pbdoc")
-        .def("Set", &SPHSystemData3::Set,
+        .def("Set",
+             static_cast<void (SPHSystemData3::*)(const SPHSystemData3&)>(
+                 &SPHSystemData3::Set),
              R"pbdoc(
 			Copies from other SPH system data.
 		)pbdoc");

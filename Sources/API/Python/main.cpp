@@ -54,6 +54,7 @@
 #include <API/Python/Grid/VertexCenteredScalarGrid.hpp>
 #include <API/Python/Grid/VertexCenteredVectorGrid.hpp>
 #include <API/Python/Math/Quaternion.hpp>
+#include <API/Python/Particle/MPM/MPMSystemData.hpp>
 #include <API/Python/Particle/ParticleSystemData.hpp>
 #include <API/Python/Particle/SPH/SPHSystemData.hpp>
 #include <API/Python/PointsToImplicit/AnisotropicPointsToImplicit.hpp>
@@ -218,6 +219,8 @@ PYBIND11_MODULE(pyCubbyFlow, m)
     AddGridSystemData3(m);
     AddParticleSystemData2(m);
     AddParticleSystemData3(m);
+    AddMPMSystemData2(m);
+    AddMPMSystemData3(m);
     AddSPHSystemData2(m);
     AddSPHSystemData3(m);
 
