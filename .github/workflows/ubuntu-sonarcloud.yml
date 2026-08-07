@@ -51,7 +51,7 @@ jobs:
       - name: Run Unit Test
         run: |
           build/bin/UnitTests
-          gcovr --gcov-executable "gcov-${{ matrix.version }}" --root . --filter '^Sources/' --sonarqube build/coverage.xml build
+          gcovr --gcov-executable "gcov-${{ matrix.version }}" --root . --filter '^(Includes|Sources)/' --sonarqube build/coverage.xml build
       - name: SonarCloud Scan
         run: sonar-scanner -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=utilforever-github
         env:
