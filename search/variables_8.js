@@ -1,7 +1,7 @@
 var searchData=
 [
   ['i_0',['i',['../struct_cubby_flow_1_1_matrix_c_s_r_1_1_element.html#aa5bd25200f0dad632c8d2cc3c35a3840',1,'CubbyFlow::MatrixCSR::Element']]],
-  ['index_1',['index',['../struct_cubby_flow_1_1_frame.html#aa0700662ea2caac344c1e0b25cfaf855',1,'CubbyFlow::Frame']]],
+  ['index_1',['index',['../struct_cubby_flow_1_1_frame.html#aa0700662ea2caac344c1e0b25cfaf855',1,'CubbyFlow::Frame::index'],['../struct_cubby_flow_1_1_cubic_b_spline_kernel_1_1_entry.html#ae8fd018f1d09e033d4194e33ab3e8ba8',1,'CubbyFlow::CubicBSplineKernel::Entry::index']]],
   ['inv_5ffour_5fpi_5fdouble_2',['INV_FOUR_PI_DOUBLE',['../namespace_cubby_flow.html#ac2643b1c7a61dd66a539e96819cac900',1,'CubbyFlow']]],
   ['inv_5ffour_5fpi_5ffloat_3',['INV_FOUR_PI_FLOAT',['../namespace_cubby_flow.html#a78963bb60402ff7a2da9ed468c86487d',1,'CubbyFlow']]],
   ['inv_5fpi_5fdouble_4',['INV_PI_DOUBLE',['../namespace_cubby_flow.html#a6f1b3a77957209858edfca2c0da9eae9',1,'CubbyFlow']]],
