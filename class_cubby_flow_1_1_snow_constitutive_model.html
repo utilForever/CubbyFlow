@@ -114,6 +114,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afb83ea4dca346235db7a25e7d908527e" id="r_afb83ea4dca346235db7a25e7d908527e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afe77d8d6ef7a256ad82e4df3a429becc">MatrixType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afb83ea4dca346235db7a25e7d908527e">ComputeKirchhoffStress</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a36d9820dec8468d4feb3be20130df52d">State</a> &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">state</a>) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
 <tr class="memdesc:afb83ea4dca346235db7a25e7d908527e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the fixed-corotated Kirchhoff stress for the state.  <br /></td></tr>
 <tr class="separator:afb83ea4dca346235db7a25e7d908527e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a273d3c7842f595c798ac9f001ede67" id="r_a3a273d3c7842f595c798ac9f001ede67"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a3a273d3c7842f595c798ac9f001ede67">ComputeWaveSpeed</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a36d9820dec8468d4feb3be20130df52d">State</a> &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">state</a>, <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">referenceDensity</a>) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
+<tr class="memdesc:a3a273d3c7842f595c798ac9f001ede67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Estimates the fastest elastic wave speed for the state.  <br /></td></tr>
+<tr class="separator:a3a273d3c7842f595c798ac9f001ede67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt;<br />
@@ -253,6 +256,47 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 
 </div>
 </div>
+<a id="a3a273d3c7842f595c798ac9f001ede67" name="a3a273d3c7842f595c798ac9f001ede67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a273d3c7842f595c798ac9f001ede67">&#9670;&#160;</a></span>ComputeWaveSpeed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html">CubbyFlow::SnowConstitutiveModel</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::ComputeWaveSpeed </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a36d9820dec8468d4feb3be20130df52d">State</a> &amp;&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td>
+          <td class="paramname"><em>referenceDensity</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Estimates the fastest elastic wave speed for the state. </p>
+<p>Evaluates the principal-basis acoustic-tensor candidates for the fixed-corotated snow energy.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">state</td><td>Current deformation state. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">referenceDensity</td><td>Positive material density at rest.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Estimated elastic wave speed. </dd></dl>
+
+</div>
+</div>
 <a id="a63a387384dc391c4efe16c515e38186e" name="a63a387384dc391c4efe16c515e38186e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a63a387384dc391c4efe16c515e38186e">&#9670;&#160;</a></span>Update()</h2>
 
@@ -307,7 +351,7 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Aug 7 2026 03:03:06 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Aug 8 2026 15:35:06 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>
