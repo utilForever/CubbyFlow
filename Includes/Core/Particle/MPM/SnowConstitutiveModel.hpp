@@ -90,7 +90,22 @@ class SnowConstitutiveModel final
     //! \return Fixed-corotated Kirchhoff stress.
     [[nodiscard]] MatrixType ComputeKirchhoffStress(const State& state) const;
 
+    //!
+    //! \brief Estimates the fastest elastic wave speed for the state.
+    //!
+    //! Evaluates the principal-basis acoustic-tensor candidates for the
+    //! fixed-corotated snow energy.
+    //!
+    //! \param[in] state Current deformation state.
+    //! \param[in] referenceDensity Positive material density at rest.
+    //!
+    //! \return Estimated elastic wave speed.
+    [[nodiscard]] double ComputeWaveSpeed(const State& state,
+                                          double referenceDensity) const;
+
  private:
+    [[nodiscard]] double ComputeHardening(const State& state) const;
+
     [[nodiscard]] static bool IsFinite(const MatrixType& matrix);
 
     static void ValidateDeformation(const MatrixType& matrix);
