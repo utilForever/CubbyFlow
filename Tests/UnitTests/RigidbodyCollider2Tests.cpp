@@ -8,6 +8,19 @@ using namespace CubbyFlow;
 
 TEST(RigidBodyCollider2, ResolveCollision)
 {
+    // Exact surface with zero radius and closing velocity
+    {
+        RigidBodyCollider2 collider(
+            std::make_shared<Plane2>(Vector2D{ 0.0, 1.0 }, Vector2D{}));
+        Vector2D position{ 1.0, 0.0 };
+        Vector2D velocity{ 1.0, -1.0 };
+
+        collider.ResolveCollision(0.0, 0.0, &position, &velocity);
+
+        EXPECT_EQ(position, Vector2D(1.0, 0.0));
+        EXPECT_EQ(velocity, Vector2D(1.0, 0.0));
+    }
+
     // 1. No penetration
     {
         RigidBodyCollider2 collider(
