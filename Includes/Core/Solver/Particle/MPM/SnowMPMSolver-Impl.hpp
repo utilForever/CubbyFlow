@@ -11,7 +11,10 @@
 #ifndef CUBBYFLOW_SNOW_MPM_SOLVER_IMPL_HPP
 #define CUBBYFLOW_SNOW_MPM_SOLVER_IMPL_HPP
 
+#include <Core/Utils/Parallel.hpp>
+
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -62,6 +65,18 @@ void SnowMPMSolver<N>::SetTimeStepLimitScale(double newScale)
     }
 
     m_timeStepLimitScale = newScale;
+}
+
+template <size_t N>
+int SnowMPMSolver<N>::GetClosedDomainBoundaryFlag() const
+{
+    return m_closedDomainBoundaryFlag;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::SetClosedDomainBoundaryFlag(int flag)
+{
+    m_closedDomainBoundaryFlag = flag;
 }
 
 template <size_t N>
@@ -161,8 +176,16 @@ void SnowMPMSolver<N>::OnBeginAdvanceTimeStep(double timeStepInSeconds)
     m_mpmSystemData->TransferFromParticlesToGrid();
     InitializeReferenceVolumes();
     UpdateGridVelocities(timeStepInSeconds);
+    ConstrainGridVelocities();
     UpdateDeformation(timeStepInSeconds);
     m_mpmSystemData->TransferFromGridToParticles();
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::OnEndAdvanceTimeStep(double timeStepInSeconds)
+{
+    Base::OnEndAdvanceTimeStep(timeStepInSeconds);
+    ConstrainParticlesToDomain();
 }
 
 template <size_t N>
@@ -280,6 +303,50 @@ void SnowMPMSolver<N>::UpdateGridVelocities(double timeStepInSeconds)
 }
 
 template <size_t N>
+void SnowMPMSolver<N>::ConstrainGridVelocities()
+{
+    constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                     DIRECTION_BACK };
+    constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                     DIRECTION_FRONT };
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    auto& gridVelocities = m_mpmSystemData->GridVelocities();
+    const auto dataSize = gridVelocities.DataSize();
+    const auto dataPosition = gridVelocities.DataPosition();
+    const auto collider = this->GetCollider();
+
+    gridVelocities.ParallelForEachDataPointIndex([&](const SizeType& index) {
+        if (gridMass(index) <= 0.0)
+        {
+            return;
+        }
+
+        VectorType velocity = gridVelocities(index);
+        if (collider != nullptr)
+        {
+            VectorType position = dataPosition(index);
+            collider->ResolveCollision(0.0, 0.0, &position, &velocity);
+        }
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
+                index[axis] == 0 && velocity[axis] < 0.0)
+            {
+                velocity[axis] = 0.0;
+            }
+            if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
+                index[axis] == dataSize[axis] - 1 && velocity[axis] > 0.0)
+            {
+                velocity[axis] = 0.0;
+            }
+        }
+
+        gridVelocities(index) = velocity;
+    });
+}
+
+template <size_t N>
 typename SnowMPMSolver<N>::MatrixType SnowMPMSolver<N>::ComputeVelocityGradient(
     size_t particleIndex) const
 {
@@ -339,6 +406,36 @@ void SnowMPMSolver<N>::UpdateDeformation(double timeStepInSeconds)
             MatrixType::MakeIdentity() + timeStepInSeconds * velocityGradient,
             states[i]);
     }
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ConstrainParticlesToDomain()
+{
+    constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                     DIRECTION_BACK };
+    constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                     DIRECTION_FRONT };
+    const auto domain = m_mpmSystemData->GridMass().GetBoundingBox();
+    auto positions = m_mpmSystemData->Positions();
+    auto velocities = m_mpmSystemData->Velocities();
+
+    ParallelFor(ZERO_SIZE, positions.Length(), [&](size_t i) {
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
+                positions[i][axis] <= domain.lowerCorner[axis])
+            {
+                positions[i][axis] = domain.lowerCorner[axis];
+                velocities[i][axis] = std::max(velocities[i][axis], 0.0);
+            }
+            if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
+                positions[i][axis] >= domain.upperCorner[axis])
+            {
+                positions[i][axis] = domain.upperCorner[axis];
+                velocities[i][axis] = std::min(velocities[i][axis], 0.0);
+            }
+        }
+    });
 }
 
 template <size_t N>

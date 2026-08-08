@@ -15,6 +15,7 @@
 #include <Core/Particle/MPM/SnowConstitutiveModel.hpp>
 #include <Core/Solver/Particle/ParticleSystemSolver2.hpp>
 #include <Core/Solver/Particle/ParticleSystemSolver3.hpp>
+#include <Core/Utils/Constants.hpp>
 
 #include <memory>
 #include <type_traits>
@@ -58,6 +59,12 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     //! Sets the adaptive time-step scale in `(0, 1]`.
     void SetTimeStepLimitScale(double newScale);
 
+    //! Returns the closed domain boundary flag.
+    [[nodiscard]] int GetClosedDomainBoundaryFlag() const;
+
+    //! Sets the closed domain boundary flag.
+    void SetClosedDomainBoundaryFlag(int flag);
+
     //! Returns a builder for SnowMPMSolver.
     [[nodiscard]] static Builder GetBuilder();
 
@@ -75,6 +82,9 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     //! Advances particle-grid snow state before base particle integration.
     void OnBeginAdvanceTimeStep(double timeStepInSeconds) override;
 
+    //! Projects particles back into selected closed domain boundaries.
+    void OnEndAdvanceTimeStep(double timeStepInSeconds) override;
+
  private:
     [[nodiscard]] static SizeType ClampIndex(const Vector<ssize_t, N>& index,
                                              const SizeType& dataSize);
@@ -83,6 +93,8 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
 
     void UpdateGridVelocities(double timeStepInSeconds);
 
+    void ConstrainGridVelocities();
+
     [[nodiscard]] MatrixType ComputeVelocityGradient(
         size_t particleIndex) const;
 
@@ -90,10 +102,13 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
 
     void UpdateDeformation(double timeStepInSeconds);
 
+    void ConstrainParticlesToDomain();
+
     std::shared_ptr<MPMSystemData<N>> m_mpmSystemData;
     SnowConstitutiveModel<N> m_constitutiveModel;
     double m_timeStepLimitScale = 0.9;
     double m_maxVelocityGradient = 0.0;
+    int m_closedDomainBoundaryFlag = DIRECTION_ALL;
 };
 
 //! Front-end to create SnowMPMSolver objects step by step.
