@@ -162,6 +162,62 @@ void ExpectPlasticCompressionHardens()
 }
 
 template <size_t N>
+void ExpectAnalyticWaveSpeed()
+{
+    const SnowConstitutiveModel<N> model{ 1000.0, 0.2, 0.025, 0.0075, 0.0 };
+
+    EXPECT_NEAR(model.ComputeWaveSpeed({}, 400.0), 5.0 / 3.0, 1e-12);
+
+    SnowDeformationState<N> state;
+    state.elastic = MakeStretch<N>(1.005);
+
+    EXPECT_NEAR(model.ComputeWaveSpeed(state, 400.0), 1.675, 1e-12);
+}
+
+template <size_t N>
+void ExpectWaveSpeedIncludesHardening()
+{
+    const SnowConstitutiveModel<N> model{ 1000.0, 0.2, 0.025, 0.0075, 10.0 };
+
+    SnowDeformationState<N> unpacked;
+    unpacked.elastic = MakeStretch<N>(1.005);
+
+    auto packed = unpacked;
+    packed.plastic = MakeStretch<N>(0.8);
+
+    EXPECT_NEAR(model.ComputeWaveSpeed(packed, 400.0) /
+                    model.ComputeWaveSpeed(unpacked, 400.0),
+                std::exp(1.0), 1e-10);
+}
+
+template <size_t N>
+void ExpectSpecialWaveSpeedCandidate()
+{
+    const SnowConstitutiveModel<N> model{ 1000.0, -0.5, 0.025, 0.0075, 0.0 };
+    SnowDeformationState<N> state;
+    state.elastic = 2.0 * MatrixD<N>::MakeIdentity();
+
+    EXPECT_NEAR(model.ComputeWaveSpeed(state, 600.0), std::sqrt(10.0), 1e-12);
+}
+
+template <size_t N>
+void ExpectInvalidWaveSpeedInputRejected()
+{
+    const SnowConstitutiveModel<N> model;
+
+    EXPECT_THROW((void)model.ComputeWaveSpeed({}, 0.0), std::invalid_argument);
+    EXPECT_THROW((void)model.ComputeWaveSpeed(
+                     {}, std::numeric_limits<double>::quiet_NaN()),
+                 std::invalid_argument);
+
+    SnowDeformationState<N> inverted;
+    inverted.elastic = MakeStretch<N>(-1.0);
+
+    EXPECT_THROW((void)model.ComputeWaveSpeed(inverted, 400.0),
+                 std::invalid_argument);
+}
+
+template <size_t N>
 void ExpectRotatedStretchProjectsAndSoftens()
 {
     const SnowConstitutiveModel<N> model{ 1000.0, 0.2, 0.025, 0.0075, 10.0 };
@@ -320,6 +376,26 @@ TEST(SnowConstitutiveModel, MultiAxisProjection3D)
 TEST(SnowConstitutiveModel, Hardening)
 {
     RUN_FOR_2D_AND_3D(ExpectPlasticCompressionHardens);
+}
+
+TEST(SnowConstitutiveModel, WaveSpeed)
+{
+    RUN_FOR_2D_AND_3D(ExpectAnalyticWaveSpeed);
+}
+
+TEST(SnowConstitutiveModel, WaveSpeedHardening)
+{
+    RUN_FOR_2D_AND_3D(ExpectWaveSpeedIncludesHardening);
+}
+
+TEST(SnowConstitutiveModel, SpecialWaveSpeedCandidate)
+{
+    RUN_FOR_2D_AND_3D(ExpectSpecialWaveSpeedCandidate);
+}
+
+TEST(SnowConstitutiveModel, InvalidWaveSpeedInput)
+{
+    RUN_FOR_2D_AND_3D(ExpectInvalidWaveSpeedInputRejected);
 }
 
 TEST(SnowConstitutiveModel, RotatedStretchProjectionAndSoftening)

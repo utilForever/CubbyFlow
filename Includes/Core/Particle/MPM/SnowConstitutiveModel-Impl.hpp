@@ -113,13 +113,7 @@ SnowConstitutiveModel<N>::ComputeKirchhoffStress(const State& state) const
 
     const MatrixType rotation = u * v.Transposed();
     const double elasticDeterminant = state.elastic.Determinant();
-    const double hardening =
-        std::exp(m_hardeningCoefficient * (1.0 - state.plastic.Determinant()));
-
-    if (!std::isfinite(hardening))
-    {
-        throw std::invalid_argument{ "Non-finite snow hardening." };
-    }
+    const double hardening = ComputeHardening(state);
 
     const double mu = m_mu0 * hardening;
     const double lambda = m_lambda0 * hardening;
@@ -134,6 +128,80 @@ SnowConstitutiveModel<N>::ComputeKirchhoffStress(const State& state) const
     }
 
     return stress;
+}
+
+template <size_t N>
+double SnowConstitutiveModel<N>::ComputeWaveSpeed(const State& state,
+                                                  double referenceDensity) const
+{
+    ValidateDeformation(state.elastic);
+    ValidateDeformation(state.plastic);
+
+    if (!std::isfinite(referenceDensity) || referenceDensity <= 0.0)
+    {
+        throw std::invalid_argument{ "Invalid snow reference density." };
+    }
+
+    MatrixType u;
+    Vector<double, N> singularValues;
+    MatrixType v;
+    SVD(state.elastic, u, singularValues, v);
+
+    const double elasticDeterminant = state.elastic.Determinant();
+    const double totalDeterminant =
+        elasticDeterminant * state.plastic.Determinant();
+    const double currentDensity = referenceDensity / totalDeterminant;
+    const double hardening = ComputeHardening(state);
+    const double mu = m_mu0 * hardening;
+    const double lambda = m_lambda0 * hardening;
+    double maxCandidate = 0.0;
+
+    for (size_t a = 0; a < N; ++a)
+    {
+        const double sigmaA = singularValues[a];
+        maxCandidate = std::max(
+            maxCandidate, 2.0 * mu * sigmaA * sigmaA +
+                              lambda * elasticDeterminant * elasticDeterminant);
+
+        for (size_t b = 0; b < N; ++b)
+        {
+            if (a == b)
+            {
+                continue;
+            }
+
+            const double sigmaB = singularValues[b];
+            maxCandidate = std::max(maxCandidate, 2.0 * mu * sigmaB * sigmaB *
+                                                      (sigmaA + sigmaB - 1.0) /
+                                                      (sigmaA + sigmaB));
+        }
+    }
+
+    const double kappa = maxCandidate / totalDeterminant;
+    const double waveSpeed = std::sqrt(kappa / currentDensity);
+
+    if (!std::isfinite(totalDeterminant) || totalDeterminant <= 0.0 ||
+        !std::isfinite(currentDensity) || currentDensity <= 0.0 ||
+        !std::isfinite(kappa) || kappa <= 0.0 || !std::isfinite(waveSpeed))
+    {
+        throw std::invalid_argument{ "Invalid snow wave speed." };
+    }
+
+    return waveSpeed;
+}
+
+template <size_t N>
+double SnowConstitutiveModel<N>::ComputeHardening(const State& state) const
+{
+    const double hardening =
+        std::exp(m_hardeningCoefficient * (1.0 - state.plastic.Determinant()));
+
+    if (!std::isfinite(hardening))
+    {
+        throw std::invalid_argument{ "Non-finite snow hardening." };
+    }
+
+    return hardening;
 }
 
 template <size_t N>
