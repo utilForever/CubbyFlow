@@ -12,6 +12,7 @@
 #define CUBBYFLOW_SNOW_MPM_SOLVER_HPP
 
 #include <Core/Particle/MPM/MPMSystemData.hpp>
+#include <Core/Particle/MPM/SnowConstitutiveModel.hpp>
 #include <Core/Solver/Particle/ParticleSystemSolver2.hpp>
 #include <Core/Solver/Particle/ParticleSystemSolver3.hpp>
 
