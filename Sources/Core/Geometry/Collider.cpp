@@ -120,10 +120,10 @@ bool Collider<N>::IsPenetrating(const ColliderQueryResult& colliderPoint,
                                 double radius)
 {
     // If the new candidate position of the particle is on the other side of
-    // the surface OR the new distance to the surface is less than the
-    // particle's radius, this particle is in colliding state.
-    return (position - colliderPoint.point).Dot(colliderPoint.normal) < 0.0 ||
-           colliderPoint.distance < radius;
+    // the surface OR the new distance to the surface is less than or equal to
+    // the particle's radius, this particle is in colliding state.
+    return (position - colliderPoint.point).Dot(colliderPoint.normal) <= 0.0 ||
+           colliderPoint.distance <= radius;
 }
 
 template <size_t N>

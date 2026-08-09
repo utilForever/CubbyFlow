@@ -1,8 +1,12 @@
 #include "gtest/gtest.h"
 
+#include <Core/Geometry/Plane.hpp>
+#include <Core/Geometry/RigidBodyCollider.hpp>
 #include <Core/Solver/Particle/MPM/SnowMPMSolver.hpp>
+#include <Core/Utils/Constants.hpp>
 #include <Core/Utils/IterationUtils.hpp>
 
+#include <array>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -26,6 +30,11 @@ class TestableSnowMPMSolver final : public SnowMPMSolver<N>
     void Initialize()
     {
         this->OnInitialize();
+    }
+
+    void BeginStep(double timeStepInSeconds)
+    {
+        this->OnBeginAdvanceTimeStep(timeStepInSeconds);
     }
 
     [[nodiscard]] unsigned int NumberOfSubTimeSteps(double interval) const
@@ -278,6 +287,10 @@ template <size_t N>
 void ExpectParametersAndBuilder()
 {
     SnowMPMSolver<N> solver;
+    EXPECT_EQ(solver.GetClosedDomainBoundaryFlag(), DIRECTION_ALL);
+    solver.SetClosedDomainBoundaryFlag(DIRECTION_LEFT | DIRECTION_UP);
+    EXPECT_EQ(solver.GetClosedDomainBoundaryFlag(),
+              DIRECTION_LEFT | DIRECTION_UP);
     EXPECT_DOUBLE_EQ(solver.GetTimeStepLimitScale(), 0.9);
     solver.SetTimeStepLimitScale(0.5);
     EXPECT_DOUBLE_EQ(solver.GetTimeStepLimitScale(), 0.5);
@@ -306,6 +319,174 @@ void ExpectParametersAndBuilder()
     EXPECT_DOUBLE_EQ(data->Mass(), 3.0);
 
     EXPECT_NE(SnowMPMSolver<N>::GetBuilder().MakeShared(), nullptr);
+}
+
+template <size_t N>
+void ExpectClosedDomainWalls()
+{
+    constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                     DIRECTION_BACK };
+    constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                     DIRECTION_FRONT };
+    const auto resolution = VectorUZ<N>::MakeConstant(4);
+    const auto spacing = VectorD<N>::MakeConstant(1.0);
+
+    for (size_t axis = 0; axis < N; ++axis)
+    {
+        for (bool isUpper : { false, true })
+        {
+            TestableSnowMPMSolver<N> solver{ resolution, spacing };
+            solver.SetClosedDomainBoundaryFlag(isUpper ? upperFlags[axis]
+                                                       : lowerFlags[axis]);
+            solver.SetGravity({});
+            solver.SetDragCoefficient(0.0);
+
+            VectorD<N> position = VectorD<N>::MakeConstant(2.0);
+            VectorD<N> velocity;
+            position[axis] = isUpper ? 3.75 : 0.25;
+            velocity[axis] = isUpper ? 1.0 : -1.0;
+            auto data = solver.GetMPMSystemData();
+            data->AddParticle(position, velocity);
+
+            solver.BeginStep(1e-3);
+
+            VectorUZ<N> nodeIndex = VectorUZ<N>::MakeConstant(2);
+            nodeIndex[axis] =
+                isUpper ? data->GridMass().DataSize()[axis] - 1 : 0;
+            ASSERT_GT(data->GridMass()(nodeIndex), 0.0);
+            EXPECT_DOUBLE_EQ(data->GridVelocities()(nodeIndex)[axis], 0.0);
+        }
+    }
+
+    for (int boundaryFlag : { DIRECTION_NONE, DIRECTION_LEFT })
+    {
+        TestableSnowMPMSolver<N> solver{ resolution, spacing };
+        solver.SetClosedDomainBoundaryFlag(boundaryFlag);
+        solver.SetGravity({});
+        solver.SetDragCoefficient(0.0);
+
+        VectorD<N> position = VectorD<N>::MakeConstant(2.0);
+        VectorD<N> velocity;
+        position[0] = 0.25;
+        velocity[0] = boundaryFlag == DIRECTION_NONE ? -1.0 : 1.0;
+        auto data = solver.GetMPMSystemData();
+        data->AddParticle(position, velocity);
+
+        solver.BeginStep(1e-3);
+
+        VectorUZ<N> nodeIndex = VectorUZ<N>::MakeConstant(2);
+        nodeIndex[0] = 0;
+        ASSERT_GT(data->GridMass()(nodeIndex), 0.0);
+        EXPECT_DOUBLE_EQ(data->GridVelocities()(nodeIndex)[0], velocity[0]);
+    }
+}
+
+template <size_t N>
+void ExpectMovingColliderAffectsGrid()
+{
+    TestableSnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
+                                     VectorD<N>::MakeConstant(1.0) };
+    solver.SetClosedDomainBoundaryFlag(DIRECTION_NONE);
+    solver.SetGravity({});
+    solver.SetDragCoefficient(0.0);
+
+    VectorD<N> normal;
+    normal[0] = 1.0;
+    auto collider = std::make_shared<RigidBodyCollider<N>>(
+        std::make_shared<Plane<N>>(normal, VectorD<N>{}));
+    collider->linearVelocity[0] = 1.0;
+    solver.SetCollider(collider);
+
+    VectorD<N> position = VectorD<N>::MakeConstant(2.0);
+    position[0] = 0.25;
+    auto data = solver.GetMPMSystemData();
+    data->AddParticle(position);
+
+    solver.BeginStep(1e-3);
+
+    VectorUZ<N> nodeIndex = VectorUZ<N>::MakeConstant(2);
+    nodeIndex[0] = 0;
+    ASSERT_GT(data->GridMass()(nodeIndex), 0.0);
+    EXPECT_DOUBLE_EQ(data->GridVelocities()(nodeIndex)[0], 1.0);
+}
+
+template <size_t N>
+void ExpectFrictionAffectsGrid()
+{
+    const auto runCase = [](double frictionCoefficient) {
+        TestableSnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
+                                         VectorD<N>::MakeConstant(1.0) };
+        solver.SetClosedDomainBoundaryFlag(DIRECTION_NONE);
+        solver.SetGravity({});
+        solver.SetDragCoefficient(0.0);
+
+        VectorD<N> normal;
+        normal[1] = 1.0;
+        VectorD<N> point;
+        point[1] = 2.0;
+        auto collider = std::make_shared<RigidBodyCollider<N>>(
+            std::make_shared<Plane<N>>(normal, point));
+        collider->SetFrictionCoefficient(frictionCoefficient);
+        solver.SetCollider(collider);
+
+        VectorD<N> position = VectorD<N>::MakeConstant(2.25);
+        VectorD<N> velocity;
+        velocity[0] = 1.0;
+        velocity[1] = -1.0;
+        auto data = solver.GetMPMSystemData();
+        data->AddParticle(position, velocity);
+
+        solver.BeginStep(1e-3);
+
+        const VectorUZ<N> nodeIndex = VectorUZ<N>::MakeConstant(2);
+        EXPECT_GT(data->GridMass()(nodeIndex), 0.0);
+        return data->GridVelocities()(nodeIndex);
+    };
+
+    const auto frictionless = runCase(0.0);
+    EXPECT_DOUBLE_EQ(frictionless[0], 1.0);
+    EXPECT_DOUBLE_EQ(frictionless[1], 0.0);
+
+    const auto frictional = runCase(1.0);
+    EXPECT_DOUBLE_EQ(frictional[0], 0.0);
+    EXPECT_DOUBLE_EQ(frictional[1], 0.0);
+}
+
+template <size_t N>
+void ExpectParticleDomainProjection()
+{
+    const auto runCase = [](int boundaryFlag) {
+        SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
+                                 VectorD<N>::MakeConstant(1.0) };
+        UseOneFixedStep(&solver);
+        solver.SetClosedDomainBoundaryFlag(boundaryFlag);
+        solver.SetGravity({});
+        solver.SetDragCoefficient(0.0);
+
+        VectorD<N> position = VectorD<N>::MakeConstant(2.0);
+        VectorD<N> velocity;
+        position[0] = -0.01;
+        velocity[0] = -1.0;
+        auto data = solver.GetMPMSystemData();
+        data->AddParticle(position, velocity);
+        solver.Update(Frame{ 0, 1e-3 });
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            EXPECT_TRUE(std::isfinite(data->Positions()[0][axis]));
+            EXPECT_TRUE(std::isfinite(data->Velocities()[0][axis]));
+        }
+
+        return std::array{ data->Positions()[0][0], data->Velocities()[0][0] };
+    };
+
+    const auto closed = runCase(DIRECTION_LEFT);
+    EXPECT_DOUBLE_EQ(closed[0], 0.0);
+    EXPECT_DOUBLE_EQ(closed[1], 0.0);
+
+    const auto open = runCase(DIRECTION_NONE);
+    EXPECT_NEAR(open[0], -0.011, 1e-12);
+    EXPECT_NEAR(open[1], -1.0, 1e-12);
 }
 }  // namespace
 
@@ -355,4 +536,24 @@ TEST(SnowMPMSolver, AdaptiveRestrictions)
 TEST(SnowMPMSolver, ParametersAndBuilder)
 {
     RUN_FOR_2D_AND_3D(ExpectParametersAndBuilder);
+}
+
+TEST(SnowMPMSolver, ClosedDomainWalls)
+{
+    RUN_FOR_2D_AND_3D(ExpectClosedDomainWalls);
+}
+
+TEST(SnowMPMSolver, MovingCollider)
+{
+    RUN_FOR_2D_AND_3D(ExpectMovingColliderAffectsGrid);
+}
+
+TEST(SnowMPMSolver, FrictionalCollider)
+{
+    RUN_FOR_2D_AND_3D(ExpectFrictionAffectsGrid);
+}
+
+TEST(SnowMPMSolver, ParticleDomainProjection)
+{
+    RUN_FOR_2D_AND_3D(ExpectParticleDomainProjection);
 }

@@ -32,7 +32,10 @@ void AddSnowMPMSolver(pybind11::module& m, const char* name)
              pybind11::arg("radius") = 1e-3, pybind11::arg("mass") = 1e-3)
         .def_property_readonly("mpmSystemData", &Solver::GetMPMSystemData)
         .def_property("timeStepLimitScale", &Solver::GetTimeStepLimitScale,
-                      &Solver::SetTimeStepLimitScale);
+                      &Solver::SetTimeStepLimitScale)
+        .def_property("closedDomainBoundaryFlag",
+                      &Solver::GetClosedDomainBoundaryFlag,
+                      &Solver::SetClosedDomainBoundaryFlag);
 }
 }  // namespace
 

@@ -36,4 +36,8 @@ def test_snow_mpm_solver_api(
     solver.timeStepLimitScale = 0.5
     assert solver.timeStepLimitScale == pytest.approx(0.5)
 
+    assert solver.closedDomainBoundaryFlag == pyCubbyFlow.DIRECTION_ALL
+    solver.closedDomainBoundaryFlag = 5
+    assert solver.closedDomainBoundaryFlag == 5
+
     solver.Update(pyCubbyFlow.Frame(0, 0.001))
