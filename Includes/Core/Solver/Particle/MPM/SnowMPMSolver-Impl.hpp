@@ -315,35 +315,37 @@ void SnowMPMSolver<N>::ConstrainGridVelocities()
     const auto dataPosition = gridVelocities.DataPosition();
     const auto collider = this->GetCollider();
 
-    gridVelocities.ParallelForEachDataPointIndex([&](const SizeType& index) {
-        if (gridMass(index) <= 0.0)
-        {
-            return;
-        }
-
-        VectorType velocity = gridVelocities(index);
-        if (collider != nullptr)
-        {
-            VectorType position = dataPosition(index);
-            collider->ResolveCollision(0.0, 0.0, &position, &velocity);
-        }
-
-        for (size_t axis = 0; axis < N; ++axis)
-        {
-            if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
-                index[axis] == 0 && velocity[axis] < 0.0)
+    gridVelocities.ParallelForEachDataPointIndex(
+        [&lowerFlags, &upperFlags, &gridMass, &gridVelocities, &dataSize,
+         &dataPosition, &collider, this](const SizeType& index) {
+            if (gridMass(index) <= 0.0)
             {
-                velocity[axis] = 0.0;
+                return;
             }
-            if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
-                index[axis] == dataSize[axis] - 1 && velocity[axis] > 0.0)
-            {
-                velocity[axis] = 0.0;
-            }
-        }
 
-        gridVelocities(index) = velocity;
-    });
+            VectorType velocity = gridVelocities(index);
+            if (collider != nullptr)
+            {
+                VectorType position = dataPosition(index);
+                collider->ResolveCollision(0.0, 0.0, &position, &velocity);
+            }
+
+            for (size_t axis = 0; axis < N; ++axis)
+            {
+                if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
+                    index[axis] == 0 && velocity[axis] < 0.0)
+                {
+                    velocity[axis] = 0.0;
+                }
+                if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
+                    index[axis] == dataSize[axis] - 1 && velocity[axis] > 0.0)
+                {
+                    velocity[axis] = 0.0;
+                }
+            }
+
+            gridVelocities(index) = velocity;
+        });
 }
 
 template <size_t N>
@@ -419,23 +421,26 @@ void SnowMPMSolver<N>::ConstrainParticlesToDomain()
     auto positions = m_mpmSystemData->Positions();
     auto velocities = m_mpmSystemData->Velocities();
 
-    ParallelFor(ZERO_SIZE, positions.Length(), [&](size_t i) {
-        for (size_t axis = 0; axis < N; ++axis)
-        {
-            if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
-                positions[i][axis] <= domain.lowerCorner[axis])
+    ParallelFor(
+        ZERO_SIZE, positions.Length(),
+        [&lowerFlags, &upperFlags, &domain, &positions, &velocities,
+         this](size_t i) {
+            for (size_t axis = 0; axis < N; ++axis)
             {
-                positions[i][axis] = domain.lowerCorner[axis];
-                velocities[i][axis] = std::max(velocities[i][axis], 0.0);
+                if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
+                    positions[i][axis] <= domain.lowerCorner[axis])
+                {
+                    positions[i][axis] = domain.lowerCorner[axis];
+                    velocities[i][axis] = std::max(velocities[i][axis], 0.0);
+                }
+                if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
+                    positions[i][axis] >= domain.upperCorner[axis])
+                {
+                    positions[i][axis] = domain.upperCorner[axis];
+                    velocities[i][axis] = std::min(velocities[i][axis], 0.0);
+                }
             }
-            if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
-                positions[i][axis] >= domain.upperCorner[axis])
-            {
-                positions[i][axis] = domain.upperCorner[axis];
-                velocities[i][axis] = std::min(velocities[i][axis], 0.0);
-            }
-        }
-    });
+        });
 }
 
 template <size_t N>
