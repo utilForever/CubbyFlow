@@ -305,10 +305,10 @@ void SnowMPMSolver<N>::UpdateGridVelocities(double timeStepInSeconds)
 template <size_t N>
 void SnowMPMSolver<N>::ConstrainGridVelocities()
 {
-    constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
-                                     DIRECTION_BACK };
-    constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
-                                     DIRECTION_FRONT };
+    static constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                            DIRECTION_BACK };
+    static constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                            DIRECTION_FRONT };
     const auto& gridMass = m_mpmSystemData->GridMass();
     auto& gridVelocities = m_mpmSystemData->GridVelocities();
     const auto dataSize = gridVelocities.DataSize();
@@ -316,8 +316,8 @@ void SnowMPMSolver<N>::ConstrainGridVelocities()
     const auto collider = this->GetCollider();
 
     gridVelocities.ParallelForEachDataPointIndex(
-        [&lowerFlags, &upperFlags, &gridMass, &gridVelocities, &dataSize,
-         &dataPosition, &collider, this](const SizeType& index) {
+        [&gridMass, &gridVelocities, &dataSize, &dataPosition, &collider,
+         this](const SizeType& index) {
             if (gridMass(index) <= 0.0)
             {
                 return;
@@ -413,18 +413,17 @@ void SnowMPMSolver<N>::UpdateDeformation(double timeStepInSeconds)
 template <size_t N>
 void SnowMPMSolver<N>::ConstrainParticlesToDomain()
 {
-    constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
-                                     DIRECTION_BACK };
-    constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
-                                     DIRECTION_FRONT };
+    static constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                            DIRECTION_BACK };
+    static constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                            DIRECTION_FRONT };
     const auto domain = m_mpmSystemData->GridMass().GetBoundingBox();
     auto positions = m_mpmSystemData->Positions();
     auto velocities = m_mpmSystemData->Velocities();
 
     ParallelFor(
         ZERO_SIZE, positions.Length(),
-        [&lowerFlags, &upperFlags, &domain, &positions, &velocities,
-         this](size_t i) {
+        [&domain, &positions, &velocities, this](size_t i) {
             for (size_t axis = 0; axis < N; ++axis)
             {
                 if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
