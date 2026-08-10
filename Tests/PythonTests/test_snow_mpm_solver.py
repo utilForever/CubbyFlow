@@ -40,4 +40,22 @@ def test_snow_mpm_solver_api(
     solver.closedDomainBoundaryFlag = 5
     assert solver.closedDomainBoundaryFlag == 5
 
+    assert solver.isUsingSemiImplicit is False
+    solver.isUsingSemiImplicit = True
+    assert solver.isUsingSemiImplicit is True
+
+    assert solver.maxNumberOfIterations == 100
+    solver.maxNumberOfIterations = 25
+    assert solver.maxNumberOfIterations == 25
+
+    assert solver.tolerance == pytest.approx(1e-6)
+    solver.tolerance = 1e-8
+    assert solver.tolerance == pytest.approx(1e-8)
+
+    with pytest.raises(ValueError):
+        solver.tolerance = 0.0
+
+    assert solver.lastNumberOfIterations == 0
+    assert solver.lastResidual == pytest.approx(0.0)
+
     solver.Update(pyCubbyFlow.Frame(0, 0.001))
