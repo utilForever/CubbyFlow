@@ -60,7 +60,7 @@ SnowConstitutiveModel<N>::SnowConstitutiveModel(double youngsModulus,
 }
 
 template <size_t N>
-typename SnowConstitutiveModel<N>::State SnowConstitutiveModel<N>::Update(
+SnowConstitutiveModel<N>::State SnowConstitutiveModel<N>::Update(
     const MatrixType& deformationGradientIncrement, const State& state) const
 {
     ValidateDeformation(deformationGradientIncrement);
@@ -99,7 +99,7 @@ typename SnowConstitutiveModel<N>::State SnowConstitutiveModel<N>::Update(
 }
 
 template <size_t N>
-typename SnowConstitutiveModel<N>::MatrixType
+SnowConstitutiveModel<N>::MatrixType
 SnowConstitutiveModel<N>::ComputeKirchhoffStress(const State& state) const
 {
     ValidateDeformation(state.elastic);
@@ -128,6 +128,75 @@ SnowConstitutiveModel<N>::ComputeKirchhoffStress(const State& state) const
     }
 
     return stress;
+}
+
+template <size_t N>
+SnowConstitutiveModel<N>::MatrixType
+SnowConstitutiveModel<N>::ComputeFirstPiolaStressDifferential(
+    const State& state, const MatrixType& differential) const
+{
+    ValidateDeformation(state.elastic);
+    ValidateDeformation(state.plastic);
+
+    if (!IsFinite(differential))
+    {
+        throw std::invalid_argument{ "Invalid snow deformation differential." };
+    }
+
+    MatrixType u;
+    Vector<double, N> singularValues;
+    MatrixType v;
+
+    SVD(state.elastic, u, singularValues, v);
+
+    const MatrixType principalDifferential = u.Transposed() * differential * v;
+    MatrixType omega;
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        for (size_t j = i + 1; j < N; ++j)
+        {
+            const double value =
+                (principalDifferential(i, j) - principalDifferential(j, i)) /
+                (singularValues[i] + singularValues[j]);
+            omega(i, j) = value;
+            omega(j, i) = -value;
+        }
+    }
+    const MatrixType rotationDifferential = u * omega * v.Transposed();
+    const MatrixType& f = state.elastic;
+    const double determinant = f.Determinant();
+    const MatrixType inverseTranspose = f.Inverse().Transposed();
+    const MatrixType cofactor = determinant * inverseTranspose;
+    double determinantDifferential = 0.0;
+
+    for (size_t row = 0; row < N; ++row)
+    {
+        for (size_t column = 0; column < N; ++column)
+        {
+            determinantDifferential +=
+                cofactor(row, column) * differential(row, column);
+        }
+    }
+
+    const MatrixType cofactorDifferential =
+        determinantDifferential * inverseTranspose -
+        determinant * inverseTranspose * differential.Transposed() *
+            inverseTranspose;
+    const double hardening = ComputeHardening(state);
+    const double mu = m_mu0 * hardening;
+    const double lambda = m_lambda0 * hardening;
+    const MatrixType result =
+        2.0 * mu * (differential - rotationDifferential) +
+        lambda * (determinantDifferential * cofactor +
+                  (determinant - 1.0) * cofactorDifferential);
+
+    if (!IsFinite(result))
+    {
+        throw std::invalid_argument{ "Non-finite snow stress differential." };
+    }
+
+    return result;
 }
 
 template <size_t N>
