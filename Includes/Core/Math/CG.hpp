@@ -49,6 +49,18 @@ void CG(const typename BLASType::MatrixType& A,
         double* lastResidualNorm);
 
 //!
+//! \brief Solves a symmetric linear system with conjugate residual.
+//!
+template <typename BLASType>
+void CR(const typename BLASType::MatrixType& A,
+        const typename BLASType::VectorType& b,
+        unsigned int maxNumberOfIterations, double tolerance,
+        typename BLASType::VectorType* x, typename BLASType::VectorType* r,
+        typename BLASType::VectorType* d, typename BLASType::VectorType* q,
+        typename BLASType::VectorType* s, unsigned int* lastNumberOfIterations,
+        double* lastResidualNorm);
+
+//!
 //! \brief Solves pre-conditioned conjugate gradient.
 //!
 template <typename BLASType, typename PrecondType>
