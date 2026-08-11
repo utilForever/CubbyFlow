@@ -137,6 +137,17 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
                                  const Array1<ssize_t>& nodeToActive,
                                  Array1<uint8_t>* constrained);
 
+    void ConstrainGridVelocityAtNode(const SizeType& index, size_t active,
+                                     Array1<uint8_t>* constrained);
+
+    void ApplyGridColliderConstraint(const SizeType& index, size_t active,
+                                     Array1<uint8_t>* constrained,
+                                     VectorType* velocity) const;
+
+    void ApplyGridDomainConstraint(const SizeType& index, size_t active,
+                                   Array1<uint8_t>* constrained,
+                                   VectorType* velocity) const;
+
     void SolveGridVelocities(double timeStepInSeconds,
                              const Array1<SizeType>& activeNodes,
                              const Array1<ssize_t>& nodeToActive,

@@ -478,17 +478,9 @@ void SnowMPMSolver<N>::ConstrainGridVelocities(
     const Array1<SizeType>& activeNodes, const Array1<ssize_t>& nodeToActive,
     Array1<uint8_t>* constrained)
 {
-    static constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
-                                            DIRECTION_BACK };
-    static constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
-                                            DIRECTION_FRONT };
-
     const auto& gridMass = m_mpmSystemData->GridMass();
     auto& gridVelocities = m_mpmSystemData->GridVelocities();
-    const auto dataSize = gridVelocities.DataSize();
-    const auto dataPosition = gridVelocities.DataPosition();
     const auto dataView = gridMass.DataView();
-    const auto collider = this->GetCollider();
 
     if (constrained != nullptr)
     {
@@ -497,8 +489,8 @@ void SnowMPMSolver<N>::ConstrainGridVelocities(
     }
 
     gridVelocities.ParallelForEachDataPointIndex(
-        [&gridMass, &gridVelocities, &dataSize, &dataPosition, &dataView,
-         &collider, &nodeToActive, constrained, this](const SizeType& index) {
+        [this, constrained, &gridMass, &nodeToActive,
+         dataView](const SizeType& index) {
             if (gridMass(index) <= 0.0)
             {
                 return;
@@ -511,53 +503,83 @@ void SnowMPMSolver<N>::ConstrainGridVelocities(
                 return;
             }
 
-            VectorType velocity = gridVelocities(index);
-
-            if (collider != nullptr)
-            {
-                const VectorType incoming = velocity;
-                VectorType position = dataPosition(index);
-
-                collider->ResolveCollision(0.0, 0.0, &position, &velocity);
-
-                if (constrained != nullptr && velocity != incoming)
-                {
-                    for (size_t axis = 0; axis < N; ++axis)
-                    {
-                        (*constrained)[static_cast<size_t>(active) * N + axis] =
-                            uint8_t{ 1 };
-                    }
-                }
-            }
-
-            for (size_t axis = 0; axis < N; ++axis)
-            {
-                if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
-                    index[axis] == 0 && velocity[axis] < 0.0)
-                {
-                    velocity[axis] = 0.0;
-
-                    if (constrained != nullptr)
-                    {
-                        (*constrained)[static_cast<size_t>(active) * N + axis] =
-                            uint8_t{ 1 };
-                    }
-                }
-                if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
-                    index[axis] == dataSize[axis] - 1 && velocity[axis] > 0.0)
-                {
-                    velocity[axis] = 0.0;
-
-                    if (constrained != nullptr)
-                    {
-                        (*constrained)[static_cast<size_t>(active) * N + axis] =
-                            uint8_t{ 1 };
-                    }
-                }
-            }
-
-            gridVelocities(index) = velocity;
+            ConstrainGridVelocityAtNode(index, static_cast<size_t>(active),
+                                        constrained);
         });
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ConstrainGridVelocityAtNode(const SizeType& index,
+                                                   size_t active,
+                                                   Array1<uint8_t>* constrained)
+{
+    auto& gridVelocities = m_mpmSystemData->GridVelocities();
+    VectorType velocity = gridVelocities(index);
+
+    ApplyGridColliderConstraint(index, active, constrained, &velocity);
+    ApplyGridDomainConstraint(index, active, constrained, &velocity);
+
+    gridVelocities(index) = velocity;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ApplyGridColliderConstraint(const SizeType& index,
+                                                   size_t active,
+                                                   Array1<uint8_t>* constrained,
+                                                   VectorType* velocity) const
+{
+    const auto collider = this->GetCollider();
+    if (collider == nullptr)
+    {
+        return;
+    }
+
+    const VectorType incoming = *velocity;
+    VectorType position =
+        m_mpmSystemData->GridVelocities().DataPosition()(index);
+
+    collider->ResolveCollision(0.0, 0.0, &position, velocity);
+
+    if (constrained != nullptr && *velocity != incoming)
+    {
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            (*constrained)[active * N + axis] = uint8_t{ 1 };
+        }
+    }
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ApplyGridDomainConstraint(const SizeType& index,
+                                                 size_t active,
+                                                 Array1<uint8_t>* constrained,
+                                                 VectorType* velocity) const
+{
+    static constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                            DIRECTION_BACK };
+    static constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                            DIRECTION_FRONT };
+    const auto dataSize = m_mpmSystemData->GridVelocities().DataSize();
+
+    for (size_t axis = 0; axis < N; ++axis)
+    {
+        const bool exceedsLower =
+            (m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
+            index[axis] == 0 && (*velocity)[axis] < 0.0;
+        const bool exceedsUpper =
+            (m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
+            index[axis] == dataSize[axis] - 1 && (*velocity)[axis] > 0.0;
+
+        if (exceedsLower || exceedsUpper)
+        {
+            (*velocity)[axis] = 0.0;
+
+            if (constrained != nullptr)
+            {
+                (*constrained)[active * N + axis] = uint8_t{ 1 };
+            }
+        }
+    }
 }
 
 template <size_t N>
