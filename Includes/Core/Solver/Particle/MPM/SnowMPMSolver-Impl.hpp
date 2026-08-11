@@ -72,6 +72,7 @@ void SnowMPMSolver<N>::LinearSystem::Multiply(const VectorND& input,
     solver->ApplyElasticHessian(*activeNodes, *nodeToActive, projectedInput,
                                 &hessian);
     output->Resize(input.GetRows(), 0.0);
+    output->Fill(0.0);
 
     const auto& gridMass = solver->m_mpmSystemData->GridMass();
 
