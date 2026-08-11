@@ -583,6 +583,90 @@ void SnowMPMSolver<N>::ApplyGridDomainConstraint(const SizeType& index,
 }
 
 template <size_t N>
+SnowMPMSolver<N>::MatrixType
+SnowMPMSolver<N>::ComputeParticleDeformationDifferential(
+    const Stencil& stencil, const Array1<ssize_t>& nodeToActive,
+    const VectorND& input, const MatrixType& elastic) const
+{
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    const auto dataSize = gridMass.DataSize();
+    const auto dataView = gridMass.DataView();
+    MatrixType result;
+
+    for (const auto& entry : stencil)
+    {
+        if (entry.weight == 0.0)
+        {
+            continue;
+        }
+
+        const SizeType index = ClampIndex(entry.index, dataSize);
+        const ssize_t active = nodeToActive[dataView.Index(index)];
+
+        if (active < 0)
+        {
+            continue;
+        }
+
+        VectorType velocityDifferential;
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            velocityDifferential[axis] =
+                input[static_cast<size_t>(active) * N + axis];
+        }
+
+        for (size_t row = 0; row < N; ++row)
+        {
+            for (size_t column = 0; column < N; ++column)
+            {
+                result(row, column) +=
+                    velocityDifferential[row] * entry.gradient[column];
+            }
+        }
+    }
+
+    result *= elastic;
+    return result;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::AccumulateParticleHessian(
+    const Stencil& stencil, const Array1<ssize_t>& nodeToActive, double volume,
+    const MatrixType& elastic, const MatrixType& stressDifferential,
+    VectorND* output) const
+{
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    const auto dataSize = gridMass.DataSize();
+    const auto dataView = gridMass.DataView();
+
+    for (const auto& entry : stencil)
+    {
+        if (entry.weight == 0.0)
+        {
+            continue;
+        }
+
+        const SizeType index = ClampIndex(entry.index, dataSize);
+        const ssize_t active = nodeToActive[dataView.Index(index)];
+
+        if (active < 0)
+        {
+            continue;
+        }
+
+        const VectorType contribution =
+            volume * stressDifferential * elastic.Transposed() * entry.gradient;
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            (*output)[static_cast<size_t>(active) * N + axis] +=
+                contribution[axis];
+        }
+    }
+}
+
+template <size_t N>
 void SnowMPMSolver<N>::ApplyElasticHessian(const Array1<SizeType>& activeNodes,
                                            const Array1<ssize_t>& nodeToActive,
                                            const VectorND& input,
@@ -592,84 +676,25 @@ void SnowMPMSolver<N>::ApplyElasticHessian(const Array1<SizeType>& activeNodes,
     const auto volumes = m_mpmSystemData->InitialVolumes();
     const auto states = m_mpmSystemData->DeformationStates();
     const auto& gridMass = m_mpmSystemData->GridMass();
-    const auto dataSize = gridMass.DataSize();
     const auto spacing = gridMass.GridSpacing();
     const auto dataOrigin = gridMass.DataOrigin();
-    const auto dataView = gridMass.DataView();
 
     output->Resize(activeNodes.Length() * N, 0.0);
     output->Fill(0.0);
 
     for (size_t p = 0; p < positions.Length(); ++p)
     {
-        MatrixType differential;
         const auto stencil = CubicBSplineKernel<N>::GetStencil(
             positions[p], spacing, dataOrigin);
-
-        for (const auto& entry : stencil)
-        {
-            if (entry.weight == 0.0)
-            {
-                continue;
-            }
-
-            const SizeType index = ClampIndex(entry.index, dataSize);
-            const ssize_t active = nodeToActive[dataView.Index(index)];
-
-            if (active < 0)
-            {
-                continue;
-            }
-
-            VectorType velocityDifferential;
-
-            for (size_t axis = 0; axis < N; ++axis)
-            {
-                velocityDifferential[axis] =
-                    input[static_cast<size_t>(active) * N + axis];
-            }
-
-            for (size_t row = 0; row < N; ++row)
-            {
-                for (size_t column = 0; column < N; ++column)
-                {
-                    differential(row, column) +=
-                        velocityDifferential[row] * entry.gradient[column];
-                }
-            }
-        }
-
-        differential *= states[p].elastic;
-
+        const MatrixType differential = ComputeParticleDeformationDifferential(
+            stencil, nodeToActive, input, states[p].elastic);
         const MatrixType stressDifferential =
             m_constitutiveModel.ComputeFirstPiolaStressDifferential(
                 states[p], differential);
 
-        for (const auto& entry : stencil)
-        {
-            if (entry.weight == 0.0)
-            {
-                continue;
-            }
-
-            const SizeType index = ClampIndex(entry.index, dataSize);
-            const ssize_t active = nodeToActive[dataView.Index(index)];
-
-            if (active < 0)
-            {
-                continue;
-            }
-
-            const VectorType contribution = volumes[p] * stressDifferential *
-                                            states[p].elastic.Transposed() *
-                                            entry.gradient;
-
-            for (size_t axis = 0; axis < N; ++axis)
-            {
-                (*output)[static_cast<size_t>(active) * N + axis] +=
-                    contribution[axis];
-            }
-        }
+        AccumulateParticleHessian(stencil, nodeToActive, volumes[p],
+                                  states[p].elastic, stressDifferential,
+                                  output);
     }
 }
 

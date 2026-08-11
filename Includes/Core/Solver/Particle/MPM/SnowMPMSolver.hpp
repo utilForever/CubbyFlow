@@ -122,6 +122,7 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
  private:
     struct LinearSystem;
     struct LinearSystemBLAS;
+    using Stencil = typename CubicBSplineKernel<N>::Stencil;
 
     [[nodiscard]] static SizeType ClampIndex(const Vector<ssize_t, N>& index,
                                              const SizeType& dataSize);
@@ -156,6 +157,16 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     void ApplyElasticHessian(const Array1<SizeType>& activeNodes,
                              const Array1<ssize_t>& nodeToActive,
                              const VectorND& input, VectorND* output) const;
+
+    [[nodiscard]] MatrixType ComputeParticleDeformationDifferential(
+        const Stencil& stencil, const Array1<ssize_t>& nodeToActive,
+        const VectorND& input, const MatrixType& elastic) const;
+
+    void AccumulateParticleHessian(const Stencil& stencil,
+                                   const Array1<ssize_t>& nodeToActive,
+                                   double volume, const MatrixType& elastic,
+                                   const MatrixType& stressDifferential,
+                                   VectorND* output) const;
 
     [[nodiscard]] MatrixType ComputeVelocityGradient(
         size_t particleIndex) const;
