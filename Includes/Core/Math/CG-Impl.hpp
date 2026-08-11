@@ -13,6 +13,8 @@
 
 #include <Core/Math/MathUtils.hpp>
 
+#include <limits>
+
 namespace CubbyFlow
 {
 template <typename BLASType>
@@ -30,6 +32,75 @@ void CG(const typename BLASType::MatrixType& A,
     PCG<BLASType, PrecondType>(A, b, maxNumberOfIterations, tolerance, &precond,
                                x, r, d, q, s, lastNumberOfIterations,
                                lastResidualNorm);
+}
+
+template <typename BLASType>
+void CR(const typename BLASType::MatrixType& A,
+        const typename BLASType::VectorType& b,
+        unsigned int maxNumberOfIterations, double tolerance,
+        typename BLASType::VectorType* x, typename BLASType::VectorType* r,
+        typename BLASType::VectorType* d, typename BLASType::VectorType* q,
+        typename BLASType::VectorType* s, unsigned int* lastNumberOfIterations,
+        double* lastResidualNorm)
+{
+    BLASType::Residual(A, *x, b, r);
+    BLASType::Set(*r, d);
+    BLASType::MVM(A, *r, s);
+    BLASType::Set(*s, q);
+
+    double rho = BLASType::Dot(*r, *s);
+    double residualNorm = BLASType::L2Norm(*r);
+    unsigned int iter = 0;
+
+    while (residualNorm > tolerance && iter < maxNumberOfIterations)
+    {
+        const double denominator = BLASType::Dot(*q, *q);
+
+        if (!std::isfinite(rho) || !std::isfinite(denominator) ||
+            denominator <= 0.0 || rho == 0.0)
+        {
+            residualNorm = std::numeric_limits<double>::infinity();
+            break;
+        }
+
+        const double alpha = rho / denominator;
+
+        BLASType::AXPlusY(alpha, *d, *x, x);
+        BLASType::AXPlusY(-alpha, *q, *r, r);
+
+        residualNorm = BLASType::L2Norm(*r);
+        ++iter;
+
+        if (!std::isfinite(residualNorm))
+        {
+            residualNorm = std::numeric_limits<double>::infinity();
+            break;
+        }
+
+        if (residualNorm <= tolerance)
+        {
+            break;
+        }
+
+        BLASType::MVM(A, *r, s);
+
+        const double rhoNew = BLASType::Dot(*r, *s);
+
+        if (!std::isfinite(rhoNew))
+        {
+            residualNorm = std::numeric_limits<double>::infinity();
+            break;
+        }
+
+        const double beta = rhoNew / rho;
+
+        BLASType::AXPlusY(beta, *d, *r, d);
+        BLASType::AXPlusY(beta, *q, *s, q);
+        rho = rhoNew;
+    }
+
+    *lastNumberOfIterations = iter;
+    *lastResidualNorm = residualNorm;
 }
 
 template <typename BLASType, typename PrecondType>

@@ -35,6 +35,52 @@ MatrixD<N> MakeQuarterTurn()
 }
 
 template <size_t N>
+MatrixD<N> ComputeFirstPiola(const SnowConstitutiveModel<N>& model,
+                             const SnowDeformationState<N>& state)
+{
+    return model.ComputeKirchhoffStress(state) *
+           state.elastic.Inverse().Transposed();
+}
+
+template <size_t N>
+void ExpectFirstPiolaDifferentialMatchesFiniteDifference()
+{
+    const SnowConstitutiveModel<N> model{ 1000.0, 0.2, 0.025, 0.0075, 10.0 };
+    SnowDeformationState<N> state;
+
+    state.elastic = MakeQuarterTurn<N>() * MakeStretch<N>(1.005);
+    state.plastic = MakeStretch<N>(0.9);
+
+    MatrixD<N> differential;
+    differential(0, 0) = 0.2;
+    differential(0, 1) = -0.3;
+    differential(1, 0) = 0.4;
+    differential(1, 1) = -0.1;
+
+    if constexpr (N == 3)
+    {
+        differential(2, 0) = 0.15;
+        differential(1, 2) = -0.2;
+        differential(2, 2) = 0.25;
+    }
+
+    constexpr double eps = 1e-6;
+    auto plus = state;
+    auto minus = state;
+
+    plus.elastic += eps * differential;
+    minus.elastic -= eps * differential;
+
+    const MatrixD<N> expected =
+        (ComputeFirstPiola(model, plus) - ComputeFirstPiola(model, minus)) /
+        (2.0 * eps);
+    const MatrixD<N> actual =
+        model.ComputeFirstPiolaStressDifferential(state, differential);
+
+    EXPECT_TRUE(actual.IsSimilar(expected, 1e-6));
+}
+
+template <size_t N>
 void ExpectIdentityStateAndZeroStress()
 {
     const SnowConstitutiveModel<N> model;
@@ -257,6 +303,11 @@ void ExpectInvalidStatesRejected()
     EXPECT_THROW(
         (void)SnowConstitutiveModel<N>{}.ComputeKirchhoffStress(inverted),
         std::invalid_argument);
+
+    EXPECT_THROW(
+        (void)SnowConstitutiveModel<N>{}.ComputeFirstPiolaStressDifferential(
+            {}, nonFinite),
+        std::invalid_argument);
 }
 
 template <size_t N>
@@ -340,6 +391,11 @@ TEST(SnowConstitutiveModel, RigidRotationStress)
 TEST(SnowConstitutiveModel, ElasticStress)
 {
     RUN_FOR_2D_AND_3D(ExpectKnownElasticStress);
+}
+
+TEST(SnowConstitutiveModel, FirstPiolaDifferential)
+{
+    RUN_FOR_2D_AND_3D(ExpectFirstPiolaDifferentialMatchesFiniteDifference);
 }
 
 TEST(SnowConstitutiveModel, Compression)

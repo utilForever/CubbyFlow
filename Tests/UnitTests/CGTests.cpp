@@ -93,3 +93,91 @@ TEST(PCG, Solve)
         EXPECT_LE(lastNumIter, 2u);
     }
 }
+
+TEST(CR, SolveSymmetricSystems)
+{
+    using BLASType = BLAS<double, Vector2D, Matrix2x2D>;
+
+    for (const auto& matrix :
+         { Matrix2x2D(4.0, 1.0, 1.0, 3.0), Matrix2x2D(2.0, 0.0, 0.0, -1.0) })
+    {
+        const Vector2D expected(1.0, 1.0);
+        const Vector2D rhs = matrix * expected;
+        Vector2D x;
+        Vector2D r;
+        Vector2D d;
+        Vector2D q;
+        Vector2D s;
+        unsigned int iterations = 0;
+        double residual = 0.0;
+
+        CR<BLASType>(matrix, rhs, 10, 1e-14, &x, &r, &d, &q, &s, &iterations,
+                     &residual);
+
+        EXPECT_TRUE(x.IsSimilar(expected, 1e-12));
+        EXPECT_LE(residual, 1e-12);
+        EXPECT_LE(iterations, 2u);
+    }
+}
+
+TEST(CR, ZeroIterationsReportsInitialResidual)
+{
+    using BLASType = BLAS<double, Vector2D, Matrix2x2D>;
+    const Matrix2x2D matrix(4.0, 1.0, 1.0, 3.0);
+    const Vector2D rhs(1.0, 2.0);
+    Vector2D x;
+    Vector2D r;
+    Vector2D d;
+    Vector2D q;
+    Vector2D s;
+    unsigned int iterations = 1;
+    double residual = 0.0;
+
+    CR<BLASType>(matrix, rhs, 0, 0.0, &x, &r, &d, &q, &s, &iterations,
+                 &residual);
+
+    EXPECT_EQ(iterations, 0u);
+    EXPECT_DOUBLE_EQ(residual, std::sqrt(5.0));
+    EXPECT_EQ(x, Vector2D{});
+}
+
+TEST(CR, AlreadyConverged)
+{
+    using BLASType = BLAS<double, Vector2D, Matrix2x2D>;
+    const Matrix2x2D matrix(4.0, 1.0, 1.0, 3.0);
+    Vector2D x(1.0, 1.0);
+    const Vector2D rhs = matrix * x;
+    Vector2D r;
+    Vector2D d;
+    Vector2D q;
+    Vector2D s;
+    unsigned int iterations = 1;
+    double residual = 1.0;
+
+    CR<BLASType>(matrix, rhs, 10, 1e-14, &x, &r, &d, &q, &s, &iterations,
+                 &residual);
+
+    EXPECT_EQ(iterations, 0u);
+    EXPECT_LE(residual, 1e-14);
+}
+
+TEST(CR, SingularSystemReportsBreakdown)
+{
+    using BLASType = BLAS<double, Vector2D, Matrix2x2D>;
+    const Matrix2x2D matrix;
+    const Vector2D rhs(1.0, 2.0);
+    Vector2D x;
+    Vector2D r;
+    Vector2D d;
+    Vector2D q;
+    Vector2D s;
+    unsigned int iterations = 1;
+    double residual = 0.0;
+
+    CR<BLASType>(matrix, rhs, 10, 1e-14, &x, &r, &d, &q, &s, &iterations,
+                 &residual);
+
+    EXPECT_EQ(iterations, 0u);
+    EXPECT_EQ(x, Vector2D{});
+    EXPECT_TRUE(std::isinf(residual));
+}

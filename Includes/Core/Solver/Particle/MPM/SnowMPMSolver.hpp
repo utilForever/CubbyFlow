@@ -11,6 +11,8 @@
 #ifndef CUBBYFLOW_SNOW_MPM_SOLVER_HPP
 #define CUBBYFLOW_SNOW_MPM_SOLVER_HPP
 
+#include <Core/Array/Array.hpp>
+#include <Core/Math/CG.hpp>
 #include <Core/Particle/MPM/MPMSystemData.hpp>
 #include <Core/Particle/MPM/SnowConstitutiveModel.hpp>
 #include <Core/Solver/Particle/ParticleSystemSolver2.hpp>
@@ -27,6 +29,13 @@ namespace CubbyFlow
 //!
 //! Uses fixed-corotated elastoplastic snow response with the existing MPM
 //! particle-grid transfers and particle-solver collision lifecycle.
+//! When semi-implicit integration is enabled, failures are reported before
+//! particle state is advanced.
+//!
+//! \throws std::runtime_error If the semi-implicit linear solve does not
+//! converge or produces a non-finite result.
+//! \throws std::invalid_argument If the constitutive state or its stress
+//! differential is invalid or non-finite.
 //!
 template <size_t N>
 class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
@@ -59,6 +68,31 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     //! Sets the adaptive time-step scale in `(0, 1]`.
     void SetTimeStepLimitScale(double newScale);
 
+    //! Returns whether the elastic grid update is semi-implicit.
+    [[nodiscard]] bool GetIsUsingSemiImplicit() const;
+
+    //! Enables or disables the semi-implicit elastic grid update.
+    void SetIsUsingSemiImplicit(bool isUsing);
+
+    //! Returns the maximum conjugate-residual iteration count.
+    [[nodiscard]] unsigned int GetMaxNumberOfIterations() const;
+
+    //! Sets the maximum conjugate-residual iteration count. Zero permits only
+    //! an already-converged solve; any nonzero residual makes the update fail.
+    void SetMaxNumberOfIterations(unsigned int maxNumberOfIterations);
+
+    //! Returns the relative conjugate-residual tolerance.
+    [[nodiscard]] double GetTolerance() const;
+
+    //! Sets the positive finite tolerance relative to the initial residual.
+    void SetTolerance(double tolerance);
+
+    //! Returns the iteration count from the last semi-implicit solve.
+    [[nodiscard]] unsigned int GetLastNumberOfIterations() const;
+
+    //! Returns the relative residual from the last semi-implicit solve.
+    [[nodiscard]] double GetLastResidual() const;
+
     //! Returns the closed domain boundary flag.
     [[nodiscard]] int GetClosedDomainBoundaryFlag() const;
 
@@ -86,6 +120,10 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     void OnEndAdvanceTimeStep(double timeStepInSeconds) override;
 
  private:
+    struct LinearSystem;
+    struct LinearSystemBLAS;
+    using Stencil = typename CubicBSplineKernel<N>::Stencil;
+
     [[nodiscard]] static SizeType ClampIndex(const Vector<ssize_t, N>& index,
                                              const SizeType& dataSize);
 
@@ -93,7 +131,63 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
 
     void UpdateGridVelocities(double timeStepInSeconds);
 
-    void ConstrainGridVelocities();
+    void BuildActiveNodes(Array1<SizeType>* activeNodes,
+                          Array1<ssize_t>* nodeToActive) const;
+
+    void ConstrainGridVelocities(const Array1<SizeType>& activeNodes,
+                                 const Array1<ssize_t>& nodeToActive,
+                                 Array1<uint8_t>* constrained);
+
+    void ConstrainGridVelocityAtNode(const SizeType& index, size_t active,
+                                     Array1<uint8_t>* constrained);
+
+    void ApplyGridColliderConstraint(const SizeType& index, size_t active,
+                                     Array1<uint8_t>* constrained,
+                                     VectorType* velocity) const;
+
+    void ApplyGridDomainConstraint(const SizeType& index, size_t active,
+                                   Array1<uint8_t>* constrained,
+                                   VectorType* velocity) const;
+
+    void SolveGridVelocities(double timeStepInSeconds,
+                             const Array1<SizeType>& activeNodes,
+                             const Array1<ssize_t>& nodeToActive,
+                             const Array1<uint8_t>& constrained);
+
+    [[nodiscard]] VectorND GatherActiveGridVelocities(
+        const Array1<SizeType>& activeNodes) const;
+
+    [[nodiscard]] VectorND BuildSemiImplicitRightHandSide(
+        double dtSquared, const Array1<SizeType>& activeNodes,
+        const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+        const VectorND& velocities) const;
+
+    [[nodiscard]] VectorND SolveGridVelocityCorrection(
+        double dtSquared, const Array1<SizeType>& activeNodes,
+        const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+        const VectorND& rhs, double initialResidual);
+
+    [[nodiscard]] VectorND ComputeGridVelocityUpdate(
+        double timeStepInSeconds, const Array1<SizeType>& activeNodes,
+        const Array1<ssize_t>& nodeToActive,
+        const Array1<uint8_t>& constrained);
+
+    void StoreActiveGridVelocities(const Array1<SizeType>& activeNodes,
+                                   const VectorND& velocities);
+
+    void ApplyElasticHessian(const Array1<SizeType>& activeNodes,
+                             const Array1<ssize_t>& nodeToActive,
+                             const VectorND& input, VectorND* output) const;
+
+    [[nodiscard]] MatrixType ComputeParticleDeformationDifferential(
+        const Stencil& stencil, const Array1<ssize_t>& nodeToActive,
+        const VectorND& input, const MatrixType& elastic) const;
+
+    void AccumulateParticleHessian(const Stencil& stencil,
+                                   const Array1<ssize_t>& nodeToActive,
+                                   double volume, const MatrixType& elastic,
+                                   const MatrixType& stressDifferential,
+                                   VectorND* output) const;
 
     [[nodiscard]] MatrixType ComputeVelocityGradient(
         size_t particleIndex) const;
@@ -106,8 +200,13 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
 
     std::shared_ptr<MPMSystemData<N>> m_mpmSystemData;
     SnowConstitutiveModel<N> m_constitutiveModel;
+    bool m_isUsingSemiImplicit = false;
+    unsigned int m_maxNumberOfIterations = 100;
+    unsigned int m_lastNumberOfIterations = 0;
     double m_timeStepLimitScale = 0.9;
     double m_maxVelocityGradient = 0.0;
+    double m_tolerance = 1e-6;
+    double m_lastResidual = 0.0;
     int m_closedDomainBoundaryFlag = DIRECTION_ALL;
 };
 

@@ -35,7 +35,16 @@ void AddSnowMPMSolver(pybind11::module& m, const char* name)
                       &Solver::SetTimeStepLimitScale)
         .def_property("closedDomainBoundaryFlag",
                       &Solver::GetClosedDomainBoundaryFlag,
-                      &Solver::SetClosedDomainBoundaryFlag);
+                      &Solver::SetClosedDomainBoundaryFlag)
+        .def_property("isUsingSemiImplicit", &Solver::GetIsUsingSemiImplicit,
+                      &Solver::SetIsUsingSemiImplicit)
+        .def_property("maxNumberOfIterations",
+                      &Solver::GetMaxNumberOfIterations,
+                      &Solver::SetMaxNumberOfIterations)
+        .def_property("tolerance", &Solver::GetTolerance, &Solver::SetTolerance)
+        .def_property_readonly("lastNumberOfIterations",
+                               &Solver::GetLastNumberOfIterations)
+        .def_property_readonly("lastResidual", &Solver::GetLastResidual);
 }
 }  // namespace
 

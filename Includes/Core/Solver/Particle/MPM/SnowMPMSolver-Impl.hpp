@@ -22,6 +22,78 @@
 namespace CubbyFlow
 {
 template <size_t N>
+struct SnowMPMSolver<N>::LinearSystem
+{
+    const SnowMPMSolver* solver;
+    const Array1<SizeType>* activeNodes;
+    const Array1<ssize_t>* nodeToActive;
+    const Array1<uint8_t>* constrained;
+    double dtSquared;
+
+    void Multiply(const VectorND& input, VectorND* output) const;
+};
+
+template <size_t N>
+struct SnowMPMSolver<N>::LinearSystemBLAS : BLAS<double, VectorND, LinearSystem>
+{
+    using System = LinearSystem;
+    using Base = BLAS<double, VectorND, System>;
+
+    static void MVM(const System& system, const VectorND& vector,
+                    VectorND* result)
+    {
+        system.Multiply(vector, result);
+    }
+
+    static void Residual(const System& system, const VectorND& x,
+                         const VectorND& b, VectorND* result)
+    {
+        system.Multiply(x, result);
+        Base::AXPlusY(-1.0, *result, b, result);
+    }
+};
+
+template <size_t N>
+void SnowMPMSolver<N>::LinearSystem::Multiply(const VectorND& input,
+                                              VectorND* output) const
+{
+    VectorND projectedInput = input;
+
+    for (size_t i = 0; i < projectedInput.GetRows(); ++i)
+    {
+        if ((*constrained)[i] != 0)
+        {
+            projectedInput[i] = 0.0;
+        }
+    }
+
+    VectorND hessian(input.GetRows(), 0.0);
+
+    solver->ApplyElasticHessian(*activeNodes, *nodeToActive, projectedInput,
+                                &hessian);
+    output->Resize(input.GetRows(), 0.0);
+    output->Fill(0.0);
+
+    const auto& gridMass = solver->m_mpmSystemData->GridMass();
+
+    for (size_t slot = 0; slot < activeNodes->Length(); ++slot)
+    {
+        const double mass = gridMass((*activeNodes)[slot]);
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            const size_t row = slot * N + axis;
+
+            if ((*constrained)[row] == 0)
+            {
+                (*output)[row] =
+                    mass * projectedInput[row] + dtSquared * hessian[row];
+            }
+        }
+    }
+}
+
+template <size_t N>
 SnowMPMSolver<N>::SnowMPMSolver(const SizeType& resolution,
                                 const VectorType& gridSpacing,
                                 const VectorType& gridOrigin, double radius,
@@ -68,6 +140,62 @@ void SnowMPMSolver<N>::SetTimeStepLimitScale(double newScale)
 }
 
 template <size_t N>
+bool SnowMPMSolver<N>::GetIsUsingSemiImplicit() const
+{
+    return m_isUsingSemiImplicit;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::SetIsUsingSemiImplicit(bool isUsing)
+{
+    m_isUsingSemiImplicit = isUsing;
+}
+
+template <size_t N>
+unsigned int SnowMPMSolver<N>::GetMaxNumberOfIterations() const
+{
+    return m_maxNumberOfIterations;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::SetMaxNumberOfIterations(
+    unsigned int maxNumberOfIterations)
+{
+    m_maxNumberOfIterations = maxNumberOfIterations;
+}
+
+template <size_t N>
+double SnowMPMSolver<N>::GetTolerance() const
+{
+    return m_tolerance;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::SetTolerance(double tolerance)
+{
+    if (!std::isfinite(tolerance) || tolerance <= 0.0)
+    {
+        throw std::invalid_argument{
+            "Semi-implicit tolerance must be positive and finite."
+        };
+    }
+
+    m_tolerance = tolerance;
+}
+
+template <size_t N>
+unsigned int SnowMPMSolver<N>::GetLastNumberOfIterations() const
+{
+    return m_lastNumberOfIterations;
+}
+
+template <size_t N>
+double SnowMPMSolver<N>::GetLastResidual() const
+{
+    return m_lastResidual;
+}
+
+template <size_t N>
 int SnowMPMSolver<N>::GetClosedDomainBoundaryFlag() const
 {
     return m_closedDomainBoundaryFlag;
@@ -80,7 +208,7 @@ void SnowMPMSolver<N>::SetClosedDomainBoundaryFlag(int flag)
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::Builder SnowMPMSolver<N>::GetBuilder()
+SnowMPMSolver<N>::Builder SnowMPMSolver<N>::GetBuilder()
 {
     return Builder{};
 }
@@ -141,7 +269,7 @@ unsigned int SnowMPMSolver<N>::GetNumberOfSubTimeSteps(
     {
         desiredTimeStep = std::min(desiredTimeStep, minSpacing / maxVelocity);
     }
-    if (maxWaveSpeed > 0.0)
+    if (!m_isUsingSemiImplicit && maxWaveSpeed > 0.0)
     {
         desiredTimeStep = std::min(desiredTimeStep, minSpacing / maxWaveSpeed);
     }
@@ -176,7 +304,28 @@ void SnowMPMSolver<N>::OnBeginAdvanceTimeStep(double timeStepInSeconds)
     m_mpmSystemData->TransferFromParticlesToGrid();
     InitializeReferenceVolumes();
     UpdateGridVelocities(timeStepInSeconds);
-    ConstrainGridVelocities();
+
+    Array1<SizeType> activeNodes;
+    Array1<ssize_t> nodeToActive;
+
+    BuildActiveNodes(&activeNodes, &nodeToActive);
+
+    Array1<uint8_t> constrained(activeNodes.Length() * N, uint8_t{ 0 });
+
+    ConstrainGridVelocities(activeNodes, nodeToActive, &constrained);
+
+    if (m_isUsingSemiImplicit)
+    {
+        SolveGridVelocities(timeStepInSeconds, activeNodes, nodeToActive,
+                            constrained);
+        ConstrainGridVelocities(activeNodes, nodeToActive, nullptr);
+    }
+    else
+    {
+        m_lastNumberOfIterations = 0;
+        m_lastResidual = 0.0;
+    }
+
     UpdateDeformation(timeStepInSeconds);
     m_mpmSystemData->TransferFromGridToParticles();
 }
@@ -189,7 +338,7 @@ void SnowMPMSolver<N>::OnEndAdvanceTimeStep(double timeStepInSeconds)
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::SizeType SnowMPMSolver<N>::ClampIndex(
+SnowMPMSolver<N>::SizeType SnowMPMSolver<N>::ClampIndex(
     const Vector<ssize_t, N>& index, const SizeType& dataSize)
 {
     SizeType result;
@@ -303,53 +452,411 @@ void SnowMPMSolver<N>::UpdateGridVelocities(double timeStepInSeconds)
 }
 
 template <size_t N>
-void SnowMPMSolver<N>::ConstrainGridVelocities()
+void SnowMPMSolver<N>::BuildActiveNodes(Array1<SizeType>* activeNodes,
+                                        Array1<ssize_t>* nodeToActive) const
 {
-    static constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
-                                            DIRECTION_BACK };
-    static constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
-                                            DIRECTION_FRONT };
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    const auto dataView = gridMass.DataView();
+
+    activeNodes->Clear();
+    nodeToActive->Resize(dataView.Length(), ssize_t{ -1 });
+    nodeToActive->Fill(ssize_t{ -1 });
+
+    gridMass.ForEachDataPointIndex([&gridMass, activeNodes, dataView,
+                                    nodeToActive](const SizeType& index) {
+        if (gridMass(index) > 0.0)
+        {
+            (*nodeToActive)[dataView.Index(index)] =
+                static_cast<ssize_t>(activeNodes->Length());
+            activeNodes->Append(index);
+        }
+    });
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ConstrainGridVelocities(
+    const Array1<SizeType>& activeNodes, const Array1<ssize_t>& nodeToActive,
+    Array1<uint8_t>* constrained)
+{
     const auto& gridMass = m_mpmSystemData->GridMass();
     auto& gridVelocities = m_mpmSystemData->GridVelocities();
-    const auto dataSize = gridVelocities.DataSize();
-    const auto dataPosition = gridVelocities.DataPosition();
-    const auto collider = this->GetCollider();
+    const auto dataView = gridMass.DataView();
+
+    if (constrained != nullptr)
+    {
+        constrained->Resize(activeNodes.Length() * N, uint8_t{ 0 });
+        constrained->Fill(uint8_t{ 0 });
+    }
 
     gridVelocities.ParallelForEachDataPointIndex(
-        [&gridMass, &gridVelocities, &dataSize, &dataPosition, &collider,
-         this](const SizeType& index) {
+        [this, constrained, &gridMass, &nodeToActive,
+         dataView](const SizeType& index) {
             if (gridMass(index) <= 0.0)
             {
                 return;
             }
 
-            VectorType velocity = gridVelocities(index);
-            if (collider != nullptr)
+            const ssize_t active = nodeToActive[dataView.Index(index)];
+
+            if (active < 0)
             {
-                VectorType position = dataPosition(index);
-                collider->ResolveCollision(0.0, 0.0, &position, &velocity);
+                return;
             }
 
-            for (size_t axis = 0; axis < N; ++axis)
-            {
-                if ((m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
-                    index[axis] == 0 && velocity[axis] < 0.0)
-                {
-                    velocity[axis] = 0.0;
-                }
-                if ((m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
-                    index[axis] == dataSize[axis] - 1 && velocity[axis] > 0.0)
-                {
-                    velocity[axis] = 0.0;
-                }
-            }
-
-            gridVelocities(index) = velocity;
+            ConstrainGridVelocityAtNode(index, static_cast<size_t>(active),
+                                        constrained);
         });
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::MatrixType SnowMPMSolver<N>::ComputeVelocityGradient(
+void SnowMPMSolver<N>::ConstrainGridVelocityAtNode(const SizeType& index,
+                                                   size_t active,
+                                                   Array1<uint8_t>* constrained)
+{
+    auto& gridVelocities = m_mpmSystemData->GridVelocities();
+    VectorType velocity = gridVelocities(index);
+
+    ApplyGridColliderConstraint(index, active, constrained, &velocity);
+    ApplyGridDomainConstraint(index, active, constrained, &velocity);
+
+    gridVelocities(index) = velocity;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ApplyGridColliderConstraint(const SizeType& index,
+                                                   size_t active,
+                                                   Array1<uint8_t>* constrained,
+                                                   VectorType* velocity) const
+{
+    const auto collider = this->GetCollider();
+
+    if (collider == nullptr)
+    {
+        return;
+    }
+
+    const VectorType incoming = *velocity;
+    VectorType position =
+        m_mpmSystemData->GridVelocities().DataPosition()(index);
+
+    collider->ResolveCollision(0.0, 0.0, &position, velocity);
+
+    if (constrained != nullptr && *velocity != incoming)
+    {
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            (*constrained)[active * N + axis] = uint8_t{ 1 };
+        }
+    }
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ApplyGridDomainConstraint(const SizeType& index,
+                                                 size_t active,
+                                                 Array1<uint8_t>* constrained,
+                                                 VectorType* velocity) const
+{
+    static constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
+                                            DIRECTION_BACK };
+    static constexpr std::array upperFlags{ DIRECTION_RIGHT, DIRECTION_UP,
+                                            DIRECTION_FRONT };
+    const auto dataSize = m_mpmSystemData->GridVelocities().DataSize();
+
+    for (size_t axis = 0; axis < N; ++axis)
+    {
+        const bool exceedsLower =
+            (m_closedDomainBoundaryFlag & lowerFlags[axis]) != 0 &&
+            index[axis] == 0 && (*velocity)[axis] < 0.0;
+        const bool exceedsUpper =
+            (m_closedDomainBoundaryFlag & upperFlags[axis]) != 0 &&
+            index[axis] == dataSize[axis] - 1 && (*velocity)[axis] > 0.0;
+
+        if (exceedsLower || exceedsUpper)
+        {
+            (*velocity)[axis] = 0.0;
+
+            if (constrained != nullptr)
+            {
+                (*constrained)[active * N + axis] = uint8_t{ 1 };
+            }
+        }
+    }
+}
+
+template <size_t N>
+SnowMPMSolver<N>::MatrixType
+SnowMPMSolver<N>::ComputeParticleDeformationDifferential(
+    const Stencil& stencil, const Array1<ssize_t>& nodeToActive,
+    const VectorND& input, const MatrixType& elastic) const
+{
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    const auto dataSize = gridMass.DataSize();
+    const auto dataView = gridMass.DataView();
+    MatrixType result;
+
+    for (const auto& entry : stencil)
+    {
+        if (entry.weight == 0.0)
+        {
+            continue;
+        }
+
+        const SizeType index = ClampIndex(entry.index, dataSize);
+        const ssize_t active = nodeToActive[dataView.Index(index)];
+
+        if (active < 0)
+        {
+            continue;
+        }
+
+        VectorType velocityDifferential;
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            velocityDifferential[axis] =
+                input[static_cast<size_t>(active) * N + axis];
+        }
+
+        for (size_t row = 0; row < N; ++row)
+        {
+            for (size_t column = 0; column < N; ++column)
+            {
+                result(row, column) +=
+                    velocityDifferential[row] * entry.gradient[column];
+            }
+        }
+    }
+
+    result *= elastic;
+    return result;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::AccumulateParticleHessian(
+    const Stencil& stencil, const Array1<ssize_t>& nodeToActive, double volume,
+    const MatrixType& elastic, const MatrixType& stressDifferential,
+    VectorND* output) const
+{
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    const auto dataSize = gridMass.DataSize();
+    const auto dataView = gridMass.DataView();
+
+    for (const auto& entry : stencil)
+    {
+        if (entry.weight == 0.0)
+        {
+            continue;
+        }
+
+        const SizeType index = ClampIndex(entry.index, dataSize);
+        const ssize_t active = nodeToActive[dataView.Index(index)];
+
+        if (active < 0)
+        {
+            continue;
+        }
+
+        const VectorType contribution =
+            volume * stressDifferential * elastic.Transposed() * entry.gradient;
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            (*output)[static_cast<size_t>(active) * N + axis] +=
+                contribution[axis];
+        }
+    }
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::ApplyElasticHessian(const Array1<SizeType>& activeNodes,
+                                           const Array1<ssize_t>& nodeToActive,
+                                           const VectorND& input,
+                                           VectorND* output) const
+{
+    const auto positions = m_mpmSystemData->Positions();
+    const auto volumes = m_mpmSystemData->InitialVolumes();
+    const auto states = m_mpmSystemData->DeformationStates();
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    const auto spacing = gridMass.GridSpacing();
+    const auto dataOrigin = gridMass.DataOrigin();
+
+    output->Resize(activeNodes.Length() * N, 0.0);
+    output->Fill(0.0);
+
+    for (size_t p = 0; p < positions.Length(); ++p)
+    {
+        const auto stencil = CubicBSplineKernel<N>::GetStencil(
+            positions[p], spacing, dataOrigin);
+        const MatrixType differential = ComputeParticleDeformationDifferential(
+            stencil, nodeToActive, input, states[p].elastic);
+        const MatrixType stressDifferential =
+            m_constitutiveModel.ComputeFirstPiolaStressDifferential(
+                states[p], differential);
+
+        AccumulateParticleHessian(stencil, nodeToActive, volumes[p],
+                                  states[p].elastic, stressDifferential,
+                                  output);
+    }
+}
+
+template <size_t N>
+VectorND SnowMPMSolver<N>::GatherActiveGridVelocities(
+    const Array1<SizeType>& activeNodes) const
+{
+    const auto& gridVelocities = m_mpmSystemData->GridVelocities();
+    VectorND result(activeNodes.Length() * N, 0.0);
+
+    for (size_t active = 0; active < activeNodes.Length(); ++active)
+    {
+        const VectorType velocity = gridVelocities(activeNodes[active]);
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            result[active * N + axis] = velocity[axis];
+        }
+    }
+
+    return result;
+}
+
+template <size_t N>
+VectorND SnowMPMSolver<N>::BuildSemiImplicitRightHandSide(
+    double dtSquared, const Array1<SizeType>& activeNodes,
+    const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+    const VectorND& velocities) const
+{
+    VectorND hessian(velocities.GetRows(), 0.0);
+
+    ApplyElasticHessian(activeNodes, nodeToActive, velocities, &hessian);
+
+    VectorND result(velocities.GetRows(), 0.0);
+
+    for (size_t i = 0; i < result.GetRows(); ++i)
+    {
+        if (constrained[i] == 0)
+        {
+            result[i] = -dtSquared * hessian[i];
+        }
+    }
+
+    return result;
+}
+
+template <size_t N>
+VectorND SnowMPMSolver<N>::SolveGridVelocityCorrection(
+    double dtSquared, const Array1<SizeType>& activeNodes,
+    const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+    const VectorND& rhs, double initialResidual)
+{
+    const LinearSystem system{ this, &activeNodes, &nodeToActive, &constrained,
+                               dtSquared };
+    VectorND correction(rhs.GetRows(), 0.0);
+    VectorND residual(rhs.GetRows(), 0.0);
+    VectorND direction(rhs.GetRows(), 0.0);
+    VectorND product(rhs.GetRows(), 0.0);
+    VectorND image(rhs.GetRows(), 0.0);
+    double residualNorm = initialResidual;
+
+    CR<LinearSystemBLAS>(system, rhs, m_maxNumberOfIterations,
+                         m_tolerance * initialResidual, &correction, &residual,
+                         &direction, &product, &image,
+                         &m_lastNumberOfIterations, &residualNorm);
+
+    m_lastResidual = residualNorm / initialResidual;
+    return correction;
+}
+
+template <size_t N>
+VectorND SnowMPMSolver<N>::ComputeGridVelocityUpdate(
+    double timeStepInSeconds, const Array1<SizeType>& activeNodes,
+    const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained)
+{
+    const double dtSquared = timeStepInSeconds * timeStepInSeconds;
+    const VectorND vStar = GatherActiveGridVelocities(activeNodes);
+    const VectorND rhs = BuildSemiImplicitRightHandSide(
+        dtSquared, activeNodes, nodeToActive, constrained, vStar);
+    const double initialResidual = LinearSystemBLAS::L2Norm(rhs);
+
+    if (!std::isfinite(initialResidual))
+    {
+        m_lastResidual = std::numeric_limits<double>::infinity();
+        throw std::runtime_error{
+            "Semi-implicit snow solve failed to converge."
+        };
+    }
+    if (initialResidual == 0.0)
+    {
+        return vStar;
+    }
+
+    const VectorND correction =
+        SolveGridVelocityCorrection(dtSquared, activeNodes, nodeToActive,
+                                    constrained, rhs, initialResidual);
+    VectorND result(vStar + correction);
+
+    if (const bool isFinite = std::ranges::all_of(
+            result, [](double value) { return std::isfinite(value); });
+        !isFinite || !std::isfinite(m_lastResidual) ||
+        m_lastResidual > m_tolerance)
+    {
+        throw std::runtime_error{
+            "Semi-implicit snow solve failed to converge."
+        };
+    }
+
+    return result;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::StoreActiveGridVelocities(
+    const Array1<SizeType>& activeNodes, const VectorND& velocities)
+{
+    auto& gridVelocities = m_mpmSystemData->GridVelocities();
+
+    for (size_t active = 0; active < activeNodes.Length(); ++active)
+    {
+        VectorType velocity;
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            velocity[axis] = velocities[active * N + axis];
+        }
+
+        gridVelocities(activeNodes[active]) = velocity;
+    }
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::SolveGridVelocities(double timeStepInSeconds,
+                                           const Array1<SizeType>& activeNodes,
+                                           const Array1<ssize_t>& nodeToActive,
+                                           const Array1<uint8_t>& constrained)
+{
+    auto& gridVelocities = m_mpmSystemData->GridVelocities();
+    const auto& gridVelocitiesBeforeUpdate =
+        m_mpmSystemData->GridVelocitiesBeforeUpdate();
+
+    m_lastNumberOfIterations = 0;
+    m_lastResidual = 0.0;
+
+    try
+    {
+        if (!activeNodes.IsEmpty())
+        {
+            const VectorND nextVelocities = ComputeGridVelocityUpdate(
+                timeStepInSeconds, activeNodes, nodeToActive, constrained);
+            StoreActiveGridVelocities(activeNodes, nextVelocities);
+        }
+    }
+    catch (...)
+    {
+        gridVelocities.Set(gridVelocitiesBeforeUpdate);
+        throw;
+    }
+}
+
+template <size_t N>
+SnowMPMSolver<N>::MatrixType SnowMPMSolver<N>::ComputeVelocityGradient(
     size_t particleIndex) const
 {
     const auto positions = m_mpmSystemData->Positions();
@@ -443,7 +950,7 @@ void SnowMPMSolver<N>::ConstrainParticlesToDomain()
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithResolution(
+SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithResolution(
     const SizeType& resolution)
 {
     m_resolution = resolution;
@@ -451,7 +958,7 @@ typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithResolution(
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithGridSpacing(
+SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithGridSpacing(
     const VectorType& gridSpacing)
 {
     m_gridSpacing = gridSpacing;
@@ -459,7 +966,7 @@ typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithGridSpacing(
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithOrigin(
+SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithOrigin(
     const VectorType& gridOrigin)
 {
     m_gridOrigin = gridOrigin;
@@ -467,16 +974,14 @@ typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithOrigin(
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithRadius(
-    double radius)
+SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithRadius(double radius)
 {
     m_radius = radius;
     return *this;
 }
 
 template <size_t N>
-typename SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithMass(
-    double mass)
+SnowMPMSolver<N>::Builder& SnowMPMSolver<N>::Builder::WithMass(double mass)
 {
     m_mass = mass;
     return *this;

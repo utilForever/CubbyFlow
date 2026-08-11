@@ -91,6 +91,23 @@ class SnowConstitutiveModel final
     [[nodiscard]] MatrixType ComputeKirchhoffStress(const State& state) const;
 
     //!
+    //! \brief Computes the first Piola stress differential.
+    //!
+    //! Evaluates `(d^2 Psi / d F_E d F_E) : differential` while holding the
+    //! plastic deformation fixed.
+    //!
+    //! \param[in] state Current elastic and plastic deformation state.
+    //! \param[in] differential Elastic deformation differential.
+    //!
+    //! \return First Piola stress differential.
+    //!
+    //! \throws std::invalid_argument If the state, differential, or computed
+    //! stress differential is invalid or non-finite.
+    //!
+    [[nodiscard]] MatrixType ComputeFirstPiolaStressDifferential(
+        const State& state, const MatrixType& differential) const;
+
+    //!
     //! \brief Estimates the fastest elastic wave speed for the state.
     //!
     //! Evaluates the principal-basis acoustic-tensor candidates for the
