@@ -149,3 +149,24 @@ TEST(CR, AlreadyConverged)
     EXPECT_EQ(iterations, 0u);
     EXPECT_LE(residual, 1e-14);
 }
+
+TEST(CR, SingularSystemReportsBreakdown)
+{
+    using BLASType = BLAS<double, Vector2D, Matrix2x2D>;
+    const Matrix2x2D matrix;
+    const Vector2D rhs(1.0, 2.0);
+    Vector2D x;
+    Vector2D r;
+    Vector2D d;
+    Vector2D q;
+    Vector2D s;
+    unsigned int iterations = 1;
+    double residual = 0.0;
+
+    CR<BLASType>(matrix, rhs, 10, 1e-14, &x, &r, &d, &q, &s, &iterations,
+                 &residual);
+
+    EXPECT_EQ(iterations, 0u);
+    EXPECT_EQ(x, Vector2D{});
+    EXPECT_TRUE(std::isinf(residual));
+}
