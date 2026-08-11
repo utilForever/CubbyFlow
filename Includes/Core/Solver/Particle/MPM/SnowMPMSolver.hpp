@@ -29,8 +29,13 @@ namespace CubbyFlow
 //!
 //! Uses fixed-corotated elastoplastic snow response with the existing MPM
 //! particle-grid transfers and particle-solver collision lifecycle.
-//! When semi-implicit integration is enabled, a non-convergent or non-finite
-//! linear solve throws `std::runtime_error` before particle state is advanced.
+//! When semi-implicit integration is enabled, failures are reported before
+//! particle state is advanced.
+//!
+//! \throws std::runtime_error If the semi-implicit linear solve does not
+//! converge or produces a non-finite result.
+//! \throws std::invalid_argument If the constitutive state or its stress
+//! differential is invalid or non-finite.
 //!
 template <size_t N>
 class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
