@@ -529,6 +529,7 @@ void SnowMPMSolver<N>::ApplyGridColliderConstraint(const SizeType& index,
                                                    VectorType* velocity) const
 {
     const auto collider = this->GetCollider();
+
     if (collider == nullptr)
     {
         return;
@@ -725,9 +726,11 @@ VectorND SnowMPMSolver<N>::BuildSemiImplicitRightHandSide(
     const VectorND& velocities) const
 {
     VectorND hessian(velocities.GetRows(), 0.0);
+
     ApplyElasticHessian(activeNodes, nodeToActive, velocities, &hessian);
 
     VectorND result(velocities.GetRows(), 0.0);
+
     for (size_t i = 0; i < result.GetRows(); ++i)
     {
         if (constrained[i] == 0)
