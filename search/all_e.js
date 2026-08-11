@@ -50,6 +50,6 @@ var searchData=
   ['orientation3_47',['Orientation3',['../namespace_cubby_flow.html#a785c61c81dc6770e8eeabab08f7dddb9',1,'CubbyFlow']]],
   ['orientation_3c_202_20_3e_48',['Orientation&lt; 2 &gt;',['../class_cubby_flow_1_1_orientation_3_012_01_4.html',1,'CubbyFlow']]],
   ['orientation_3c_203_20_3e_49',['Orientation&lt; 3 &gt;',['../class_cubby_flow_1_1_orientation_3_013_01_4.html',1,'CubbyFlow']]],
-  ['origin_50',['origin',['../class_cubby_flow_1_1_grid_system_data.html#a06a10275ea0d20b27e48f6cf872b81b6',1,'CubbyFlow::GridSystemData::Origin()'],['../class_cubby_flow_1_1_grid.html#a1c074afec6a3acc60a49a64be6ee936b',1,'CubbyFlow::Grid::Origin()'],['../class_cubby_flow_1_1_ray.html#a79b25d0ccd0bcc4758a4a2fe0bbf6fbf',1,'CubbyFlow::Ray::origin']]],
+  ['origin_50',['origin',['../class_cubby_flow_1_1_ray.html#a79b25d0ccd0bcc4758a4a2fe0bbf6fbf',1,'CubbyFlow::Ray::origin'],['../class_cubby_flow_1_1_grid_system_data.html#a06a10275ea0d20b27e48f6cf872b81b6',1,'CubbyFlow::GridSystemData::Origin()'],['../class_cubby_flow_1_1_grid.html#a1c074afec6a3acc60a49a64be6ee936b',1,'CubbyFlow::Grid::Origin()']]],
   ['overlaps_51',['Overlaps',['../class_cubby_flow_1_1_bounding_box.html#a957673cbe015e86d65a515fdf3edb012',1,'CubbyFlow::BoundingBox']]]
 ];

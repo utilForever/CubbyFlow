@@ -114,6 +114,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afb83ea4dca346235db7a25e7d908527e" id="r_afb83ea4dca346235db7a25e7d908527e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afe77d8d6ef7a256ad82e4df3a429becc">MatrixType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afb83ea4dca346235db7a25e7d908527e">ComputeKirchhoffStress</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a36d9820dec8468d4feb3be20130df52d">State</a> &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">state</a>) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
 <tr class="memdesc:afb83ea4dca346235db7a25e7d908527e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the fixed-corotated Kirchhoff stress for the state.  <br /></td></tr>
 <tr class="separator:afb83ea4dca346235db7a25e7d908527e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55da2548968e4d4ee2e259b25f96458e" id="r_a55da2548968e4d4ee2e259b25f96458e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afe77d8d6ef7a256ad82e4df3a429becc">MatrixType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a55da2548968e4d4ee2e259b25f96458e">ComputeFirstPiolaStressDifferential</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a36d9820dec8468d4feb3be20130df52d">State</a> &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">state</a>, <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afe77d8d6ef7a256ad82e4df3a429becc">MatrixType</a> &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">differential</a>) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
+<tr class="memdesc:a55da2548968e4d4ee2e259b25f96458e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the first Piola stress differential.  <br /></td></tr>
+<tr class="separator:a55da2548968e4d4ee2e259b25f96458e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a273d3c7842f595c798ac9f001ede67" id="r_a3a273d3c7842f595c798ac9f001ede67"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a3a273d3c7842f595c798ac9f001ede67">ComputeWaveSpeed</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a36d9820dec8468d4feb3be20130df52d">State</a> &amp;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">state</a>, <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">referenceDensity</a>) <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
 <tr class="memdesc:a3a273d3c7842f595c798ac9f001ede67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Estimates the fastest elastic wave speed for the state.  <br /></td></tr>
 <tr class="separator:a3a273d3c7842f595c798ac9f001ede67"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -226,6 +229,53 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a55da2548968e4d4ee2e259b25f96458e" name="a55da2548968e4d4ee2e259b25f96458e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55da2548968e4d4ee2e259b25f96458e">&#9670;&#160;</a></span>ComputeFirstPiolaStressDifferential()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html">SnowConstitutiveModel</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;<a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afe77d8d6ef7a256ad82e4df3a429becc">::MatrixType</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html">CubbyFlow::SnowConstitutiveModel</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::ComputeFirstPiolaStressDifferential </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#a36d9820dec8468d4feb3be20130df52d">State</a> &amp;&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a> <a class="el" href="class_cubby_flow_1_1_snow_constitutive_model.html#afe77d8d6ef7a256ad82e4df3a429becc">MatrixType</a> &amp;&#160;</td>
+          <td class="paramname"><em>differential</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Computes the first Piola stress differential. </p>
+<p>Evaluates <code>(d^2 Psi / d F_E d F_E) : differential</code> while holding the plastic deformation fixed.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">state</td><td>Current elastic and plastic deformation state. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">differential</td><td>Elastic deformation differential.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>First Piola stress differential.</dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>If the state, differential, or computed stress differential is invalid or non-finite. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="afb83ea4dca346235db7a25e7d908527e" name="afb83ea4dca346235db7a25e7d908527e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afb83ea4dca346235db7a25e7d908527e">&#9670;&#160;</a></span>ComputeKirchhoffStress()</h2>
 
@@ -351,7 +401,7 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Aug 9 2026 04:28:05 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Aug 11 2026 02:48:06 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>

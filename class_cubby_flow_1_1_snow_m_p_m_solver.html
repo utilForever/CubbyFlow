@@ -110,6 +110,10 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver_1_1_builder.html">Builder</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Front-end to create <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html" title="N-D material point method solver for snow.">SnowMPMSolver</a> objects step by step.  <a href="class_cubby_flow_1_1_snow_m_p_m_solver_1_1_builder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_cubby_flow_1_1_snow_m_p_m_solver_1_1_linear_system.html">LinearSystem</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_cubby_flow_1_1_snow_m_p_m_solver_1_1_linear_system_b_l_a_s.html">LinearSystemBLAS</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -136,6 +140,29 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad3efe875d608034b8d3bdce5fe6bbe3e" id="r_ad3efe875d608034b8d3bdce5fe6bbe3e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#ad3efe875d608034b8d3bdce5fe6bbe3e">SetTimeStepLimitScale</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">newScale</a>)</td></tr>
 <tr class="memdesc:ad3efe875d608034b8d3bdce5fe6bbe3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the adaptive time-step scale in <code>(0, 1]</code>.  <br /></td></tr>
 <tr class="separator:ad3efe875d608034b8d3bdce5fe6bbe3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92bc747866bdd0d62ea5366dc928c873" id="r_a92bc747866bdd0d62ea5366dc928c873"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#a92bc747866bdd0d62ea5366dc928c873">GetIsUsingSemiImplicit</a> () <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
+<tr class="memdesc:a92bc747866bdd0d62ea5366dc928c873"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether the elastic grid update is semi-implicit.  <br /></td></tr>
+<tr class="separator:a92bc747866bdd0d62ea5366dc928c873"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa078f7b73805dcab97f84e422c0bedd7" id="r_aa078f7b73805dcab97f84e422c0bedd7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#aa078f7b73805dcab97f84e422c0bedd7">SetIsUsingSemiImplicit</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">bool</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">isUsing</a>)</td></tr>
+<tr class="memdesc:aa078f7b73805dcab97f84e422c0bedd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables the semi-implicit elastic grid update.  <br /></td></tr>
+<tr class="separator:aa078f7b73805dcab97f84e422c0bedd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63e33a93274d360d97c612f1dcaf27d6" id="r_a63e33a93274d360d97c612f1dcaf27d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">unsigned</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#a63e33a93274d360d97c612f1dcaf27d6">GetMaxNumberOfIterations</a> () <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
+<tr class="memdesc:a63e33a93274d360d97c612f1dcaf27d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the maximum conjugate-residual iteration count.  <br /></td></tr>
+<tr class="separator:a63e33a93274d360d97c612f1dcaf27d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9d5c768f271ce0c7677b4defa2d5987" id="r_aa9d5c768f271ce0c7677b4defa2d5987"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#aa9d5c768f271ce0c7677b4defa2d5987">SetMaxNumberOfIterations</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">unsigned</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">maxNumberOfIterations</a>)</td></tr>
+<tr class="separator:aa9d5c768f271ce0c7677b4defa2d5987"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1adb740163690839d43ed7444918b980" id="r_a1adb740163690839d43ed7444918b980"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#a1adb740163690839d43ed7444918b980">GetTolerance</a> () <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
+<tr class="memdesc:a1adb740163690839d43ed7444918b980"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the relative conjugate-residual tolerance.  <br /></td></tr>
+<tr class="separator:a1adb740163690839d43ed7444918b980"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af26d818e3751b542010fea7349f1ebff" id="r_af26d818e3751b542010fea7349f1ebff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#af26d818e3751b542010fea7349f1ebff">SetTolerance</a> (<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> tolerance)</td></tr>
+<tr class="memdesc:af26d818e3751b542010fea7349f1ebff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the positive finite tolerance relative to the initial residual.  <br /></td></tr>
+<tr class="separator:af26d818e3751b542010fea7349f1ebff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad08b78645330453f5961269125585742" id="r_ad08b78645330453f5961269125585742"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">unsigned</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#ad08b78645330453f5961269125585742">GetLastNumberOfIterations</a> () <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
+<tr class="memdesc:ad08b78645330453f5961269125585742"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the iteration count from the last semi-implicit solve.  <br /></td></tr>
+<tr class="separator:ad08b78645330453f5961269125585742"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaec52ff450f266639746870cd78b1cf2" id="r_aaec52ff450f266639746870cd78b1cf2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#aaec52ff450f266639746870cd78b1cf2">GetLastResidual</a> () <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
+<tr class="memdesc:aaec52ff450f266639746870cd78b1cf2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the relative residual from the last semi-implicit solve.  <br /></td></tr>
+<tr class="separator:aaec52ff450f266639746870cd78b1cf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3db8a4775f52830f2ec7aeb39acee45" id="r_ab3db8a4775f52830f2ec7aeb39acee45"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html#ab3db8a4775f52830f2ec7aeb39acee45">GetClosedDomainBoundaryFlag</a> () <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">const</a></td></tr>
 <tr class="memdesc:ab3db8a4775f52830f2ec7aeb39acee45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the closed domain boundary flag.  <br /></td></tr>
 <tr class="separator:ab3db8a4775f52830f2ec7aeb39acee45"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -170,7 +197,14 @@ Protected Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt;<br />
 class CubbyFlow::SnowMPMSolver&lt; N &gt;</div><p>N-D material point method solver for snow. </p>
-<p>Uses fixed-corotated elastoplastic snow response with the existing MPM particle-grid transfers and particle-solver collision lifecycle. </p>
+<p>Uses fixed-corotated elastoplastic snow response with the existing MPM particle-grid transfers and particle-solver collision lifecycle. When semi-implicit integration is enabled, failures are reported before particle state is advanced.</p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>If the semi-implicit linear solve does not converge or produces a non-finite result. </td></tr>
+    <tr><td class="paramname">std::invalid_argument</td><td>If the constitutive state or its stress differential is invalid or non-finite. </td></tr>
+  </table>
+  </dd>
+</dl>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="ab065a80b7a24e6817d245c89e642bcd3" name="ab065a80b7a24e6817d245c89e642bcd3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab065a80b7a24e6817d245c89e642bcd3">&#9670;&#160;</a></span>Base</h2>
@@ -376,6 +410,90 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 
 </div>
 </div>
+<a id="a92bc747866bdd0d62ea5366dc928c873" name="a92bc747866bdd0d62ea5366dc928c873"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92bc747866bdd0d62ea5366dc928c873">&#9670;&#160;</a></span>GetIsUsingSemiImplicit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">bool</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::GetIsUsingSemiImplicit </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns whether the elastic grid update is semi-implicit. </p>
+
+</div>
+</div>
+<a id="ad08b78645330453f5961269125585742" name="ad08b78645330453f5961269125585742"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad08b78645330453f5961269125585742">&#9670;&#160;</a></span>GetLastNumberOfIterations()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">unsigned</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::GetLastNumberOfIterations </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the iteration count from the last semi-implicit solve. </p>
+
+</div>
+</div>
+<a id="aaec52ff450f266639746870cd78b1cf2" name="aaec52ff450f266639746870cd78b1cf2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaec52ff450f266639746870cd78b1cf2">&#9670;&#160;</a></span>GetLastResidual()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::GetLastResidual </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the relative residual from the last semi-implicit solve. </p>
+
+</div>
+</div>
+<a id="a63e33a93274d360d97c612f1dcaf27d6" name="a63e33a93274d360d97c612f1dcaf27d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a63e33a93274d360d97c612f1dcaf27d6">&#9670;&#160;</a></span>GetMaxNumberOfIterations()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">unsigned</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::GetMaxNumberOfIterations </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the maximum conjugate-residual iteration count. </p>
+
+</div>
+</div>
 <a id="adc5b46f81b551fe117c80f6ae335c63c" name="adc5b46f81b551fe117c80f6ae335c63c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adc5b46f81b551fe117c80f6ae335c63c">&#9670;&#160;</a></span>GetMPMSystemData()</h2>
 
@@ -445,6 +563,27 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 </div><div class="memdoc">
 
 <p>Returns the scale applied to adaptive time-step limits. </p>
+
+</div>
+</div>
+<a id="a1adb740163690839d43ed7444918b980" name="a1adb740163690839d43ed7444918b980"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1adb740163690839d43ed7444918b980">&#9670;&#160;</a></span>GetTolerance()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::GetTolerance </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the relative conjugate-residual tolerance. </p>
 
 </div>
 </div>
@@ -559,6 +698,49 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 
 </div>
 </div>
+<a id="aa078f7b73805dcab97f84e422c0bedd7" name="aa078f7b73805dcab97f84e422c0bedd7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa078f7b73805dcab97f84e422c0bedd7">&#9670;&#160;</a></span>SetIsUsingSemiImplicit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::SetIsUsingSemiImplicit </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">bool</a>&#160;</td>
+          <td class="paramname"><em>isUsing</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enables or disables the semi-implicit elastic grid update. </p>
+
+</div>
+</div>
+<a id="aa9d5c768f271ce0c7677b4defa2d5987" name="aa9d5c768f271ce0c7677b4defa2d5987"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9d5c768f271ce0c7677b4defa2d5987">&#9670;&#160;</a></span>SetMaxNumberOfIterations()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::SetMaxNumberOfIterations </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">unsigned</a> <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">int</a>&#160;</td>
+          <td class="paramname"><em>maxNumberOfIterations</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Sets the maximum conjugate-residual iteration count. Zero permits only an already-converged solve; any nonzero residual makes the update fail. </p>
+
+</div>
+</div>
 <a id="ad3efe875d608034b8d3bdce5fe6bbe3e" name="ad3efe875d608034b8d3bdce5fe6bbe3e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad3efe875d608034b8d3bdce5fe6bbe3e">&#9670;&#160;</a></span>SetTimeStepLimitScale()</h2>
 
@@ -581,6 +763,28 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 
 </div>
 </div>
+<a id="af26d818e3751b542010fea7349f1ebff" name="af26d818e3751b542010fea7349f1ebff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af26d818e3751b542010fea7349f1ebff">&#9670;&#160;</a></span>SetTolerance()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">size_t</a> N&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">void</a> <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver</a>&lt; <a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">N</a> &gt;::SetTolerance </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8aa269e86f3c">double</a>&#160;</td>
+          <td class="paramname"><em>tolerance</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the positive finite tolerance relative to the initial residual. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>Core/Solver/Particle/MPM/<a class="el" href="_core_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp_source.html">SnowMPMSolver.hpp</a></li>
 <li>Core/Solver/Particle/MPM/<a class="el" href="_snow_m_p_m_solver-_impl_8hpp_source.html">SnowMPMSolver-Impl.hpp</a></li>
@@ -594,7 +798,7 @@ template&lt;<a class="el" href="namespace_cubby_flow.html#a9932602cee20e55ad02e8
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Aug 9 2026 04:28:05 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Aug 11 2026 02:48:06 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>
