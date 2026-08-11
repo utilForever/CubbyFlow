@@ -74,7 +74,8 @@ void AddLinearParticleLattice(SnowMPMSolver<N>* solver, double rate)
     Array1<VectorD<N>> positions;
     Array1<VectorD<N>> velocities;
 
-    ForEachIndex(dataSize, [&](auto... rawIndices) {
+    ForEachIndex(dataSize, [center, origin, &positions, rate, spacing,
+                            &velocities](auto... rawIndices) {
         const VectorUZ<N> index{ rawIndices... };
         VectorD<N> position = origin;
         for (size_t axis = 0; axis < N; ++axis)
@@ -100,7 +101,7 @@ void AddCompressedParticleLattice(SnowMPMSolver<N>* solver)
     Array1<VectorD<N>> positions;
 
     ForEachIndex(VectorUZ<N>::MakeConstant(2), VectorUZ<N>::MakeConstant(8),
-                 [&](auto... rawIndices) {
+                 [origin, &positions, spacing](auto... rawIndices) {
                      const VectorUZ<N> index{ rawIndices... };
                      VectorD<N> position = origin;
 

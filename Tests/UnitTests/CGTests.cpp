@@ -103,7 +103,11 @@ TEST(CR, SolveSymmetricSystems)
     {
         const Vector2D expected(1.0, 1.0);
         const Vector2D rhs = matrix * expected;
-        Vector2D x, r, d, q, s;
+        Vector2D x;
+        Vector2D r;
+        Vector2D d;
+        Vector2D q;
+        Vector2D s;
         unsigned int iterations = 0;
         double residual = 0.0;
 
@@ -121,7 +125,11 @@ TEST(CR, ZeroIterationsReportsInitialResidual)
     using BLASType = BLAS<double, Vector2D, Matrix2x2D>;
     const Matrix2x2D matrix(4.0, 1.0, 1.0, 3.0);
     const Vector2D rhs(1.0, 2.0);
-    Vector2D x, r, d, q, s;
+    Vector2D x;
+    Vector2D r;
+    Vector2D d;
+    Vector2D q;
+    Vector2D s;
     unsigned int iterations = 1;
     double residual = 0.0;
 
@@ -139,7 +147,10 @@ TEST(CR, AlreadyConverged)
     const Matrix2x2D matrix(4.0, 1.0, 1.0, 3.0);
     Vector2D x(1.0, 1.0);
     const Vector2D rhs = matrix * x;
-    Vector2D r, d, q, s;
+    Vector2D r;
+    Vector2D d;
+    Vector2D q;
+    Vector2D s;
     unsigned int iterations = 1;
     double residual = 1.0;
 

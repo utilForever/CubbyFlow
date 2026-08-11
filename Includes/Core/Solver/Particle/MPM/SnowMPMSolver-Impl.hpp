@@ -462,7 +462,8 @@ void SnowMPMSolver<N>::BuildActiveNodes(Array1<SizeType>* activeNodes,
     nodeToActive->Resize(dataView.Length(), ssize_t{ -1 });
     nodeToActive->Fill(ssize_t{ -1 });
 
-    gridMass.ForEachDataPointIndex([&](const SizeType& index) {
+    gridMass.ForEachDataPointIndex([&gridMass, activeNodes, dataView,
+                                    nodeToActive](const SizeType& index) {
         if (gridMass(index) > 0.0)
         {
             (*nodeToActive)[dataView.Index(index)] =
@@ -715,8 +716,10 @@ void SnowMPMSolver<N>::SolveGridVelocities(double timeStepInSeconds,
         const LinearSystem system{ this, &activeNodes, &nodeToActive,
                                    &constrained, dtSquared };
         VectorND correction(vectorSize, 0.0);
-        VectorND residual(vectorSize, 0.0), direction(vectorSize, 0.0),
-            product(vectorSize, 0.0), image(vectorSize, 0.0);
+        VectorND residual(vectorSize, 0.0);
+        VectorND direction(vectorSize, 0.0);
+        VectorND product(vectorSize, 0.0);
+        VectorND image(vectorSize, 0.0);
         double residualNorm = initialResidual;
 
         CR<LinearSystemBLAS>(system, rhs, m_maxNumberOfIterations,
@@ -727,10 +730,10 @@ void SnowMPMSolver<N>::SolveGridVelocities(double timeStepInSeconds,
         m_lastResidual = residualNorm / initialResidual;
 
         VectorND nextVelocities(vStar + correction);
-        const bool isFinite = std::ranges::all_of(
-            nextVelocities, [](double value) { return std::isfinite(value); });
-
-        if (!isFinite || !std::isfinite(m_lastResidual) ||
+        if (const bool isFinite = std::ranges::all_of(
+                nextVelocities,
+                [](double value) { return std::isfinite(value); });
+            !isFinite || !std::isfinite(m_lastResidual) ||
             m_lastResidual > m_tolerance)
         {
             throw std::runtime_error{
