@@ -600,7 +600,7 @@ void ExpectParametersAndBuilder()
 }
 
 template <size_t N>
-void ExpectClosedDomainWalls(bool semiImplicit = false)
+void ExpectClosedDomainWallStopsVelocity(bool semiImplicit)
 {
     constexpr std::array lowerFlags{ DIRECTION_LEFT, DIRECTION_DOWN,
                                      DIRECTION_BACK };
@@ -639,6 +639,13 @@ void ExpectClosedDomainWalls(bool semiImplicit = false)
             EXPECT_DOUBLE_EQ(data->GridVelocities()(nodeIndex)[axis], 0.0);
         }
     }
+}
+
+template <size_t N>
+void ExpectUnconstrainedDomainWallPreservesVelocity(bool semiImplicit)
+{
+    const auto resolution = VectorUZ<N>::MakeConstant(4);
+    const auto spacing = VectorD<N>::MakeConstant(1.0);
 
     for (int boundaryFlag : { DIRECTION_NONE, DIRECTION_LEFT })
     {
@@ -665,6 +672,13 @@ void ExpectClosedDomainWalls(bool semiImplicit = false)
         ASSERT_GT(data->GridMass()(nodeIndex), 0.0);
         EXPECT_DOUBLE_EQ(data->GridVelocities()(nodeIndex)[0], velocity[0]);
     }
+}
+
+template <size_t N>
+void ExpectClosedDomainWalls(bool semiImplicit = false)
+{
+    ExpectClosedDomainWallStopsVelocity<N>(semiImplicit);
+    ExpectUnconstrainedDomainWallPreservesVelocity<N>(semiImplicit);
 }
 
 template <size_t N>
