@@ -699,6 +699,131 @@ void SnowMPMSolver<N>::ApplyElasticHessian(const Array1<SizeType>& activeNodes,
 }
 
 template <size_t N>
+VectorND SnowMPMSolver<N>::GatherActiveGridVelocities(
+    const Array1<SizeType>& activeNodes) const
+{
+    const auto& gridVelocities = m_mpmSystemData->GridVelocities();
+    VectorND result(activeNodes.Length() * N, 0.0);
+
+    for (size_t active = 0; active < activeNodes.Length(); ++active)
+    {
+        const VectorType velocity = gridVelocities(activeNodes[active]);
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            result[active * N + axis] = velocity[axis];
+        }
+    }
+
+    return result;
+}
+
+template <size_t N>
+VectorND SnowMPMSolver<N>::BuildSemiImplicitRightHandSide(
+    double dtSquared, const Array1<SizeType>& activeNodes,
+    const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+    const VectorND& velocities) const
+{
+    VectorND hessian(velocities.GetRows(), 0.0);
+    ApplyElasticHessian(activeNodes, nodeToActive, velocities, &hessian);
+
+    VectorND result(velocities.GetRows(), 0.0);
+    for (size_t i = 0; i < result.GetRows(); ++i)
+    {
+        if (constrained[i] == 0)
+        {
+            result[i] = -dtSquared * hessian[i];
+        }
+    }
+
+    return result;
+}
+
+template <size_t N>
+VectorND SnowMPMSolver<N>::SolveGridVelocityCorrection(
+    double dtSquared, const Array1<SizeType>& activeNodes,
+    const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+    const VectorND& rhs, double initialResidual)
+{
+    const LinearSystem system{ this, &activeNodes, &nodeToActive, &constrained,
+                               dtSquared };
+    VectorND correction(rhs.GetRows(), 0.0);
+    VectorND residual(rhs.GetRows(), 0.0);
+    VectorND direction(rhs.GetRows(), 0.0);
+    VectorND product(rhs.GetRows(), 0.0);
+    VectorND image(rhs.GetRows(), 0.0);
+    double residualNorm = initialResidual;
+
+    CR<LinearSystemBLAS>(system, rhs, m_maxNumberOfIterations,
+                         m_tolerance * initialResidual, &correction, &residual,
+                         &direction, &product, &image,
+                         &m_lastNumberOfIterations, &residualNorm);
+
+    m_lastResidual = residualNorm / initialResidual;
+    return correction;
+}
+
+template <size_t N>
+VectorND SnowMPMSolver<N>::ComputeGridVelocityUpdate(
+    double timeStepInSeconds, const Array1<SizeType>& activeNodes,
+    const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained)
+{
+    const double dtSquared = timeStepInSeconds * timeStepInSeconds;
+    const VectorND vStar = GatherActiveGridVelocities(activeNodes);
+    const VectorND rhs = BuildSemiImplicitRightHandSide(
+        dtSquared, activeNodes, nodeToActive, constrained, vStar);
+    const double initialResidual = LinearSystemBLAS::L2Norm(rhs);
+
+    if (!std::isfinite(initialResidual))
+    {
+        m_lastResidual = std::numeric_limits<double>::infinity();
+        throw std::runtime_error{
+            "Semi-implicit snow solve failed to converge."
+        };
+    }
+    if (initialResidual == 0.0)
+    {
+        return vStar;
+    }
+
+    const VectorND correction =
+        SolveGridVelocityCorrection(dtSquared, activeNodes, nodeToActive,
+                                    constrained, rhs, initialResidual);
+    VectorND result(vStar + correction);
+
+    if (const bool isFinite = std::ranges::all_of(
+            result, [](double value) { return std::isfinite(value); });
+        !isFinite || !std::isfinite(m_lastResidual) ||
+        m_lastResidual > m_tolerance)
+    {
+        throw std::runtime_error{
+            "Semi-implicit snow solve failed to converge."
+        };
+    }
+
+    return result;
+}
+
+template <size_t N>
+void SnowMPMSolver<N>::StoreActiveGridVelocities(
+    const Array1<SizeType>& activeNodes, const VectorND& velocities)
+{
+    auto& gridVelocities = m_mpmSystemData->GridVelocities();
+
+    for (size_t active = 0; active < activeNodes.Length(); ++active)
+    {
+        VectorType velocity;
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            velocity[axis] = velocities[active * N + axis];
+        }
+
+        gridVelocities(activeNodes[active]) = velocity;
+    }
+}
+
+template <size_t N>
 void SnowMPMSolver<N>::SolveGridVelocities(double timeStepInSeconds,
                                            const Array1<SizeType>& activeNodes,
                                            const Array1<ssize_t>& nodeToActive,
@@ -713,91 +838,11 @@ void SnowMPMSolver<N>::SolveGridVelocities(double timeStepInSeconds,
 
     try
     {
-        if (activeNodes.IsEmpty())
+        if (!activeNodes.IsEmpty())
         {
-            return;
-        }
-
-        const size_t vectorSize = activeNodes.Length() * N;
-        const double dtSquared = timeStepInSeconds * timeStepInSeconds;
-        VectorND vStar(vectorSize, 0.0);
-
-        for (size_t active = 0; active < activeNodes.Length(); ++active)
-        {
-            const VectorType velocity = gridVelocities(activeNodes[active]);
-
-            for (size_t axis = 0; axis < N; ++axis)
-            {
-                vStar[active * N + axis] = velocity[axis];
-            }
-        }
-
-        VectorND hessian(vectorSize, 0.0);
-
-        ApplyElasticHessian(activeNodes, nodeToActive, vStar, &hessian);
-
-        VectorND rhs(vectorSize, 0.0);
-
-        for (size_t i = 0; i < vectorSize; ++i)
-        {
-            if (constrained[i] == 0)
-            {
-                rhs[i] = -dtSquared * hessian[i];
-            }
-        }
-
-        const double initialResidual = LinearSystemBLAS::L2Norm(rhs);
-
-        if (!std::isfinite(initialResidual))
-        {
-            m_lastResidual = std::numeric_limits<double>::infinity();
-            throw std::runtime_error{
-                "Semi-implicit snow solve failed to converge."
-            };
-        }
-        if (initialResidual == 0.0)
-        {
-            return;
-        }
-
-        const LinearSystem system{ this, &activeNodes, &nodeToActive,
-                                   &constrained, dtSquared };
-        VectorND correction(vectorSize, 0.0);
-        VectorND residual(vectorSize, 0.0);
-        VectorND direction(vectorSize, 0.0);
-        VectorND product(vectorSize, 0.0);
-        VectorND image(vectorSize, 0.0);
-        double residualNorm = initialResidual;
-
-        CR<LinearSystemBLAS>(system, rhs, m_maxNumberOfIterations,
-                             m_tolerance * initialResidual, &correction,
-                             &residual, &direction, &product, &image,
-                             &m_lastNumberOfIterations, &residualNorm);
-
-        m_lastResidual = residualNorm / initialResidual;
-
-        VectorND nextVelocities(vStar + correction);
-        if (const bool isFinite = std::ranges::all_of(
-                nextVelocities,
-                [](double value) { return std::isfinite(value); });
-            !isFinite || !std::isfinite(m_lastResidual) ||
-            m_lastResidual > m_tolerance)
-        {
-            throw std::runtime_error{
-                "Semi-implicit snow solve failed to converge."
-            };
-        }
-
-        for (size_t active = 0; active < activeNodes.Length(); ++active)
-        {
-            VectorType velocity;
-
-            for (size_t axis = 0; axis < N; ++axis)
-            {
-                velocity[axis] = nextVelocities[active * N + axis];
-            }
-
-            gridVelocities(activeNodes[active]) = velocity;
+            const VectorND nextVelocities = ComputeGridVelocityUpdate(
+                timeStepInSeconds, activeNodes, nodeToActive, constrained);
+            StoreActiveGridVelocities(activeNodes, nextVelocities);
         }
     }
     catch (...)

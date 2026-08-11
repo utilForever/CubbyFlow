@@ -154,6 +154,27 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
                              const Array1<ssize_t>& nodeToActive,
                              const Array1<uint8_t>& constrained);
 
+    [[nodiscard]] VectorND GatherActiveGridVelocities(
+        const Array1<SizeType>& activeNodes) const;
+
+    [[nodiscard]] VectorND BuildSemiImplicitRightHandSide(
+        double dtSquared, const Array1<SizeType>& activeNodes,
+        const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+        const VectorND& velocities) const;
+
+    [[nodiscard]] VectorND SolveGridVelocityCorrection(
+        double dtSquared, const Array1<SizeType>& activeNodes,
+        const Array1<ssize_t>& nodeToActive, const Array1<uint8_t>& constrained,
+        const VectorND& rhs, double initialResidual);
+
+    [[nodiscard]] VectorND ComputeGridVelocityUpdate(
+        double timeStepInSeconds, const Array1<SizeType>& activeNodes,
+        const Array1<ssize_t>& nodeToActive,
+        const Array1<uint8_t>& constrained);
+
+    void StoreActiveGridVelocities(const Array1<SizeType>& activeNodes,
+                                   const VectorND& velocities);
+
     void ApplyElasticHessian(const Array1<SizeType>& activeNodes,
                              const Array1<ssize_t>& nodeToActive,
                              const VectorND& input, VectorND* output) const;
