@@ -1,0 +1,71 @@
+<scene version="0.5.0">
+    <integrator type="volpath">
+        <integer name="maxDepth" value="12"/>
+    </integrator>
+
+    <sensor type="perspective">
+        <transform name="toWorld">
+            <lookat origin="1.35, 0.76, 1.55"
+                    target="0.5, 0.48, 0.5" up="0, 1, 0"/>
+        </transform>
+        <float name="fov" value="45"/>
+        <sampler type="independent">
+            <integer name="sampleCount" value="$spp"/>
+        </sampler>
+        <film type="ldrfilm">
+            <integer name="width" value="720"/>
+            <integer name="height" value="540"/>
+            <rfilter type="gaussian"/>
+        </film>
+    </sensor>
+
+    <medium type="heterogeneous" id="snow">
+        <string name="method" value="woodcock"/>
+        <volume name="density" type="gridvolume">
+            <string name="filename" value="$volume"/>
+        </volume>
+        <volume name="albedo" type="constvolume">
+            <spectrum name="value" value="0.9, 0.95, 1.0"/>
+        </volume>
+        <phase type="hg">
+            <float name="g" value="0.5"/>
+        </phase>
+        <float name="scale" value="724"/>
+    </medium>
+
+    <shape type="cube">
+        <transform name="toWorld">
+            <scale x="0.5" y="0.4495" z="0.5"/>
+            <translate x="0.5" y="0.5505" z="0.5"/>
+        </transform>
+        <bsdf type="null"/>
+        <ref name="interior" id="snow"/>
+    </shape>
+
+    <shape type="rectangle">
+        <transform name="toWorld">
+            <scale value="0.65"/>
+            <rotate x="1" angle="-90"/>
+            <translate x="0.5" y="0.1" z="0.5"/>
+        </transform>
+        <bsdf type="roughdiffuse">
+            <spectrum name="reflectance" value="0.48, 0.51, 0.55"/>
+            <float name="alpha" value="0.2"/>
+        </bsdf>
+    </shape>
+
+    <shape type="rectangle">
+        <transform name="toWorld">
+            <scale value="0.45"/>
+            <rotate x="1" angle="90"/>
+            <translate x="0.5" y="1.05" z="0.5"/>
+        </transform>
+        <emitter type="area">
+            <spectrum name="radiance" value="3"/>
+        </emitter>
+    </shape>
+
+    <emitter type="constant">
+        <spectrum name="radiance" value="0.03"/>
+    </emitter>
+</scene>

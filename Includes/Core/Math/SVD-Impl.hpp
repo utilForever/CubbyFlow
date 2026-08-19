@@ -435,6 +435,18 @@ void SVD(const MatrixMxN<T>& a, MatrixMxN<T>& u, VectorN<T>& w, MatrixMxN<T>& v)
             w[k] = x;
         }
     }
+
+    for (k = 0; k < n; ++k)
+    {
+        if (w[k] < 0)
+        {
+            w[k] = -w[k];
+            for (j = 0; j < n; ++j)
+            {
+                v(j, k) = -v(j, k);
+            }
+        }
+    }
 }
 
 template <typename T, size_t M, size_t N>
@@ -808,6 +820,18 @@ void SVD(const Matrix<T, M, N>& a, Matrix<T, M, N>& u, Vector<T, N>& w,
             rv1[l] = 0;
             rv1[k] = f;
             w[k] = x;
+        }
+    }
+
+    for (k = 0; k < n; ++k)
+    {
+        if (w[k] < 0)
+        {
+            w[k] = -w[k];
+            for (j = 0; j < n; ++j)
+            {
+                v(j, k) = -v(j, k);
+            }
         }
     }
 }

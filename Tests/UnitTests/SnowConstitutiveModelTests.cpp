@@ -429,6 +429,22 @@ TEST(SnowConstitutiveModel, MultiAxisProjection3D)
         (updated.elastic * updated.plastic).IsSimilar(deformation, 1e-12));
 }
 
+TEST(SnowConstitutiveModel, SignedSVDPreservesOrientation3D)
+{
+    const MatrixD<3> deformation{
+        { 0.99999999999999967, 8.4402182212980653e-17, 5.888597690270359e-17 },
+        { -2.8206308027881296e-16, 0.99999999999999956,
+          4.5886721400715257e-17 },
+        { 1.1190377808845786e-16, 4.5625389093404679e-17, 0.99999999999999956 }
+    };
+
+    const auto updated = SnowConstitutiveModel3{}.Update(deformation, {});
+
+    EXPECT_GT(updated.elastic.Determinant(), 0.0);
+    EXPECT_TRUE(
+        (updated.elastic * updated.plastic).IsSimilar(deformation, 1e-12));
+}
+
 TEST(SnowConstitutiveModel, Hardening)
 {
     RUN_FOR_2D_AND_3D(ExpectPlasticCompressionHardens);

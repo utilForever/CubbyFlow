@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#include "../../Examples/SnowMPMSim/SnowBall.hpp"
+
 #include <Core/Geometry/Plane.hpp>
 #include <Core/Geometry/RigidBodyCollider.hpp>
 #include <Core/Solver/Particle/MPM/SnowMPMSolver.hpp>
@@ -301,6 +303,57 @@ void ExpectSemiImplicitStiffStability()
 }
 
 template <size_t N>
+void ExpectSemiImplicitConvergesAcrossMassScales()
+{
+    SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(16),
+                             VectorD<N>::MakeConstant(0.1) };
+    UseOneFixedStep(&solver);
+    solver.SetClosedDomainBoundaryFlag(DIRECTION_NONE);
+    solver.SetIsUsingSemiImplicit(true);
+    solver.SetMaxNumberOfIterations(10);
+    solver.SetTolerance(1e-3);
+    solver.SetGravity({});
+    solver.SetDragCoefficient(0.0);
+
+    Array1<VectorD<N>> positions;
+    for (size_t cluster = 0; cluster < 2; ++cluster)
+    {
+        ForEachIndex(VectorUZ<N>::MakeConstant(2),
+                     [cluster, &positions](auto... rawIndices) {
+                         const VectorUZ<N> index{ rawIndices... };
+                         VectorD<N> position;
+                         for (size_t axis = 0; axis < N; ++axis)
+                         {
+                             position[axis] =
+                                 0.1 * static_cast<double>(index[axis] + 3) +
+                                 0.7 * static_cast<double>(cluster);
+                         }
+                         positions.Append(position);
+                     });
+    }
+
+    auto data = solver.GetMPMSystemData();
+    data->AddParticles(positions);
+    auto masses = data->ParticleMasses();
+    auto volumes = data->InitialVolumes();
+    auto states = data->DeformationStates();
+    const size_t clusterSize = size_t{ 1 } << N;
+
+    for (size_t i = 0; i < positions.Length(); ++i)
+    {
+        const size_t local = i % clusterSize;
+        masses[i] = std::pow(1e-12, static_cast<double>(local) /
+                                        static_cast<double>(clusterSize - 1));
+        volumes[i] = masses[i] / 400.0;
+        states[i].elastic(0, 0) = 0.98;
+    }
+
+    EXPECT_NO_THROW(solver.Update(Frame{ 0, 5e-4 }));
+    EXPECT_LE(solver.GetLastNumberOfIterations(), 10u);
+    EXPECT_LE(solver.GetLastResidual(), solver.GetTolerance());
+}
+
+template <size_t N>
 void ExpectSemiImplicitFailureRollback()
 {
     SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(10),
@@ -520,26 +573,33 @@ void ExpectAdaptiveRestrictions()
 
     EXPECT_GT(softerDensity.NumberOfSubTimeSteps(0.1), baselineSteps);
 
-    TestableSnowMPMSolver<N> deforming{ resolution, unit };
-    deforming.SetGravity({});
-
-    AddLinearParticleLattice(&deforming, 100.0);
-
-    auto volumes = deforming.GetMPMSystemData()->InitialVolumes();
-    const auto masses = deforming.GetMPMSystemData()->ParticleMasses();
-
-    for (size_t i = 0; i < volumes.Length(); ++i)
+    for (double rate : { -100.0, 100.0 })
     {
-        volumes[i] = masses[i] / 400.0;
+        SCOPED_TRACE(rate);
+        TestableSnowMPMSolver<N> deforming{ resolution, unit };
+        deforming.SetClosedDomainBoundaryFlag(DIRECTION_NONE);
+        deforming.SetGravity({});
+
+        AddLinearParticleLattice(&deforming, rate);
+
+        auto volumes = deforming.GetMPMSystemData()->InitialVolumes();
+        const auto masses = deforming.GetMPMSystemData()->ParticleMasses();
+
+        for (size_t i = 0; i < volumes.Length(); ++i)
+        {
+            volumes[i] = masses[i] / 400.0;
+        }
+
+        deforming.Initialize();
+
+        EXPECT_EQ(deforming.NumberOfSubTimeSteps(0.1), 56u);
+
+        deforming.BeginStep(0.001);
+        EXPECT_EQ(deforming.NumberOfSubTimeSteps(0.1), 56u);
+
+        deforming.SetIsUsingSemiImplicit(true);
+        EXPECT_EQ(deforming.NumberOfSubTimeSteps(0.1), 56u);
     }
-
-    deforming.Initialize();
-
-    EXPECT_EQ(deforming.NumberOfSubTimeSteps(0.1), 56u);
-
-    deforming.SetIsUsingSemiImplicit(true);
-
-    EXPECT_EQ(deforming.NumberOfSubTimeSteps(0.1), 56u);
 }
 
 template <size_t N>
@@ -846,6 +906,11 @@ TEST(SnowMPMSolver, SemiImplicitStiffStability)
     RUN_FOR_2D_AND_3D(ExpectSemiImplicitStiffStability);
 }
 
+TEST(SnowMPMSolver, SemiImplicitMassScaling)
+{
+    RUN_FOR_2D_AND_3D(ExpectSemiImplicitConvergesAcrossMassScales);
+}
+
 TEST(SnowMPMSolver, SemiImplicitFailureRollback)
 {
     RUN_FOR_2D_AND_3D(ExpectSemiImplicitFailureRollback);
@@ -904,4 +969,49 @@ TEST(SnowMPMSolver, FrictionalCollider)
 TEST(SnowMPMSolver, ParticleDomainProjection)
 {
     RUN_FOR_2D_AND_3D(ExpectParticleDomainProjection);
+}
+
+TEST(SnowMPMExample, PaperSnowBallSampling)
+{
+    const Vector3D center{ 0.5, 0.5, 0.5 };
+    constexpr double radius = 0.2;
+    const auto first = GeneratePaperSnowBall(center, radius, 0.05, 4, 7);
+    const auto second = GeneratePaperSnowBall(center, radius, 0.05, 4, 7);
+
+    ASSERT_GT(first.positions.Length(), 500u);
+    ASSERT_EQ(first.positions.Length(), second.positions.Length());
+    ASSERT_EQ(first.positions.Length(), first.massScales.Length());
+    ASSERT_EQ(first.positions.Length(), first.hardeningScales.Length());
+
+    bool foundOuterParticle = false;
+    for (size_t i = 0; i < first.positions.Length(); ++i)
+    {
+        EXPECT_EQ(first.positions[i], second.positions[i]);
+        EXPECT_LE(first.positions[i].DistanceTo(center), radius);
+
+        if (first.positions[i].DistanceTo(center) >= 0.75 * radius)
+        {
+            foundOuterParticle = true;
+            EXPECT_DOUBLE_EQ(first.massScales[i], 1.5);
+            EXPECT_GT(first.hardeningScales[i], 1.0);
+        }
+    }
+
+    EXPECT_TRUE(foundOuterParticle);
+}
+
+TEST(SnowMPMExample, ConfiguresPaperSemiImplicitSteps)
+{
+    SnowMPMSolver3 automatic;
+    ConfigurePaperSemiImplicit(automatic, 0);
+
+    EXPECT_TRUE(automatic.GetIsUsingSemiImplicit());
+    EXPECT_FALSE(automatic.GetIsUsingFixedSubTimeSteps());
+    EXPECT_EQ(automatic.GetMaxNumberOfIterations(), 200u);
+    EXPECT_DOUBLE_EQ(automatic.GetTolerance(), 1e-3);
+
+    SnowMPMSolver3 overridden;
+    ConfigurePaperSemiImplicit(overridden, 8);
+    EXPECT_TRUE(overridden.GetIsUsingFixedSubTimeSteps());
+    EXPECT_EQ(overridden.GetNumberOfFixedSubTimeSteps(), 8u);
 }

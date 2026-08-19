@@ -57,28 +57,35 @@ template <size_t N>
 void SnowMPMSolver<N>::LinearSystem::Multiply(const VectorND& input,
                                               VectorND* output) const
 {
-    VectorND projectedInput = input;
+    // Use sqrt(M)-scaled coordinates so the mass-symmetric system is
+    // symmetric in the Euclidean inner product used by CR.
+    VectorND physicalInput(input.GetRows(), 0.0);
+    const auto& gridMass = solver->m_mpmSystemData->GridMass();
 
-    for (size_t i = 0; i < projectedInput.GetRows(); ++i)
+    for (size_t slot = 0; slot < activeNodes->Length(); ++slot)
     {
-        if ((*constrained)[i] != 0)
+        const double sqrtMass = std::sqrt(gridMass((*activeNodes)[slot]));
+
+        for (size_t axis = 0; axis < N; ++axis)
         {
-            projectedInput[i] = 0.0;
+            const size_t row = slot * N + axis;
+            if ((*constrained)[row] == 0)
+            {
+                physicalInput[row] = input[row] / sqrtMass;
+            }
         }
     }
 
     VectorND hessian(input.GetRows(), 0.0);
 
-    solver->ApplyElasticHessian(*activeNodes, *nodeToActive, projectedInput,
+    solver->ApplyElasticHessian(*activeNodes, *nodeToActive, physicalInput,
                                 &hessian);
     output->Resize(input.GetRows(), 0.0);
     output->Fill(0.0);
 
-    const auto& gridMass = solver->m_mpmSystemData->GridMass();
-
     for (size_t slot = 0; slot < activeNodes->Length(); ++slot)
     {
-        const double mass = gridMass((*activeNodes)[slot]);
+        const double sqrtMass = std::sqrt(gridMass((*activeNodes)[slot]));
 
         for (size_t axis = 0; axis < N; ++axis)
         {
@@ -87,7 +94,7 @@ void SnowMPMSolver<N>::LinearSystem::Multiply(const VectorND& input,
             if ((*constrained)[row] == 0)
             {
                 (*output)[row] =
-                    mass * projectedInput[row] + dtSquared * hessian[row];
+                    input[row] + dtSquared * hessian[row] / sqrtMass;
             }
         }
     }
@@ -730,12 +737,19 @@ VectorND SnowMPMSolver<N>::BuildSemiImplicitRightHandSide(
     ApplyElasticHessian(activeNodes, nodeToActive, velocities, &hessian);
 
     VectorND result(velocities.GetRows(), 0.0);
+    const auto& gridMass = m_mpmSystemData->GridMass();
 
-    for (size_t i = 0; i < result.GetRows(); ++i)
+    for (size_t slot = 0; slot < activeNodes.Length(); ++slot)
     {
-        if (constrained[i] == 0)
+        const double sqrtMass = std::sqrt(gridMass(activeNodes[slot]));
+
+        for (size_t axis = 0; axis < N; ++axis)
         {
-            result[i] = -dtSquared * hessian[i];
+            const size_t row = slot * N + axis;
+            if (constrained[row] == 0)
+            {
+                result[row] = -dtSquared * hessian[row] / sqrtMass;
+            }
         }
     }
 
@@ -792,7 +806,19 @@ VectorND SnowMPMSolver<N>::ComputeGridVelocityUpdate(
     const VectorND correction =
         SolveGridVelocityCorrection(dtSquared, activeNodes, nodeToActive,
                                     constrained, rhs, initialResidual);
-    VectorND result(vStar + correction);
+    VectorND result = vStar;
+    const auto& gridMass = m_mpmSystemData->GridMass();
+
+    for (size_t slot = 0; slot < activeNodes.Length(); ++slot)
+    {
+        const double sqrtMass = std::sqrt(gridMass(activeNodes[slot]));
+
+        for (size_t axis = 0; axis < N; ++axis)
+        {
+            const size_t row = slot * N + axis;
+            result[row] += correction[row] / sqrtMass;
+        }
+    }
 
     if (const bool isFinite = std::ranges::all_of(
             result, [](double value) { return std::isfinite(value); });
@@ -894,7 +920,8 @@ double SnowMPMSolver<N>::ComputeMaxVelocityGradient() const
 
     for (size_t i = 0; i < m_mpmSystemData->NumberOfParticles(); ++i)
     {
-        result = std::max(result, ComputeVelocityGradient(i).AbsMax());
+        result =
+            std::max(result, std::fabs(ComputeVelocityGradient(i).AbsMax()));
     }
 
     return result;
@@ -909,8 +936,8 @@ void SnowMPMSolver<N>::UpdateDeformation(double timeStepInSeconds)
     for (size_t i = 0; i < states.Length(); ++i)
     {
         const MatrixType velocityGradient = ComputeVelocityGradient(i);
-        m_maxVelocityGradient =
-            std::max(m_maxVelocityGradient, velocityGradient.AbsMax());
+        m_maxVelocityGradient = std::max(m_maxVelocityGradient,
+                                         std::fabs(velocityGradient.AbsMax()));
         states[i] = m_constitutiveModel.Update(
             MatrixType::MakeIdentity() + timeStepInSeconds * velocityGradient,
             states[i]);
