@@ -17,6 +17,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 
 namespace CubbyFlow
 {
@@ -158,10 +159,9 @@ CubicBSplineKernel<N>::Stencil CubicBSplineKernel<N>::GetStencil(
 }
 
 template <size_t N>
-MPMSystemData<N>::MPMSystemData(const Vector<size_t, N>& resolution,
-                                const Vector<double, N>& gridSpacing,
-                                const Vector<double, N>& gridOrigin,
-                                size_t numberOfParticles)
+MPMTransferSystemData<N>::MPMTransferSystemData(
+    const Vector<size_t, N>& resolution, const Vector<double, N>& gridSpacing,
+    const Vector<double, N>& gridOrigin, size_t numberOfParticles)
     : Base{}
 {
     ResizeGrid(resolution, gridSpacing, gridOrigin);
@@ -169,33 +169,32 @@ MPMSystemData<N>::MPMSystemData(const Vector<size_t, N>& resolution,
 }
 
 template <size_t N>
-void MPMSystemData<N>::Resize(size_t newNumberOfParticles)
+void MPMTransferSystemData<N>::Resize(size_t newNumberOfParticles)
 {
     Base::Resize(newNumberOfParticles);
 
     m_particleMasses.Resize(newNumberOfParticles, Base::Mass());
     m_initialVolumes.Resize(newNumberOfParticles, 0.0);
-    m_deformationStates.Resize(newNumberOfParticles, DeformationState{});
 }
 
 template <size_t N>
-void MPMSystemData<N>::Deserialize(const std::vector<uint8_t>& buffer)
+void MPMTransferSystemData<N>::Deserialize(const std::vector<uint8_t>& buffer)
 {
     Base::Deserialize(buffer);
-    ResetMPMState();
+    ResetTransferState();
 }
 
 template <size_t N>
-void MPMSystemData<N>::Set(const ParticleSystemData<N>& other)
+void MPMTransferSystemData<N>::Set(const ParticleSystemData<N>& other)
 {
     Base::Set(other);
-    ResetMPMState();
+    ResetTransferState();
 }
 
 template <size_t N>
-void MPMSystemData<N>::ResizeGrid(const Vector<size_t, N>& resolution,
-                                  const Vector<double, N>& gridSpacing,
-                                  const Vector<double, N>& gridOrigin)
+void MPMTransferSystemData<N>::ResizeGrid(const Vector<size_t, N>& resolution,
+                                          const Vector<double, N>& gridSpacing,
+                                          const Vector<double, N>& gridOrigin)
 {
     ValidateGridParameters(resolution, gridSpacing, gridOrigin);
 
@@ -205,88 +204,76 @@ void MPMSystemData<N>::ResizeGrid(const Vector<size_t, N>& resolution,
 }
 
 template <size_t N>
-ConstArrayView1<double> MPMSystemData<N>::ParticleMasses() const
+ConstArrayView1<double> MPMTransferSystemData<N>::ParticleMasses() const
 {
     return m_particleMasses.View();
 }
 
 template <size_t N>
-ArrayView1<double> MPMSystemData<N>::ParticleMasses()
+ArrayView1<double> MPMTransferSystemData<N>::ParticleMasses()
 {
     return m_particleMasses.View();
 }
 
 template <size_t N>
-ConstArrayView1<double> MPMSystemData<N>::InitialVolumes() const
+ConstArrayView1<double> MPMTransferSystemData<N>::InitialVolumes() const
 {
     return m_initialVolumes.View();
 }
 
 template <size_t N>
-ArrayView1<double> MPMSystemData<N>::InitialVolumes()
+ArrayView1<double> MPMTransferSystemData<N>::InitialVolumes()
 {
     return m_initialVolumes.View();
 }
 
 template <size_t N>
-ConstArrayView1<typename MPMSystemData<N>::DeformationState>
-MPMSystemData<N>::DeformationStates() const
-{
-    return m_deformationStates.View();
-}
-
-template <size_t N>
-ArrayView1<typename MPMSystemData<N>::DeformationState>
-MPMSystemData<N>::DeformationStates()
-{
-    return m_deformationStates.View();
-}
-
-template <size_t N>
-const VertexCenteredScalarGrid<N>& MPMSystemData<N>::GridMass() const
+const VertexCenteredScalarGrid<N>& MPMTransferSystemData<N>::GridMass() const
 {
     return m_gridMass;
 }
 
 template <size_t N>
-VertexCenteredScalarGrid<N>& MPMSystemData<N>::GridMass()
+VertexCenteredScalarGrid<N>& MPMTransferSystemData<N>::GridMass()
 {
     return m_gridMass;
 }
 
 template <size_t N>
-const VertexCenteredVectorGrid<N>& MPMSystemData<N>::GridVelocities() const
+const VertexCenteredVectorGrid<N>& MPMTransferSystemData<N>::GridVelocities()
+    const
 {
     return m_gridVelocities;
 }
 
 template <size_t N>
-VertexCenteredVectorGrid<N>& MPMSystemData<N>::GridVelocities()
+VertexCenteredVectorGrid<N>& MPMTransferSystemData<N>::GridVelocities()
 {
     return m_gridVelocities;
 }
 
 template <size_t N>
 const VertexCenteredVectorGrid<N>&
-MPMSystemData<N>::GridVelocitiesBeforeUpdate() const
+MPMTransferSystemData<N>::GridVelocitiesBeforeUpdate() const
 {
     return m_gridVelocitiesBeforeUpdate;
 }
 
 template <size_t N>
-VertexCenteredVectorGrid<N>& MPMSystemData<N>::GridVelocitiesBeforeUpdate()
+VertexCenteredVectorGrid<N>&
+MPMTransferSystemData<N>::GridVelocitiesBeforeUpdate()
 {
     return m_gridVelocitiesBeforeUpdate;
 }
 
 template <size_t N>
-double MPMSystemData<N>::FLIPBlendingFactor() const
+double MPMTransferSystemData<N>::FLIPBlendingFactor() const
 {
     return m_flipBlendingFactor;
 }
 
 template <size_t N>
-void MPMSystemData<N>::SetFLIPBlendingFactor(double factor)
+void MPMTransferSystemData<N>::SetFLIPBlendingFactor(double factor)
 {
     if (!std::isfinite(factor) || factor < 0.0 || factor > 1.0)
     {
@@ -297,7 +284,7 @@ void MPMSystemData<N>::SetFLIPBlendingFactor(double factor)
 }
 
 template <size_t N>
-void MPMSystemData<N>::TransferFromParticlesToGrid()
+void MPMTransferSystemData<N>::TransferFromParticlesToGrid()
 {
     ValidateGridState();
 
@@ -313,12 +300,17 @@ void MPMSystemData<N>::TransferFromParticlesToGrid()
         }
     }
 
-    m_gridMass.Fill(0.0, ExecutionPolicy::Serial);
-    m_gridVelocities.Fill(Vector<double, N>{}, ExecutionPolicy::Serial);
+    VertexCenteredScalarGrid<N> nextGridMass{ m_gridMass.Resolution(),
+                                              m_gridMass.GridSpacing(),
+                                              m_gridMass.Origin() };
+    VertexCenteredVectorGrid<N> nextGridVelocities{
+        m_gridVelocities.Resolution(), m_gridVelocities.GridSpacing(),
+        m_gridVelocities.Origin()
+    };
 
-    const auto dataSize = m_gridMass.DataSize();
-    const auto gridSpacing = m_gridMass.GridSpacing();
-    const auto dataOrigin = m_gridMass.DataOrigin();
+    const auto dataSize = nextGridMass.DataSize();
+    const auto gridSpacing = nextGridMass.GridSpacing();
+    const auto dataOrigin = nextGridMass.DataOrigin();
 
     for (size_t i = 0; i < this->NumberOfParticles(); ++i)
     {
@@ -335,29 +327,55 @@ void MPMSystemData<N>::TransferFromParticlesToGrid()
             const auto index = ClampIndex(entry.index, dataSize);
             const double mass = entry.weight * m_particleMasses[i];
 
-            m_gridMass(index) += mass;
-            m_gridVelocities(index) += mass * velocities[i];
+            nextGridMass(index) += mass;
+            nextGridVelocities(index) += mass * velocities[i];
         }
     }
 
-    m_gridMass.ForEachDataPointIndex([this](const Vector<size_t, N>& index) {
-        const double mass = m_gridMass(index);
+    nextGridMass.ForEachDataPointIndex([&nextGridMass, &nextGridVelocities](
+                                           const Vector<size_t, N>& index) {
+        const double mass = nextGridMass(index);
+
+        if (!std::isfinite(mass) ||
+            !MPMTransferSystemData<N>::IsFinite(nextGridVelocities(index)))
+        {
+            throw std::invalid_argument("Invalid MPM grid accumulation.");
+        }
+
         if (mass > 0.0)
         {
-            m_gridVelocities(index) /= mass;
+            nextGridVelocities(index) /= mass;
+
+            if (!MPMTransferSystemData<N>::IsFinite(nextGridVelocities(index)))
+            {
+                throw std::invalid_argument(
+                    "Invalid MPM grid velocity update.");
+            }
         }
     });
 
-    m_gridVelocitiesBeforeUpdate.Set(m_gridVelocities);
+    VertexCenteredVectorGrid<N> nextGridVelocitiesBeforeUpdate =
+        nextGridVelocities;
+
+    m_gridMass = std::move(nextGridMass);
+    m_gridVelocities = std::move(nextGridVelocities);
+    m_gridVelocitiesBeforeUpdate = std::move(nextGridVelocitiesBeforeUpdate);
 }
 
 template <size_t N>
-void MPMSystemData<N>::TransferFromGridToParticles()
+void MPMTransferSystemData<N>::TransferFromGridToParticles()
+{
+    ValidateGridToParticleState();
+    TransferFromGridToParticlesUnchecked();
+}
+
+template <size_t N>
+void MPMTransferSystemData<N>::ValidateGridToParticleState() const
 {
     ValidateGridState();
 
     const auto positions = this->Positions();
-    auto velocities = this->Velocities();
+    const auto velocities = this->Velocities();
 
     for (size_t i = 0; i < this->NumberOfParticles(); ++i)
     {
@@ -375,6 +393,14 @@ void MPMSystemData<N>::TransferFromGridToParticles()
                 throw std::invalid_argument("Invalid MPM grid velocity.");
             }
         });
+}
+
+template <size_t N>
+void MPMTransferSystemData<N>::TransferFromGridToParticlesUnchecked()
+{
+    const auto positions = this->Positions();
+    auto velocities = this->Velocities();
+    Array1<Vector<double, N>> nextVelocities(this->NumberOfParticles());
 
     const auto dataSize = m_gridVelocities.DataSize();
     const auto gridSpacing = m_gridVelocities.GridSpacing();
@@ -405,12 +431,56 @@ void MPMSystemData<N>::TransferFromGridToParticles()
             (1.0 - m_flipBlendingFactor) * picVelocity +
             m_flipBlendingFactor * flipVelocity;
 
-        velocities[i] = result;
+        if (!IsFinite(result))
+        {
+            throw std::invalid_argument(
+                "Invalid MPM particle velocity update.");
+        }
+
+        nextVelocities[i] = result;
+    }
+
+    for (size_t i = 0; i < this->NumberOfParticles(); ++i)
+    {
+        velocities[i] = nextVelocities[i];
     }
 }
 
 template <size_t N>
-Vector<size_t, N> MPMSystemData<N>::ClampIndex(
+Matrix<double, N, N> MPMTransferSystemData<N>::ComputeVelocityGradient(
+    size_t particleIndex) const
+{
+    const auto positions = this->Positions();
+    const auto dataSize = m_gridVelocities.DataSize();
+    const auto stencil = CubicBSplineKernel<N>::GetStencil(
+        positions[particleIndex], m_gridVelocities.GridSpacing(),
+        m_gridVelocities.DataOrigin());
+    Matrix<double, N, N> result;
+
+    for (const auto& entry : stencil)
+    {
+        if (entry.weight == 0.0)
+        {
+            continue;
+        }
+
+        const Vector<double, N> velocity =
+            m_gridVelocities(ClampIndex(entry.index, dataSize));
+
+        for (size_t row = 0; row < N; ++row)
+        {
+            for (size_t column = 0; column < N; ++column)
+            {
+                result(row, column) += velocity[row] * entry.gradient[column];
+            }
+        }
+    }
+
+    return result;
+}
+
+template <size_t N>
+Vector<size_t, N> MPMTransferSystemData<N>::ClampIndex(
     const Vector<ssize_t, N>& index, const Vector<size_t, N>& dataSize)
 {
     Vector<size_t, N> result;
@@ -427,7 +497,7 @@ Vector<size_t, N> MPMSystemData<N>::ClampIndex(
 }
 
 template <size_t N>
-bool MPMSystemData<N>::IsFinite(const Vector<double, N>& value)
+bool MPMTransferSystemData<N>::IsFinite(const Vector<double, N>& value)
 {
     for (size_t axis = 0; axis < N; ++axis)
     {
@@ -441,7 +511,7 @@ bool MPMSystemData<N>::IsFinite(const Vector<double, N>& value)
 }
 
 template <size_t N>
-void MPMSystemData<N>::ValidateGridParameters(
+void MPMTransferSystemData<N>::ValidateGridParameters(
     const Vector<size_t, N>& resolution, const Vector<double, N>& gridSpacing,
     const Vector<double, N>& gridOrigin)
 {
@@ -458,7 +528,7 @@ void MPMSystemData<N>::ValidateGridParameters(
 }
 
 template <size_t N>
-void MPMSystemData<N>::ValidateGridState() const
+void MPMTransferSystemData<N>::ValidateGridState() const
 {
     ValidateGridParameters(m_gridMass.Resolution(), m_gridMass.GridSpacing(),
                            m_gridMass.Origin());
@@ -482,15 +552,66 @@ void MPMSystemData<N>::ValidateGridState() const
 }
 
 template <size_t N>
-void MPMSystemData<N>::ResetMPMState()
+void MPMTransferSystemData<N>::ResetTransferState()
 {
     m_particleMasses.Fill(Base::Mass());
     m_initialVolumes.Fill(0.0);
-    m_deformationStates.Fill(DeformationState{});
     m_gridMass.Fill(0.0, ExecutionPolicy::Serial);
     m_gridVelocities.Fill(Vector<double, N>{}, ExecutionPolicy::Serial);
     m_gridVelocitiesBeforeUpdate.Fill(Vector<double, N>{},
                                       ExecutionPolicy::Serial);
+}
+
+template <size_t N>
+MPMSystemData<N>::MPMSystemData(const Vector<size_t, N>& resolution,
+                                const Vector<double, N>& gridSpacing,
+                                const Vector<double, N>& gridOrigin,
+                                size_t numberOfParticles)
+    : TransferBase{ resolution, gridSpacing, gridOrigin, numberOfParticles },
+      m_deformationStates{ numberOfParticles, DeformationState{} }
+{
+    // Do nothing
+}
+
+template <size_t N>
+void MPMSystemData<N>::Resize(size_t newNumberOfParticles)
+{
+    TransferBase::Resize(newNumberOfParticles);
+    m_deformationStates.Resize(newNumberOfParticles, DeformationState{});
+}
+
+template <size_t N>
+void MPMSystemData<N>::Deserialize(const std::vector<uint8_t>& buffer)
+{
+    TransferBase::Deserialize(buffer);
+    m_deformationStates.Fill(DeformationState{});
+}
+
+template <size_t N>
+void MPMSystemData<N>::Set(const ParticleSystemData<N>& other)
+{
+    TransferBase::Set(other);
+    m_deformationStates.Fill(DeformationState{});
+}
+
+template <size_t N>
+void MPMSystemData<N>::TransferFromGridToParticles()
+{
+    TransferBase::TransferFromGridToParticles();
+}
+
+template <size_t N>
+ConstArrayView1<typename MPMSystemData<N>::DeformationState>
+MPMSystemData<N>::DeformationStates() const
+{
+    return m_deformationStates.View();
+}
+
+template <size_t N>
+ArrayView1<typename MPMSystemData<N>::DeformationState>
+MPMSystemData<N>::DeformationStates()
+{
+    return m_deformationStates.View();
 }
 }  // namespace CubbyFlow
 
