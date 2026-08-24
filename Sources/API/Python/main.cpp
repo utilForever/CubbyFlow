@@ -222,6 +222,8 @@ PYBIND11_MODULE(pyCubbyFlow, m)
     AddParticleSystemData3(m);
     AddMPMSystemData2(m);
     AddMPMSystemData3(m);
+    AddMPMFluidSystemData2(m);
+    AddMPMFluidSystemData3(m);
     AddSPHSystemData2(m);
     AddSPHSystemData3(m);
 

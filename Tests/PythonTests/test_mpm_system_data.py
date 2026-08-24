@@ -63,3 +63,58 @@ def test_mpm_system_data_api(
         assert grid.resolution == resized_grid[0]
         assert grid.gridSpacing == resized_grid[1]
         assert grid.gridOrigin == resized_grid[2]
+
+
+@pytest.mark.parametrize(
+    "data_type,resolution,spacing,origin,grid_velocity,dimension",
+    [
+        (
+            pyCubbyFlow.MPMFluidSystemData2,
+            pyCubbyFlow.Vector2UZ(3, 3),
+            pyCubbyFlow.Vector2D(1.0, 1.0),
+            pyCubbyFlow.Vector2D(),
+            (1.0, 1.0),
+            2,
+        ),
+        (
+            pyCubbyFlow.MPMFluidSystemData3,
+            pyCubbyFlow.Vector3UZ(3, 3, 3),
+            pyCubbyFlow.Vector3D(1.0, 1.0, 1.0),
+            pyCubbyFlow.Vector3D(),
+            (1.0, 1.0, 1.0),
+            3,
+        ),
+    ],
+)
+def test_mpm_fluid_system_data_api(
+    data_type,
+    resolution,
+    spacing,
+    origin,
+    grid_velocity,
+    dimension,
+):
+    data = data_type(resolution, spacing, origin, 1)
+
+    ratios = np.asarray(data.volumeRatios)
+    gradients = data.velocityGradients
+    assert ratios.shape == (1,)
+    assert len(gradients) == 1
+    assert gradients[0].shape == (dimension, dimension)
+    assert not hasattr(data, "deformationStates")
+
+    ratios[0] = 2.0
+    gradients[0][0, 0] = 3.0
+    assert data.volumeRatios[0] == 2.0
+    assert data.velocityGradients[0][0, 0] == 3.0
+    ratios[0] = 1.0
+    gradients[0][0, 0] = 0.0
+
+    data.TransferFromParticlesToGrid()
+    data.gridVelocities.Fill(grid_velocity)
+    data.TransferFromGridToParticles(0.1)
+
+    assert data.volumeRatios[0] == pytest.approx(1.0)
+    assert np.asarray(data.velocityGradients[0]) == pytest.approx(
+        np.zeros((dimension, dimension))
+    )
