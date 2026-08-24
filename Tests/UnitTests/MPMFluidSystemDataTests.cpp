@@ -242,7 +242,7 @@ void ExpectUniformDilation(double rate, double expectedVolumeRatio)
 
     data.TransferFromGridToParticles(1.0);
 
-    const auto& gradient = data.VelocityGradients()[0];
+    const auto gradient = data.VelocityGradients()[0];
 
     for (size_t row = 0; row < N; ++row)
     {
@@ -282,7 +282,7 @@ void ExpectVelocityGradientPreservesComponentOrientation()
     FillCrossVelocityField(&data);
     data.TransferFromGridToParticles(0.0);
 
-    const auto& gradient = data.VelocityGradients()[0];
+    const auto gradient = data.VelocityGradients()[0];
 
     for (size_t row = 0; row < N; ++row)
     {
