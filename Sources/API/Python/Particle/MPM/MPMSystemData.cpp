@@ -20,6 +20,22 @@ namespace
 {
 namespace py = pybind11;
 
+constexpr char SCALAR_VIEW_DOC[] = R"pbdoc(
+Returns a mutable NumPy view into the particle data.
+
+The view is invalidated when an operation changes the particle count or
+replaces the particle state, such as Resize, AddParticle, AddParticles, Set,
+or Deserialize.
+)pbdoc";
+
+constexpr char MATRIX_VIEW_DOC[] = R"pbdoc(
+Returns mutable NumPy views into the per-particle matrices.
+
+The views are invalidated when an operation changes the particle count or
+replaces the particle state, such as Resize, AddParticle, AddParticles, Set,
+or Deserialize.
+)pbdoc";
+
 template <size_t N>
 using MPMClass = py::class_<MPMSystemData<N>, std::shared_ptr<MPMSystemData<N>>,
                             ParticleSystemData<N>>;
@@ -102,38 +118,44 @@ py::list DeformationStates(MPMSystemData<N>& instance)
 template <size_t N>
 void BindParticleState(MPMClass<N>& cls)
 {
-    cls.def_property_readonly("particleMasses",
-                              [](MPMSystemData<N>& instance) {
-                                  return ScalarView(instance,
-                                                    instance.ParticleMasses());
-                              })
-        .def_property_readonly("initialVolumes",
-                               [](MPMSystemData<N>& instance) {
-                                   return ScalarView(instance,
-                                                     instance.InitialVolumes());
-                               })
+    cls.def_property_readonly(
+           "particleMasses",
+           [](MPMSystemData<N>& instance) {
+               return ScalarView(instance, instance.ParticleMasses());
+           },
+           SCALAR_VIEW_DOC)
+        .def_property_readonly(
+            "initialVolumes",
+            [](MPMSystemData<N>& instance) {
+                return ScalarView(instance, instance.InitialVolumes());
+            },
+            SCALAR_VIEW_DOC)
         .def_property_readonly("deformationStates", &DeformationStates<N>);
 }
 
 template <size_t N>
 void BindParticleState(MPMFluidClass<N>& cls)
 {
-    cls.def_property_readonly("particleMasses",
-                              [](MPMFluidSystemData<N>& instance) {
-                                  return ScalarView(instance,
-                                                    instance.ParticleMasses());
-                              })
-        .def_property_readonly("initialVolumes",
-                               [](MPMFluidSystemData<N>& instance) {
-                                   return ScalarView(instance,
-                                                     instance.InitialVolumes());
-                               })
-        .def_property_readonly("volumeRatios",
-                               [](MPMFluidSystemData<N>& instance) {
-                                   return ScalarView(instance,
-                                                     instance.VolumeRatios());
-                               })
-        .def_property_readonly("velocityGradients", &VelocityGradients<N>);
+    cls.def_property_readonly(
+           "particleMasses",
+           [](MPMFluidSystemData<N>& instance) {
+               return ScalarView(instance, instance.ParticleMasses());
+           },
+           SCALAR_VIEW_DOC)
+        .def_property_readonly(
+            "initialVolumes",
+            [](MPMFluidSystemData<N>& instance) {
+                return ScalarView(instance, instance.InitialVolumes());
+            },
+            SCALAR_VIEW_DOC)
+        .def_property_readonly(
+            "volumeRatios",
+            [](MPMFluidSystemData<N>& instance) {
+                return ScalarView(instance, instance.VolumeRatios());
+            },
+            SCALAR_VIEW_DOC)
+        .def_property_readonly("velocityGradients", &VelocityGradients<N>,
+                               MATRIX_VIEW_DOC);
 }
 
 template <size_t N, typename DataClass, typename Data>

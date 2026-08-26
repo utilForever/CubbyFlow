@@ -118,3 +118,57 @@ def test_mpm_fluid_system_data_api(
     assert np.asarray(data.velocityGradients[0]) == pytest.approx(
         np.zeros((dimension, dimension))
     )
+
+
+@pytest.mark.parametrize(
+    "data_type,resolution,spacing,origin,position,velocity_field,dimension",
+    [
+        (
+            pyCubbyFlow.MPMFluidSystemData2,
+            pyCubbyFlow.Vector2UZ(6, 6),
+            pyCubbyFlow.Vector2D(1.0, 1.0),
+            pyCubbyFlow.Vector2D(),
+            (2.25, 2.25),
+            lambda pt: (0.2 * pt.x, 0.2 * pt.y),
+            2,
+        ),
+        (
+            pyCubbyFlow.MPMFluidSystemData3,
+            pyCubbyFlow.Vector3UZ(6, 6, 6),
+            pyCubbyFlow.Vector3D(1.0, 1.0, 1.0),
+            pyCubbyFlow.Vector3D(),
+            (2.25, 2.25, 2.25),
+            lambda pt: (0.2 * pt.x, 0.2 * pt.y, 0.2 * pt.z),
+            3,
+        ),
+    ],
+)
+def test_mpm_fluid_views_remain_valid_after_transfer(
+    data_type,
+    resolution,
+    spacing,
+    origin,
+    position,
+    velocity_field,
+    dimension,
+):
+    data = data_type(resolution, spacing, origin)
+    data.AddParticle(position)
+    data.gridVelocities.Fill(velocity_field)
+    data.gridVelocitiesBeforeUpdate.Fill(velocity_field)
+
+    ratios = np.asarray(data.volumeRatios)
+    gradients = data.velocityGradients
+    ratios[0] = 2.0
+
+    data.TransferFromGridToParticles(0.5)
+
+    assert ratios[0] == pytest.approx(2.0 * 1.1**dimension)
+    assert np.asarray(gradients[0]) == pytest.approx(
+        0.2 * np.identity(dimension)
+    )
+
+    ratios[0] = 3.0
+    gradients[0][0, 0] = 4.0
+    assert data.volumeRatios[0] == 3.0
+    assert data.velocityGradients[0][0, 0] == 4.0

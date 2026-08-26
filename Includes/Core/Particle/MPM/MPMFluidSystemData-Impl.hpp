@@ -11,6 +11,7 @@
 #ifndef CUBBYFLOW_MPM_FLUID_SYSTEM_DATA_IMPL_HPP
 #define CUBBYFLOW_MPM_FLUID_SYSTEM_DATA_IMPL_HPP
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
@@ -117,8 +118,10 @@ void MPMFluidSystemData<N>::TransferFromGridToParticles(
 
     this->TransferFromGridToParticlesUnchecked();
 
-    m_volumeRatios.Swap(nextVolumeRatios);
-    m_velocityGradients.Swap(nextVelocityGradients);
+    std::copy(nextVolumeRatios.begin(), nextVolumeRatios.end(),
+              m_volumeRatios.begin());
+    std::copy(nextVelocityGradients.begin(), nextVelocityGradients.end(),
+              m_velocityGradients.begin());
 }
 
 template <size_t N>
