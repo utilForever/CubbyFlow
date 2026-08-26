@@ -118,10 +118,8 @@ void MPMFluidSystemData<N>::TransferFromGridToParticles(
 
     this->TransferFromGridToParticlesUnchecked();
 
-    std::copy(nextVolumeRatios.begin(), nextVolumeRatios.end(),
-              m_volumeRatios.begin());
-    std::copy(nextVelocityGradients.begin(), nextVelocityGradients.end(),
-              m_velocityGradients.begin());
+    std::ranges::copy(nextVolumeRatios, m_volumeRatios.begin());
+    std::ranges::copy(nextVelocityGradients, m_velocityGradients.begin());
 }
 
 template <size_t N>
