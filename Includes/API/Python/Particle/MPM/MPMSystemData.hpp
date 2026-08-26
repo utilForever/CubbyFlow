@@ -15,5 +15,7 @@
 
 void AddMPMSystemData2(pybind11::module& m);
 void AddMPMSystemData3(pybind11::module& m);
+void AddMPMFluidSystemData2(pybind11::module& m);
+void AddMPMFluidSystemData3(pybind11::module& m);
 
 #endif

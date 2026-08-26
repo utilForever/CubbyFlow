@@ -62,22 +62,21 @@ class CubicBSplineKernel final
 };
 
 //!
-//! \brief N-D material point method particle and grid state.
+//! \brief Shared N-D material point method particle-grid transfer state.
 //!
 //! \note Serialization preserves only the inherited particle-system state;
-//! MPM-specific particle and grid state is reset after deserialization.
+//! transfer-specific particle and grid state is reset after deserialization.
 //!
 template <size_t N>
-class MPMSystemData final : public ParticleSystemData<N>
+class MPMTransferSystemData : public ParticleSystemData<N>
 {
  public:
     static_assert(N == 2 || N == 3, "MPM supports only 2-D and 3-D.");
 
     using Base = ParticleSystemData<N>;
-    using DeformationState = SnowDeformationState<N>;
 
-    //! Constructs MPM state with a vertex-centered background grid.
-    explicit MPMSystemData(
+    //! Constructs transfer state with a vertex-centered background grid.
+    explicit MPMTransferSystemData(
         const Vector<size_t, N>& resolution =
             Vector<size_t, N>::MakeConstant(1),
         const Vector<double, N>& gridSpacing =
@@ -85,13 +84,13 @@ class MPMSystemData final : public ParticleSystemData<N>
         const Vector<double, N>& gridOrigin = Vector<double, N>{},
         size_t numberOfParticles = 0);
 
-    //! Resizes particle state, initializing new MPM attributes.
+    //! Resizes particle state, initializing new transfer attributes.
     void Resize(size_t newNumberOfParticles) override;
 
-    //! Deserializes inherited particle state and resets MPM-specific state.
+    //! Deserializes inherited particle state and resets transfer state.
     void Deserialize(const std::vector<uint8_t>& buffer) override;
 
-    //! Copies inherited particle state and resets MPM-specific state.
+    //! Copies inherited particle state and resets transfer state.
     void Set(const ParticleSystemData<N>& other) override;
 
     //! Resizes the background grid without changing particle state.
@@ -110,12 +109,6 @@ class MPMSystemData final : public ParticleSystemData<N>
 
     //! Returns per-particle initial volumes.
     [[nodiscard]] ArrayView1<double> InitialVolumes();
-
-    //! Returns per-particle deformation states.
-    [[nodiscard]] ConstArrayView1<DeformationState> DeformationStates() const;
-
-    //! Returns per-particle deformation states.
-    [[nodiscard]] ArrayView1<DeformationState> DeformationStates();
 
     //! Returns grid mass.
     [[nodiscard]] const VertexCenteredScalarGrid<N>& GridMass() const;
@@ -146,11 +139,11 @@ class MPMSystemData final : public ParticleSystemData<N>
     //! Stencil nodes outside the finite grid are clamped to its boundary.
     void TransferFromParticlesToGrid();
 
+ protected:
     //! Transfers updated background-grid velocities to particles.
     //! Stencil nodes outside the finite grid are clamped to its boundary.
     void TransferFromGridToParticles();
 
- private:
     [[nodiscard]] static Vector<size_t, N> ClampIndex(
         const Vector<ssize_t, N>& index, const Vector<size_t, N>& dataSize);
 
@@ -162,15 +155,67 @@ class MPMSystemData final : public ParticleSystemData<N>
 
     void ValidateGridState() const;
 
-    void ResetMPMState();
+    void ValidateGridToParticleState() const;
+
+    void TransferFromGridToParticlesUnchecked();
+
+    [[nodiscard]] Matrix<double, N, N> ComputeVelocityGradient(
+        size_t particleIndex) const;
+
+ private:
+    void ResetTransferState();
 
     Array1<double> m_particleMasses;
     Array1<double> m_initialVolumes;
-    Array1<DeformationState> m_deformationStates;
     VertexCenteredScalarGrid<N> m_gridMass;
     VertexCenteredVectorGrid<N> m_gridVelocities;
     VertexCenteredVectorGrid<N> m_gridVelocitiesBeforeUpdate;
     double m_flipBlendingFactor = 0.95;
+};
+
+//!
+//! \brief N-D snow material point method particle and grid state.
+//!
+//! \note Serialization preserves only the inherited particle-system state;
+//! MPM-specific particle and grid state is reset after deserialization.
+//!
+template <size_t N>
+class MPMSystemData final : public MPMTransferSystemData<N>
+{
+ public:
+    static_assert(N == 2 || N == 3, "MPM supports only 2-D and 3-D.");
+
+    using Base = ParticleSystemData<N>;
+    using TransferBase = MPMTransferSystemData<N>;
+    using DeformationState = SnowDeformationState<N>;
+    using TransferBase::TransferFromGridToParticles;
+
+    //! Constructs snow MPM state with a vertex-centered background grid.
+    explicit MPMSystemData(
+        const Vector<size_t, N>& resolution =
+            Vector<size_t, N>::MakeConstant(1),
+        const Vector<double, N>& gridSpacing =
+            Vector<double, N>::MakeConstant(1.0),
+        const Vector<double, N>& gridOrigin = Vector<double, N>{},
+        size_t numberOfParticles = 0);
+
+    //! Resizes particle state, initializing new deformation states.
+    void Resize(size_t newNumberOfParticles) override;
+
+    //! Deserializes inherited particle state and resets deformation state.
+    void Deserialize(const std::vector<uint8_t>& buffer) override;
+
+    //! Copies inherited particle state and resets deformation state.
+    void Set(const ParticleSystemData<N>& other) override;
+
+    //! Returns per-particle deformation states.
+    [[nodiscard]] ConstArrayView1<DeformationState> DeformationStates() const;
+
+    //! Returns per-particle deformation states.
+    [[nodiscard]] ArrayView1<DeformationState> DeformationStates();
+
+ private:
+    Array1<DeformationState> m_deformationStates;
 };
 
 //! 2-D material point method system data.
