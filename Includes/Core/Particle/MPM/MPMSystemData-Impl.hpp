@@ -162,10 +162,11 @@ template <size_t N>
 MPMTransferSystemData<N>::MPMTransferSystemData(
     const Vector<size_t, N>& resolution, const Vector<double, N>& gridSpacing,
     const Vector<double, N>& gridOrigin, size_t numberOfParticles)
-    : Base{}
+    : Base{ numberOfParticles },
+      m_particleMasses(numberOfParticles, Base::Mass()),
+      m_initialVolumes(numberOfParticles, 0.0)
 {
     ResizeGrid(resolution, gridSpacing, gridOrigin);
-    Resize(numberOfParticles);
 }
 
 template <size_t N>
