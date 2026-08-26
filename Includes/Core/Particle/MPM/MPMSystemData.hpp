@@ -188,6 +188,7 @@ class MPMSystemData final : public MPMTransferSystemData<N>
     using Base = ParticleSystemData<N>;
     using TransferBase = MPMTransferSystemData<N>;
     using DeformationState = SnowDeformationState<N>;
+    using TransferBase::TransferFromGridToParticles;
 
     //! Constructs snow MPM state with a vertex-centered background grid.
     explicit MPMSystemData(
@@ -206,10 +207,6 @@ class MPMSystemData final : public MPMTransferSystemData<N>
 
     //! Copies inherited particle state and resets deformation state.
     void Set(const ParticleSystemData<N>& other) override;
-
-    //! Transfers updated background-grid velocities to particles.
-    //! Stencil nodes outside the finite grid are clamped to its boundary.
-    void TransferFromGridToParticles();
 
     //! Returns per-particle deformation states.
     [[nodiscard]] ConstArrayView1<DeformationState> DeformationStates() const;

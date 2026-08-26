@@ -596,12 +596,6 @@ void MPMSystemData<N>::Set(const ParticleSystemData<N>& other)
 }
 
 template <size_t N>
-void MPMSystemData<N>::TransferFromGridToParticles()
-{
-    TransferBase::TransferFromGridToParticles();
-}
-
-template <size_t N>
 ConstArrayView1<typename MPMSystemData<N>::DeformationState>
 MPMSystemData<N>::DeformationStates() const
 {
