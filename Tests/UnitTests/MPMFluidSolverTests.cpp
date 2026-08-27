@@ -13,6 +13,7 @@
 #include <Core/Solver/Particle/MPM/MPMFluidSolver.hpp>
 #include <Core/Utils/Constants.hpp>
 
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 
@@ -47,6 +48,13 @@ class TestableMPMFluidSolver final : public MPMFluidSolver<N>
         return this->GetNumberOfSubTimeSteps(interval);
     }
 };
+
+template <size_t N>
+void UseOneFixedStep(MPMFluidSolver<N>* solver)
+{
+    solver->SetIsUsingFixedSubTimeSteps(true);
+    solver->SetNumberOfFixedSubTimeSteps(1);
+}
 
 template <size_t N>
 void ExpectParametersAndBuilder()
@@ -111,6 +119,7 @@ void ExpectReferenceVolumesAndAdaptiveSteps()
 {
     const auto resolution = VectorUZ<N>::MakeConstant(8);
     const auto spacing = VectorD<N>::MakeConstant(0.1);
+
     TestableMPMFluidSolver<N> empty{ resolution, spacing };
     EXPECT_NO_THROW(empty.Initialize());
     EXPECT_EQ(empty.NumberOfSubTimeSteps(0.1), 1u);
@@ -124,14 +133,17 @@ void ExpectReferenceVolumesAndAdaptiveSteps()
     TestableMPMFluidSolver<N> solver{ resolution, spacing, {},  0.01,
                                       2.0,        1000.0,  10.0 };
     const VectorD<N> position = VectorD<N>::MakeConstant(0.35);
+
     VectorD<N> velocity;
     velocity[0] = 3.0;
+
     auto data = solver.GetMPMSystemData();
     data->AddParticle(position, velocity);
-    solver.Initialize();
 
+    solver.Initialize();
     EXPECT_DOUBLE_EQ(data->InitialVolumes()[0], 0.002);
     EXPECT_EQ(solver.NumberOfSubTimeSteps(0.1), 15u);
+
     solver.SetTimeStepLimitScale(0.5);
     EXPECT_EQ(solver.NumberOfSubTimeSteps(0.1), 26u);
 
@@ -158,6 +170,107 @@ void ExpectReferenceVolumesAndAdaptiveSteps()
     invalid.GetMPMSystemData()->InitialVolumes()[0] = -1.0;
     EXPECT_THROW(invalid.Initialize(), std::invalid_argument);
 }
+
+template <size_t N>
+void ExpectUniformMotionAndExternalForces()
+{
+    const auto resolution = VectorUZ<N>::MakeConstant(8);
+    const auto spacing = VectorD<N>::MakeConstant(1.0);
+    const auto position = VectorD<N>::MakeConstant(3.5);
+
+    MPMFluidSolver<N> uniform{ resolution, spacing };
+    UseOneFixedStep(&uniform);
+    uniform.SetGravity({});
+    uniform.SetDragCoefficient(0.0);
+
+    VectorD<N> velocity;
+    velocity[0] = 0.2;
+
+    auto uniformData = uniform.GetMPMSystemData();
+    uniformData->AddParticle(position, velocity);
+    uniform.Update(Frame{ 0, 0.001 });
+
+    EXPECT_TRUE(uniformData->Velocities()[0].IsSimilar(velocity, 1e-12));
+    EXPECT_TRUE(uniformData->Positions()[0].IsSimilar(
+        position + 0.001 * velocity, 1e-12));
+
+    MPMFluidSolver<N> gravitySolver{ resolution, spacing };
+    UseOneFixedStep(&gravitySolver);
+    gravitySolver.SetDragCoefficient(0.0);
+
+    VectorD<N> gravity;
+    gravity[1] = -2.0;
+    gravitySolver.SetGravity(gravity);
+
+    auto gravityData = gravitySolver.GetMPMSystemData();
+    gravityData->AddParticle(position);
+    gravitySolver.Update(Frame{ 0, 0.001 });
+
+    EXPECT_TRUE(gravityData->Velocities()[0].IsSimilar(0.001 * gravity, 1e-12));
+
+    MPMFluidSolver<N> dragSolver{ resolution, spacing, {}, 0.1, 2.0 };
+    UseOneFixedStep(&dragSolver);
+    dragSolver.SetGravity({});
+    dragSolver.SetDragCoefficient(4.0);
+
+    velocity = {};
+    velocity[0] = 1.0;
+
+    auto dragData = dragSolver.GetMPMSystemData();
+    dragData->AddParticle(position, velocity);
+    dragSolver.Update(Frame{ 0, 0.001 });
+
+    velocity[0] = 0.998;
+    EXPECT_TRUE(dragData->Velocities()[0].IsSimilar(velocity, 1e-12));
+}
+
+template <size_t N>
+void ExpectCompressedParticlesMoveOutwardAndStayFinite()
+{
+    const auto resolution = VectorUZ<N>::MakeConstant(8);
+    const auto spacing = VectorD<N>::MakeConstant(1.0);
+    MPMFluidSolver<N> solver{ resolution, spacing, {}, 0.1, 1.0, 1000.0, 10.0 };
+
+    UseOneFixedStep(&solver);
+    solver.SetGravity({});
+    solver.SetDragCoefficient(0.0);
+
+    VectorD<N> left = VectorD<N>::MakeConstant(3.5);
+    VectorD<N> right = left;
+    left[0] = 3.25;
+    right[0] = 3.75;
+
+    auto data = solver.GetMPMSystemData();
+    data->AddParticle(left);
+    data->AddParticle(right);
+    data->InitialVolumes()[0] = 0.001;
+    data->InitialVolumes()[1] = 0.001;
+    data->VolumeRatios()[0] = 0.5;
+    data->VolumeRatios()[1] = 0.5;
+
+    for (int frame = 0; frame < 4; ++frame)
+    {
+        solver.Update(Frame{ frame, 1e-5 });
+    }
+
+    EXPECT_LT(data->Velocities()[0][0], 0.0);
+    EXPECT_GT(data->Velocities()[1][0], 0.0);
+
+    for (size_t i = 0; i < data->NumberOfParticles(); ++i)
+    {
+        EXPECT_GT(data->VolumeRatios()[i], 0.0);
+        EXPECT_TRUE(std::isfinite(data->VolumeRatios()[i]));
+
+        for (double component : data->Positions()[i])
+        {
+            EXPECT_TRUE(std::isfinite(component));
+        }
+        for (double component : data->Velocities()[i])
+        {
+            EXPECT_TRUE(std::isfinite(component));
+        }
+    }
+}
 }  // namespace
 
 TEST(MPMFluidSolver, ParametersAndBuilder)
@@ -170,4 +283,16 @@ TEST(MPMFluidSolver, ReferenceVolumesAndAdaptiveSteps)
 {
     ExpectReferenceVolumesAndAdaptiveSteps<2>();
     ExpectReferenceVolumesAndAdaptiveSteps<3>();
+}
+
+TEST(MPMFluidSolver, UniformMotionAndExternalForces)
+{
+    ExpectUniformMotionAndExternalForces<2>();
+    ExpectUniformMotionAndExternalForces<3>();
+}
+
+TEST(MPMFluidSolver, CompressedParticlesMoveOutwardAndStayFinite)
+{
+    ExpectCompressedParticlesMoveOutwardAndStayFinite<2>();
+    ExpectCompressedParticlesMoveOutwardAndStayFinite<3>();
 }
