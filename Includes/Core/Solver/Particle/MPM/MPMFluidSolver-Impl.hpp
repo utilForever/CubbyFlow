@@ -145,7 +145,23 @@ void MPMFluidSolver<N>::OnBeginAdvanceTimeStep(double timeStepInSeconds)
 {
     m_mpmSystemData->TransferFromParticlesToGrid();
     InitializeReferenceVolumes();
+    UpdateGridVelocities(timeStepInSeconds);
     m_mpmSystemData->TransferFromGridToParticles(timeStepInSeconds);
+}
+
+template <size_t N>
+MPMFluidSolver<N>::SizeType MPMFluidSolver<N>::ClampIndex(
+    const Vector<ssize_t, N>& index, const SizeType& dataSize)
+{
+    SizeType result;
+
+    for (size_t axis = 0; axis < N; ++axis)
+    {
+        result[axis] = static_cast<size_t>(std::clamp<ssize_t>(
+            index[axis], 0, static_cast<ssize_t>(dataSize[axis] - 1)));
+    }
+
+    return result;
 }
 
 template <size_t N>
@@ -165,6 +181,70 @@ void MPMFluidSolver<N>::InitializeReferenceVolumes()
             throw std::invalid_argument{
                 "Invalid MPM fluid reference volume."
             };
+        }
+    }
+}
+
+template <size_t N>
+void MPMFluidSolver<N>::UpdateGridVelocities(double timeStepInSeconds)
+{
+    const auto positions = m_mpmSystemData->Positions();
+    const auto velocities = m_mpmSystemData->Velocities();
+    const auto masses = m_mpmSystemData->ParticleMasses();
+    const auto initialVolumes = m_mpmSystemData->InitialVolumes();
+    const auto volumeRatios = m_mpmSystemData->VolumeRatios();
+    const auto& gridMass = m_mpmSystemData->GridMass();
+    auto& gridVelocities = m_mpmSystemData->GridVelocities();
+    const auto dataSize = gridMass.DataSize();
+    const auto spacing = gridMass.GridSpacing();
+    const auto dataOrigin = gridMass.DataOrigin();
+
+    for (size_t i = 0; i < positions.Length(); ++i)
+    {
+        const double currentVolume = initialVolumes[i] * volumeRatios[i];
+        const double density =
+            m_constitutiveModel.ComputeDensity(masses[i], currentVolume);
+        const double pressure = m_constitutiveModel.ComputePressure(density);
+        const MatrixType stress =
+            m_constitutiveModel.ComputeCauchyStress(pressure);
+        const VectorType relativeVelocity =
+            velocities[i] - this->GetWind()->Sample(positions[i]);
+        const VectorType externalForce =
+            masses[i] * this->GetGravity() -
+            this->GetDragCoefficient() * relativeVelocity;
+        const auto stencil = CubicBSplineKernel<N>::GetStencil(
+            positions[i], spacing, dataOrigin);
+
+        for (const auto& entry : stencil)
+        {
+            if (entry.weight == 0.0)
+            {
+                continue;
+            }
+
+            const auto index = ClampIndex(entry.index, dataSize);
+            const double nodeMass = gridMass(index);
+
+            if (nodeMass > 0.0)
+            {
+                const VectorType increment =
+                    timeStepInSeconds *
+                    (entry.weight * externalForce -
+                     currentVolume * stress * entry.gradient) /
+                    nodeMass;
+
+                for (double component : increment)
+                {
+                    if (!std::isfinite(component))
+                    {
+                        throw std::invalid_argument{
+                            "Invalid MPM fluid grid velocity update."
+                        };
+                    }
+                }
+
+                gridVelocities(index) += increment;
+            }
         }
     }
 }

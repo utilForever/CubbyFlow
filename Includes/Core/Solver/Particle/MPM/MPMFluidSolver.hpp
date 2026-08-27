@@ -85,6 +85,9 @@ class MPMFluidSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     void OnBeginAdvanceTimeStep(double timeStepInSeconds) override;
 
  private:
+    [[nodiscard]] static SizeType ClampIndex(const Vector<ssize_t, N>& index,
+                                             const SizeType& dataSize);
+
     void InitializeReferenceVolumes();
 
     void UpdateGridVelocities(double timeStepInSeconds);
