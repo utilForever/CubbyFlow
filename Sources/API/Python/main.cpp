@@ -93,7 +93,7 @@
 #include <API/Python/Solver/LevelSet/LevelSetSolver.hpp>
 #include <API/Python/Solver/LevelSet/UpwindLevelSetSolver.hpp>
 #include <API/Python/Solver/Particle/MPM/MPMFluidSolver.hpp>
-#include <API/Python/Solver/Particle/MPM/SnowMPMSolver.hpp>
+#include <API/Python/Solver/Particle/MPM/MPMSnowSolver.hpp>
 #include <API/Python/Solver/Particle/PCISPH/PCISPHSolver.hpp>
 #include <API/Python/Solver/Particle/ParticleSystemSolver.hpp>
 #include <API/Python/Solver/Particle/SPH/SPHSolver.hpp>
@@ -337,8 +337,8 @@ PYBIND11_MODULE(pyCubbyFlow, m)
     AddParticleSystemSolver3(m);
     AddMPMFluidSolver2(m);
     AddMPMFluidSolver3(m);
-    AddSnowMPMSolver2(m);
-    AddSnowMPMSolver3(m);
+    AddMPMSnowSolver2(m);
+    AddMPMSnowSolver3(m);
     AddSPHSolver2(m);
     AddSPHSolver3(m);
     AddPCISPHSolver2(m);

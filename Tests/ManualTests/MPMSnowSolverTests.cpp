@@ -2,16 +2,16 @@
 
 #include <Core/Geometry/Plane.hpp>
 #include <Core/Geometry/RigidBodyCollider.hpp>
-#include <Core/Solver/Particle/MPM/SnowMPMSolver.hpp>
+#include <Core/Solver/Particle/MPM/MPMSnowSolver.hpp>
 
 #include <cmath>
 
 using namespace CubbyFlow;
 
-TEST(SnowMPMSolverManual, FrictionalColliderStateRemainsFinite)
+TEST(MPMSnowSolverManual, FrictionalColliderStateRemainsFinite)
 {
     constexpr double radius = 0.01;
-    SnowMPMSolver2 solver{ { 16, 16 }, { 0.1, 0.1 }, {}, radius, 1e-3 };
+    MPMSnowSolver2 solver{ { 16, 16 }, { 0.1, 0.1 }, {}, radius, 1e-3 };
     solver.SetDragCoefficient(0.0);
 
     auto collider = std::make_shared<RigidBodyCollider2>(

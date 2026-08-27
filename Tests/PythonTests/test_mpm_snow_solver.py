@@ -7,14 +7,14 @@ import pyCubbyFlow
     "solver_type,data_type,resolution,spacing,origin",
     [
         (
-            pyCubbyFlow.SnowMPMSolver2,
+            pyCubbyFlow.MPMSnowSolver2,
             pyCubbyFlow.MPMSystemData2,
             pyCubbyFlow.Vector2UZ(4, 4),
             pyCubbyFlow.Vector2D(0.5, 1.0),
             pyCubbyFlow.Vector2D(-1.0, -2.0),
         ),
         (
-            pyCubbyFlow.SnowMPMSolver3,
+            pyCubbyFlow.MPMSnowSolver3,
             pyCubbyFlow.MPMSystemData3,
             pyCubbyFlow.Vector3UZ(4, 4, 4),
             pyCubbyFlow.Vector3D(0.5, 1.0, 2.0),
@@ -22,7 +22,7 @@ import pyCubbyFlow
         ),
     ],
 )
-def test_snow_mpm_solver_api(
+def test_mpm_snow_solver_api(
     solver_type, data_type, resolution, spacing, origin
 ):
     solver = solver_type(resolution, spacing, origin, 0.1, 2.0)
