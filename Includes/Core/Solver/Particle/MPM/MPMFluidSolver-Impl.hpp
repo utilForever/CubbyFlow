@@ -198,6 +198,7 @@ void MPMFluidSolver<N>::UpdateGridVelocities(double timeStepInSeconds)
     const auto dataSize = gridMass.DataSize();
     const auto spacing = gridMass.GridSpacing();
     const auto dataOrigin = gridMass.DataOrigin();
+    const auto isFinite = [](double value) { return std::isfinite(value); };
 
     for (size_t i = 0; i < positions.Length(); ++i)
     {
@@ -217,34 +218,26 @@ void MPMFluidSolver<N>::UpdateGridVelocities(double timeStepInSeconds)
 
         for (const auto& entry : stencil)
         {
-            if (entry.weight == 0.0)
+            const auto index = ClampIndex(entry.index, dataSize);
+            const double nodeMass = gridMass(index);
+
+            if (nodeMass <= 0.0)
             {
                 continue;
             }
 
-            const auto index = ClampIndex(entry.index, dataSize);
-            const double nodeMass = gridMass(index);
+            const VectorType increment =
+                timeStepInSeconds *
+                (entry.weight * externalForce -
+                 currentVolume * stress * entry.gradient) /
+                nodeMass;
 
-            if (nodeMass > 0.0)
+            if (!std::ranges::all_of(increment, isFinite))
             {
-                const VectorType increment =
-                    timeStepInSeconds *
-                    (entry.weight * externalForce -
-                     currentVolume * stress * entry.gradient) /
-                    nodeMass;
-
-                for (double component : increment)
-                {
-                    if (!std::isfinite(component))
-                    {
-                        throw std::invalid_argument{
-                            "Invalid MPM fluid grid velocity update."
-                        };
-                    }
-                }
-
-                gridVelocities(index) += increment;
+                throw std::invalid_argument{ "Non-finite MPM fluid update." };
             }
+
+            gridVelocities(index) += increment;
         }
     }
 }
