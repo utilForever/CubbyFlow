@@ -10,12 +10,15 @@
 
 #include "gtest/gtest.h"
 
+#include <Core/Emitter/PointParticleEmitter2.hpp>
+#include <Core/Emitter/PointParticleEmitter3.hpp>
 #include <Core/Solver/Particle/MPM/MPMFluidSolver.hpp>
 #include <Core/Utils/Constants.hpp>
 
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 using namespace CubbyFlow;
 
@@ -26,6 +29,10 @@ using VectorD = Vector<double, N>;
 
 template <size_t N>
 using VectorUZ = Vector<size_t, N>;
+
+template <size_t N>
+using PointEmitter =
+    std::conditional_t<N == 2, PointParticleEmitter2, PointParticleEmitter3>;
 
 template <size_t N>
 class TestableMPMFluidSolver final : public MPMFluidSolver<N>
@@ -57,7 +64,7 @@ void UseOneFixedStep(MPMFluidSolver<N>* solver)
 }
 
 template <size_t N>
-void ExpectParametersAndBuilder()
+void ExpectParameters()
 {
     MPMFluidSolver<N> solver;
     EXPECT_DOUBLE_EQ(solver.GetTimeStepLimitScale(), 0.9);
@@ -84,7 +91,11 @@ void ExpectParametersAndBuilder()
                                      0.1,
                                      0.0 }),
                  std::invalid_argument);
+}
 
+template <size_t N>
+void ExpectBuilder()
+{
     const auto resolution = VectorUZ<N>::MakeConstant(7);
     const auto spacing = VectorD<N>::MakeConstant(0.25);
     const auto origin = VectorD<N>::MakeConstant(-1.0);
@@ -112,6 +123,52 @@ void ExpectParametersAndBuilder()
     EXPECT_DOUBLE_EQ(built.GetConstitutiveModel().GetNegativePressureScale(),
                      0.25);
     EXPECT_NE(MPMFluidSolver<N>::GetBuilder().MakeShared(), nullptr);
+}
+
+template <size_t N>
+void ExpectEmitter()
+{
+    const auto resolution = VectorUZ<N>::MakeConstant(8);
+    const auto spacing = VectorD<N>::MakeConstant(0.1);
+    const auto position = spacing;
+    VectorD<N> direction;
+    direction[0] = 1.0;
+
+    MPMFluidSolver<N> solver{ resolution, spacing };
+    solver.SetGravity({});
+    solver.SetDragCoefficient(0.0);
+    auto emitter =
+        std::make_shared<PointEmitter<N>>(position, direction, 0.0, 0.0, 1, 1);
+    solver.SetEmitter(emitter);
+
+    solver.Update(Frame{ 0, 0.001 });
+
+    const auto data = solver.GetMPMSystemData();
+    EXPECT_EQ(data->NumberOfParticles(), 1u);
+    EXPECT_DOUBLE_EQ(data->InitialVolumes()[0], 1e-6);
+}
+
+template <size_t N>
+void ExpectDefensiveChecks()
+{
+    const auto resolution = VectorUZ<N>::MakeConstant(8);
+    const auto spacing = VectorD<N>::MakeConstant(1.0);
+    const auto position = VectorD<N>::MakeConstant(3.5);
+
+    TestableMPMFluidSolver<N> invalidVelocity{ resolution, spacing };
+    auto invalidVelocityData = invalidVelocity.GetMPMSystemData();
+    invalidVelocityData->AddParticle(position);
+    invalidVelocity.Initialize();
+    invalidVelocityData->Velocities()[0][0] =
+        std::numeric_limits<double>::quiet_NaN();
+    EXPECT_THROW(static_cast<void>(invalidVelocity.NumberOfSubTimeSteps(0.1)),
+                 std::invalid_argument);
+
+    TestableMPMFluidSolver<N> invalidIncrement{ resolution, spacing };
+    invalidIncrement.GetMPMSystemData()->AddParticle(position);
+    invalidIncrement.Initialize();
+    EXPECT_THROW(invalidIncrement.BeginStep(std::numeric_limits<double>::max()),
+                 std::invalid_argument);
 }
 
 template <size_t N>
@@ -275,8 +332,22 @@ void ExpectCompressedParticlesMoveOutwardAndStayFinite()
 
 TEST(MPMFluidSolver, ParametersAndBuilder)
 {
-    ExpectParametersAndBuilder<2>();
-    ExpectParametersAndBuilder<3>();
+    ExpectParameters<2>();
+    ExpectParameters<3>();
+    ExpectBuilder<2>();
+    ExpectBuilder<3>();
+}
+
+TEST(MPMFluidSolver, Emitter)
+{
+    ExpectEmitter<2>();
+    ExpectEmitter<3>();
+}
+
+TEST(MPMFluidSolver, DefensiveChecks)
+{
+    ExpectDefensiveChecks<2>();
+    ExpectDefensiveChecks<3>();
 }
 
 TEST(MPMFluidSolver, ReferenceVolumesAndAdaptiveSteps)
