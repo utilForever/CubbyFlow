@@ -164,6 +164,11 @@ void ExpectDefensiveChecks()
     EXPECT_THROW(static_cast<void>(invalidVelocity.NumberOfSubTimeSteps(0.1)),
                  std::invalid_argument);
 
+    invalidVelocityData->Velocities()[0][0] =
+        std::numeric_limits<double>::max();
+    EXPECT_THROW(static_cast<void>(invalidVelocity.NumberOfSubTimeSteps(0.1)),
+                 std::invalid_argument);
+
     TestableMPMFluidSolver<N> invalidIncrement{ resolution, spacing };
     invalidIncrement.GetMPMSystemData()->AddParticle(position);
     invalidIncrement.Initialize();

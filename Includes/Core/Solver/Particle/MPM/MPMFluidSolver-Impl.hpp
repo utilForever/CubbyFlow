@@ -121,7 +121,17 @@ unsigned int MPMFluidSolver<N>::GetNumberOfSubTimeSteps(
                 };
             }
         }
-        maxSpeed = std::max(maxSpeed, velocity.Length());
+
+        const double speed = velocity.Length();
+
+        if (!std::isfinite(speed))
+        {
+            throw std::invalid_argument{
+                "Invalid MPM fluid particle velocity."
+            };
+        }
+
+        maxSpeed = std::max(maxSpeed, speed);
     }
 
     const double desiredTimeStep =
