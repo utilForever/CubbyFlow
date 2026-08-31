@@ -9,8 +9,8 @@ var searchData=
   ['lineararraysampler_6',['LinearArraySampler',['../class_cubby_flow_1_1_linear_array_sampler.html',1,'CubbyFlow']]],
   ['lineararraysampler_3c_20cubbyflow_3a_3amatrix_3c_20double_2c_20n_20_3e_2c_20n_20_3e_7',['LinearArraySampler&lt; CubbyFlow::Matrix&lt; double, N &gt;, N &gt;',['../class_cubby_flow_1_1_linear_array_sampler.html',1,'CubbyFlow']]],
   ['lineararraysampler_3c_20double_2c_20n_20_3e_8',['LinearArraySampler&lt; double, N &gt;',['../class_cubby_flow_1_1_linear_array_sampler.html',1,'CubbyFlow']]],
-  ['linearsystem_9',['LinearSystem',['../struct_cubby_flow_1_1_snow_m_p_m_solver_1_1_linear_system.html',1,'CubbyFlow::SnowMPMSolver']]],
-  ['linearsystemblas_10',['LinearSystemBLAS',['../struct_cubby_flow_1_1_snow_m_p_m_solver_1_1_linear_system_b_l_a_s.html',1,'CubbyFlow::SnowMPMSolver']]],
+  ['linearsystem_9',['LinearSystem',['../struct_cubby_flow_1_1_m_p_m_snow_solver_1_1_linear_system.html',1,'CubbyFlow::MPMSnowSolver']]],
+  ['linearsystemblas_10',['LinearSystemBLAS',['../struct_cubby_flow_1_1_m_p_m_snow_solver_1_1_linear_system_b_l_a_s.html',1,'CubbyFlow::MPMSnowSolver']]],
   ['listqueryengine_11',['ListQueryEngine',['../class_cubby_flow_1_1_list_query_engine.html',1,'CubbyFlow']]],
   ['logger_12',['Logger',['../class_cubby_flow_1_1_logger.html',1,'CubbyFlow']]],
   ['logging_13',['Logging',['../class_cubby_flow_1_1_logging.html',1,'CubbyFlow']]]

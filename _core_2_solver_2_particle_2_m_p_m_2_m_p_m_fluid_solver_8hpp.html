@@ -8,7 +8,7 @@
         <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
         <meta name="generator" content="Doxygen 1.9.8"/>
         <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-        <title>CubbyFlow: Core/Solver/Particle/MPM/SnowMPMSolver-Impl.hpp File Reference</title>
+        <title>CubbyFlow: Core/Solver/Particle/MPM/MPMFluidSolver.hpp File Reference</title>
         <!--<link href="tabs.css" rel="stylesheet" type="text/css"/>-->
         <script type="text/javascript" src="dynsections.js"></script>
         <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -85,30 +85,46 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a>  </div>
-  <div class="headertitle"><div class="title">SnowMPMSolver-Impl.hpp File Reference</div></div>
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#typedef-members">Typedefs</a>  </div>
+  <div class="headertitle"><div class="title">MPMFluidSolver.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;<a class="el" href="_parallel_8hpp_source.html">Core/Utils/Parallel.hpp</a>&gt;</code><br />
-<code>#include &lt;algorithm&gt;</code><br />
-<code>#include &lt;array&gt;</code><br />
-<code>#include &lt;cmath&gt;</code><br />
-<code>#include &lt;limits&gt;</code><br />
-<code>#include &lt;stdexcept&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="_m_p_m_fluid_constitutive_model_8hpp_source.html">Core/Particle/MPM/MPMFluidConstitutiveModel.hpp</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="_m_p_m_fluid_system_data_8hpp_source.html">Core/Particle/MPM/MPMFluidSystemData.hpp</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="_particle_system_solver2_8hpp_source.html">Core/Solver/Particle/ParticleSystemSolver2.hpp</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="_particle_system_solver3_8hpp_source.html">Core/Solver/Particle/ParticleSystemSolver3.hpp</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="_core_2_utils_2_constants_8hpp_source.html">Core/Utils/Constants.hpp</a>&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
+<code>#include &lt;<a class="el" href="_m_p_m_fluid_solver-_impl_8hpp_source.html">Core/Solver/Particle/MPM/MPMFluidSolver-Impl.hpp</a>&gt;</code><br />
 </div>
-<p><a href="_snow_m_p_m_solver-_impl_8hpp_source.html">Go to the source code of this file.</a></p>
+<p><a href="_core_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_cubby_flow_1_1_snow_m_p_m_solver_1_1_linear_system.html">CubbyFlow::SnowMPMSolver&lt; N &gt;::LinearSystem&lt; N &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_m_p_m_fluid_solver.html">CubbyFlow::MPMFluidSolver&lt; N &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">N-D explicit weakly compressible material point method solver.  <a href="class_cubby_flow_1_1_m_p_m_fluid_solver.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_cubby_flow_1_1_snow_m_p_m_solver_1_1_linear_system_b_l_a_s.html">CubbyFlow::SnowMPMSolver&lt; N &gt;::LinearSystemBLAS&lt; N &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_m_p_m_fluid_solver_1_1_builder.html">CubbyFlow::MPMFluidSolver&lt; N &gt;::Builder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Front-end to create <a class="el" href="class_cubby_flow_1_1_m_p_m_fluid_solver.html" title="N-D explicit weakly compressible material point method solver.">MPMFluidSolver</a> objects step by step.  <a href="class_cubby_flow_1_1_m_p_m_fluid_solver_1_1_builder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespace_cubby_flow" id="r_namespace_cubby_flow"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html">CubbyFlow</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:ab878405343f001cfdcd2c604f21e9d71" id="r_ab878405343f001cfdcd2c604f21e9d71"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#ab878405343f001cfdcd2c604f21e9d71">CubbyFlow::MPMFluidSolver2</a> = <a class="el" href="class_cubby_flow_1_1_m_p_m_fluid_solver.html">MPMFluidSolver</a>&lt; 2 &gt;</td></tr>
+<tr class="separator:ab878405343f001cfdcd2c604f21e9d71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44b891aa39573f8a49c62d51275e7e43" id="r_a44b891aa39573f8a49c62d51275e7e43"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#a44b891aa39573f8a49c62d51275e7e43">CubbyFlow::MPMFluidSolver3</a> = <a class="el" href="class_cubby_flow_1_1_m_p_m_fluid_solver.html">MPMFluidSolver</a>&lt; 3 &gt;</td></tr>
+<tr class="separator:a44b891aa39573f8a49c62d51275e7e43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa6f377923390b90948ff550d93d810d" id="r_aaa6f377923390b90948ff550d93d810d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#aaa6f377923390b90948ff550d93d810d">CubbyFlow::MPMFluidSolver2Ptr</a> = std::shared_ptr&lt; <a class="el" href="namespace_cubby_flow.html#ab878405343f001cfdcd2c604f21e9d71">MPMFluidSolver2</a> &gt;</td></tr>
+<tr class="separator:aaa6f377923390b90948ff550d93d810d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad42805b69092d773ebdf0c065c2d3609" id="r_ad42805b69092d773ebdf0c065c2d3609"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#ad42805b69092d773ebdf0c065c2d3609">CubbyFlow::MPMFluidSolver3Ptr</a> = std::shared_ptr&lt; <a class="el" href="namespace_cubby_flow.html#a44b891aa39573f8a49c62d51275e7e43">MPMFluidSolver3</a> &gt;</td></tr>
+<tr class="separator:ad42805b69092d773ebdf0c065c2d3609"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- HTML footer for doxygen 1.8.8-->
@@ -119,7 +135,7 @@ Namespaces</h2></td></tr>
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 26 2026 04:22:59 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 31 2026 23:21:25 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>

@@ -8,7 +8,7 @@
         <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
         <meta name="generator" content="Doxygen 1.9.8"/>
         <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-        <title>CubbyFlow: Core/Solver/Particle/MPM/SnowMPMSolver.hpp File Reference</title>
+        <title>CubbyFlow: Core/Solver/Particle/MPM/MPMSnowSolver.hpp File Reference</title>
         <!--<link href="tabs.css" rel="stylesheet" type="text/css"/>-->
         <script type="text/javascript" src="dynsections.js"></script>
         <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -87,7 +87,7 @@ $(function() {
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#typedef-members">Typedefs</a>  </div>
-  <div class="headertitle"><div class="title">SnowMPMSolver.hpp File Reference</div></div>
+  <div class="headertitle"><div class="title">MPMSnowSolver.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;<a class="el" href="_array_8hpp_source.html">Core/Array/Array.hpp</a>&gt;</code><br />
@@ -99,17 +99,17 @@ $(function() {
 <code>#include &lt;<a class="el" href="_core_2_utils_2_constants_8hpp_source.html">Core/Utils/Constants.hpp</a>&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;type_traits&gt;</code><br />
-<code>#include &lt;<a class="el" href="_snow_m_p_m_solver-_impl_8hpp_source.html">Core/Solver/Particle/MPM/SnowMPMSolver-Impl.hpp</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="_m_p_m_snow_solver-_impl_8hpp_source.html">Core/Solver/Particle/MPM/MPMSnowSolver-Impl.hpp</a>&gt;</code><br />
 </div>
-<p><a href="_core_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp_source.html">Go to the source code of this file.</a></p>
+<p><a href="_core_2_solver_2_particle_2_m_p_m_2_m_p_m_snow_solver_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">CubbyFlow::SnowMPMSolver&lt; N &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">N-D material point method solver for snow.  <a href="class_cubby_flow_1_1_snow_m_p_m_solver.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_m_p_m_snow_solver.html">CubbyFlow::MPMSnowSolver&lt; N &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">N-D material point method solver for snow.  <a href="class_cubby_flow_1_1_m_p_m_snow_solver.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver_1_1_builder.html">CubbyFlow::SnowMPMSolver&lt; N &gt;::Builder</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Front-end to create <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html" title="N-D material point method solver for snow.">SnowMPMSolver</a> objects step by step.  <a href="class_cubby_flow_1_1_snow_m_p_m_solver_1_1_builder.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_cubby_flow_1_1_m_p_m_snow_solver_1_1_builder.html">CubbyFlow::MPMSnowSolver&lt; N &gt;::Builder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Front-end to create <a class="el" href="class_cubby_flow_1_1_m_p_m_snow_solver.html" title="N-D material point method solver for snow.">MPMSnowSolver</a> objects step by step.  <a href="class_cubby_flow_1_1_m_p_m_snow_solver_1_1_builder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
@@ -119,14 +119,14 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:afcc1de2fdeff56bfdfdca92894bb112b" id="r_afcc1de2fdeff56bfdfdca92894bb112b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#afcc1de2fdeff56bfdfdca92894bb112b">CubbyFlow::SnowMPMSolver2</a> = <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">SnowMPMSolver</a>&lt; 2 &gt;</td></tr>
-<tr class="separator:afcc1de2fdeff56bfdfdca92894bb112b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abcb21d82774f05366994763bce874693" id="r_abcb21d82774f05366994763bce874693"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#abcb21d82774f05366994763bce874693">CubbyFlow::SnowMPMSolver3</a> = <a class="el" href="class_cubby_flow_1_1_snow_m_p_m_solver.html">SnowMPMSolver</a>&lt; 3 &gt;</td></tr>
-<tr class="separator:abcb21d82774f05366994763bce874693"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb1034c24fc57d2906f3a4efbba3c87f" id="r_acb1034c24fc57d2906f3a4efbba3c87f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#acb1034c24fc57d2906f3a4efbba3c87f">CubbyFlow::SnowMPMSolver2Ptr</a> = std::shared_ptr&lt; <a class="el" href="namespace_cubby_flow.html#afcc1de2fdeff56bfdfdca92894bb112b">SnowMPMSolver2</a> &gt;</td></tr>
-<tr class="separator:acb1034c24fc57d2906f3a4efbba3c87f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a31388b32ce664c65cdb8aa07692c13f4" id="r_a31388b32ce664c65cdb8aa07692c13f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#a31388b32ce664c65cdb8aa07692c13f4">CubbyFlow::SnowMPMSolver3Ptr</a> = std::shared_ptr&lt; <a class="el" href="namespace_cubby_flow.html#abcb21d82774f05366994763bce874693">SnowMPMSolver3</a> &gt;</td></tr>
-<tr class="separator:a31388b32ce664c65cdb8aa07692c13f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c41860b371d0d9ac026162b1bef68fd" id="r_a1c41860b371d0d9ac026162b1bef68fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#a1c41860b371d0d9ac026162b1bef68fd">CubbyFlow::MPMSnowSolver2</a> = <a class="el" href="class_cubby_flow_1_1_m_p_m_snow_solver.html">MPMSnowSolver</a>&lt; 2 &gt;</td></tr>
+<tr class="separator:a1c41860b371d0d9ac026162b1bef68fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71a49faaca4fde1cf5e0b6bbd0074506" id="r_a71a49faaca4fde1cf5e0b6bbd0074506"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#a71a49faaca4fde1cf5e0b6bbd0074506">CubbyFlow::MPMSnowSolver3</a> = <a class="el" href="class_cubby_flow_1_1_m_p_m_snow_solver.html">MPMSnowSolver</a>&lt; 3 &gt;</td></tr>
+<tr class="separator:a71a49faaca4fde1cf5e0b6bbd0074506"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc5591bf1c83603af161844acac71a40" id="r_acc5591bf1c83603af161844acac71a40"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#acc5591bf1c83603af161844acac71a40">CubbyFlow::MPMSnowSolver2Ptr</a> = std::shared_ptr&lt; <a class="el" href="namespace_cubby_flow.html#a1c41860b371d0d9ac026162b1bef68fd">MPMSnowSolver2</a> &gt;</td></tr>
+<tr class="separator:acc5591bf1c83603af161844acac71a40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ddec1d04425566b685788fb07df73c6" id="r_a5ddec1d04425566b685788fb07df73c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_cubby_flow.html#afaaefddd57432a85f34cc704a0f736f8">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_cubby_flow.html#a5ddec1d04425566b685788fb07df73c6">CubbyFlow::MPMSnowSolver3Ptr</a> = std::shared_ptr&lt; <a class="el" href="namespace_cubby_flow.html#a71a49faaca4fde1cf5e0b6bbd0074506">MPMSnowSolver3</a> &gt;</td></tr>
+<tr class="separator:a5ddec1d04425566b685788fb07df73c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- HTML footer for doxygen 1.8.8-->
@@ -137,7 +137,7 @@ Typedefs</h2></td></tr>
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 26 2026 04:22:59 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 31 2026 23:21:25 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>

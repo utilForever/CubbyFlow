@@ -8,7 +8,7 @@
         <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
         <meta name="generator" content="Doxygen 1.9.8"/>
         <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-        <title>CubbyFlow: API/Python/Solver/Particle/MPM/SnowMPMSolver.hpp Source File</title>
+        <title>CubbyFlow: API/Python/Solver/Particle/MPM/MPMFluidSolver.hpp Source File</title>
         <!--<link href="tabs.css" rel="stylesheet" type="text/css"/>-->
         <script type="text/javascript" src="dynsections.js"></script>
         <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -88,10 +88,10 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 </div><!-- top -->
 <div class="header">
-  <div class="headertitle"><div class="title">SnowMPMSolver.hpp</div></div>
+  <div class="headertitle"><div class="title">MPMFluidSolver.hpp</div></div>
 </div><!--header-->
 <div class="contents">
-<a href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">// This code is based on Jet framework.</span></div>
+<a href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">// This code is based on Jet framework.</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// Copyright (c) 2018 Doyub Kim</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment">// CubbyFlow is voxel-based fluid simulation engine for computer games.</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment">// Copyright (c) 2020 CubbyFlow Team</span></div>
@@ -101,17 +101,17 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="comment">// personal capacity and are not conveying any rights to any intellectual</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="comment">// property of any third parties.</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#ifndef CUBBYFLOW_PYTHON_SNOW_MPM_SOLVER_HPP</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#define CUBBYFLOW_PYTHON_SNOW_MPM_SOLVER_HPP</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#ifndef CUBBYFLOW_PYTHON_MPM_FLUID_SOLVER_HPP</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#define CUBBYFLOW_PYTHON_MPM_FLUID_SOLVER_HPP</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;pybind11/pybind11.h&gt;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp.html#af5a0ccc7599bcf138de2849e1af4251a">   16</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp.html#af5a0ccc7599bcf138de2849e1af4251a">AddSnowMPMSolver2</a>(pybind11::module&amp; m);</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp.html#a98d284555887ce77efa1f5c78dc1cb3c">   17</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp.html#a98d284555887ce77efa1f5c78dc1cb3c">AddSnowMPMSolver3</a>(pybind11::module&amp; m);</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp.html#a51172dac2dac7e7eca383fa564375961">   16</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp.html#a51172dac2dac7e7eca383fa564375961">AddMPMFluidSolver2</a>(pybind11::module&amp; m);</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp.html#ad130fba5dc75ba5dc2c4adaa7d99ff4d">   17</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp.html#ad130fba5dc75ba5dc2c4adaa7d99ff4d">AddMPMFluidSolver3</a>(pybind11::module&amp; m);</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="a_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp_html_a98d284555887ce77efa1f5c78dc1cb3c"><div class="ttname"><a href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp.html#a98d284555887ce77efa1f5c78dc1cb3c">AddSnowMPMSolver3</a></div><div class="ttdeci">void AddSnowMPMSolver3(pybind11::module &amp;m)</div></div>
-<div class="ttc" id="a_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp_html_af5a0ccc7599bcf138de2849e1af4251a"><div class="ttname"><a href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_snow_m_p_m_solver_8hpp.html#af5a0ccc7599bcf138de2849e1af4251a">AddSnowMPMSolver2</a></div><div class="ttdeci">void AddSnowMPMSolver2(pybind11::module &amp;m)</div></div>
+<div class="ttc" id="a_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp_html_a51172dac2dac7e7eca383fa564375961"><div class="ttname"><a href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp.html#a51172dac2dac7e7eca383fa564375961">AddMPMFluidSolver2</a></div><div class="ttdeci">void AddMPMFluidSolver2(pybind11::module &amp;m)</div></div>
+<div class="ttc" id="a_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp_html_ad130fba5dc75ba5dc2c4adaa7d99ff4d"><div class="ttname"><a href="_a_p_i_2_python_2_solver_2_particle_2_m_p_m_2_m_p_m_fluid_solver_8hpp.html#ad130fba5dc75ba5dc2c4adaa7d99ff4d">AddMPMFluidSolver3</a></div><div class="ttdeci">void AddMPMFluidSolver3(pybind11::module &amp;m)</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- HTML footer for doxygen 1.8.8-->
 <!-- start footer part -->
@@ -121,7 +121,7 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 </div>
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 26 2026 04:22:59 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Aug 31 2026 23:21:25 for CubbyFlow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.9.8
 </small></address>
