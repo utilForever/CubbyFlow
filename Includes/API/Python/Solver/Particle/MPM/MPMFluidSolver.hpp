@@ -8,12 +8,12 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef CUBBYFLOW_PYTHON_SNOW_MPM_SOLVER_HPP
-#define CUBBYFLOW_PYTHON_SNOW_MPM_SOLVER_HPP
+#ifndef CUBBYFLOW_PYTHON_MPM_FLUID_SOLVER_HPP
+#define CUBBYFLOW_PYTHON_MPM_FLUID_SOLVER_HPP
 
 #include <pybind11/pybind11.h>
 
-void AddSnowMPMSolver2(pybind11::module& m);
-void AddSnowMPMSolver3(pybind11::module& m);
+void AddMPMFluidSolver2(pybind11::module& m);
+void AddMPMFluidSolver3(pybind11::module& m);
 
 #endif

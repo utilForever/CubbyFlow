@@ -8,17 +8,17 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <API/Python/Solver/Particle/MPM/SnowMPMSolver.hpp>
-#include <Core/Solver/Particle/MPM/SnowMPMSolver.hpp>
+#include <API/Python/Solver/Particle/MPM/MPMSnowSolver.hpp>
+#include <Core/Solver/Particle/MPM/MPMSnowSolver.hpp>
 
 using namespace CubbyFlow;
 
 namespace
 {
 template <size_t N, typename Base>
-void AddSnowMPMSolver(pybind11::module& m, const char* name)
+void AddMPMSnowSolver(pybind11::module& m, const char* name)
 {
-    using Solver = SnowMPMSolver<N>;
+    using Solver = MPMSnowSolver<N>;
     using SolverPtr = std::shared_ptr<Solver>;
     using VectorType = Vector<double, N>;
     using SizeType = Vector<size_t, N>;
@@ -48,12 +48,12 @@ void AddSnowMPMSolver(pybind11::module& m, const char* name)
 }
 }  // namespace
 
-void AddSnowMPMSolver2(pybind11::module& m)
+void AddMPMSnowSolver2(pybind11::module& m)
 {
-    AddSnowMPMSolver<2, ParticleSystemSolver2>(m, "SnowMPMSolver2");
+    AddMPMSnowSolver<2, ParticleSystemSolver2>(m, "MPMSnowSolver2");
 }
 
-void AddSnowMPMSolver3(pybind11::module& m)
+void AddMPMSnowSolver3(pybind11::module& m)
 {
-    AddSnowMPMSolver<3, ParticleSystemSolver3>(m, "SnowMPMSolver3");
+    AddMPMSnowSolver<3, ParticleSystemSolver3>(m, "MPMSnowSolver3");
 }

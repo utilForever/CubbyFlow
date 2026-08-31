@@ -8,8 +8,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef CUBBYFLOW_SNOW_MPM_SOLVER_HPP
-#define CUBBYFLOW_SNOW_MPM_SOLVER_HPP
+#ifndef CUBBYFLOW_MPM_SNOW_SOLVER_HPP
+#define CUBBYFLOW_MPM_SNOW_SOLVER_HPP
 
 #include <Core/Array/Array.hpp>
 #include <Core/Math/CG.hpp>
@@ -38,7 +38,7 @@ namespace CubbyFlow
 //! differential is invalid or non-finite.
 //!
 template <size_t N>
-class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
+class MPMSnowSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
                                                 ParticleSystemSolver3>
 {
  public:
@@ -53,7 +53,7 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     class Builder;
 
     //! Constructs an empty snow MPM solver.
-    explicit SnowMPMSolver(
+    explicit MPMSnowSolver(
         const SizeType& resolution = SizeType::MakeConstant(32),
         const VectorType& gridSpacing = VectorType::MakeConstant(1.0),
         const VectorType& gridOrigin = VectorType{}, double radius = 1e-3,
@@ -99,7 +99,7 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     //! Sets the closed domain boundary flag.
     void SetClosedDomainBoundaryFlag(int flag);
 
-    //! Returns a builder for SnowMPMSolver.
+    //! Returns a builder for MPMSnowSolver.
     [[nodiscard]] static Builder GetBuilder();
 
  protected:
@@ -210,9 +210,9 @@ class SnowMPMSolver : public std::conditional_t<N == 2, ParticleSystemSolver2,
     int m_closedDomainBoundaryFlag = DIRECTION_ALL;
 };
 
-//! Front-end to create SnowMPMSolver objects step by step.
+//! Front-end to create MPMSnowSolver objects step by step.
 template <size_t N>
-class SnowMPMSolver<N>::Builder final
+class MPMSnowSolver<N>::Builder final
 {
  public:
     [[nodiscard]] Builder& WithResolution(const SizeType& resolution);
@@ -225,9 +225,9 @@ class SnowMPMSolver<N>::Builder final
 
     [[nodiscard]] Builder& WithMass(double mass);
 
-    [[nodiscard]] SnowMPMSolver Build() const;
+    [[nodiscard]] MPMSnowSolver Build() const;
 
-    [[nodiscard]] std::shared_ptr<SnowMPMSolver> MakeShared() const;
+    [[nodiscard]] std::shared_ptr<MPMSnowSolver> MakeShared() const;
 
  private:
     SizeType m_resolution = SizeType::MakeConstant(32);
@@ -237,12 +237,12 @@ class SnowMPMSolver<N>::Builder final
     double m_mass = 1e-3;
 };
 
-using SnowMPMSolver2 = SnowMPMSolver<2>;
-using SnowMPMSolver3 = SnowMPMSolver<3>;
-using SnowMPMSolver2Ptr = std::shared_ptr<SnowMPMSolver2>;
-using SnowMPMSolver3Ptr = std::shared_ptr<SnowMPMSolver3>;
+using MPMSnowSolver2 = MPMSnowSolver<2>;
+using MPMSnowSolver3 = MPMSnowSolver<3>;
+using MPMSnowSolver2Ptr = std::shared_ptr<MPMSnowSolver2>;
+using MPMSnowSolver3Ptr = std::shared_ptr<MPMSnowSolver3>;
 }  // namespace CubbyFlow
 
-#include <Core/Solver/Particle/MPM/SnowMPMSolver-Impl.hpp>
+#include <Core/Solver/Particle/MPM/MPMSnowSolver-Impl.hpp>
 
 #endif

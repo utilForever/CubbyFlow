@@ -2,7 +2,7 @@
 
 #include <Core/Geometry/Plane.hpp>
 #include <Core/Geometry/RigidBodyCollider.hpp>
-#include <Core/Solver/Particle/MPM/SnowMPMSolver.hpp>
+#include <Core/Solver/Particle/MPM/MPMSnowSolver.hpp>
 #include <Core/Utils/Constants.hpp>
 #include <Core/Utils/IterationUtils.hpp>
 
@@ -23,10 +23,10 @@ template <size_t N>
 using VectorUZ = Vector<size_t, N>;
 
 template <size_t N>
-class TestableSnowMPMSolver final : public SnowMPMSolver<N>
+class TestableMPMSnowSolver final : public MPMSnowSolver<N>
 {
  public:
-    using SnowMPMSolver<N>::SnowMPMSolver;
+    using MPMSnowSolver<N>::MPMSnowSolver;
 
     void Initialize()
     {
@@ -56,14 +56,14 @@ VectorD<N> InteriorPosition(const VectorD<N>& spacing)
 }
 
 template <size_t N>
-void UseOneFixedStep(SnowMPMSolver<N>* solver)
+void UseOneFixedStep(MPMSnowSolver<N>* solver)
 {
     solver->SetIsUsingFixedSubTimeSteps(true);
     solver->SetNumberOfFixedSubTimeSteps(1);
 }
 
 template <size_t N>
-void AddLinearParticleLattice(SnowMPMSolver<N>* solver, double rate)
+void AddLinearParticleLattice(MPMSnowSolver<N>* solver, double rate)
 {
     auto data = solver->GetMPMSystemData();
     const auto dataSize = data->GridMass().DataSize();
@@ -93,7 +93,7 @@ void AddLinearParticleLattice(SnowMPMSolver<N>* solver, double rate)
 }
 
 template <size_t N>
-void AddCompressedParticleLattice(SnowMPMSolver<N>* solver)
+void AddCompressedParticleLattice(MPMSnowSolver<N>* solver)
 {
     auto data = solver->GetMPMSystemData();
     const auto spacing = data->GridMass().GridSpacing();
@@ -130,7 +130,7 @@ void AddCompressedParticleLattice(SnowMPMSolver<N>* solver)
 template <size_t N>
 std::shared_ptr<MPMSystemData<N>> RunCompressedCase(bool semiImplicit)
 {
-    SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(10),
+    MPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(10),
                              VectorD<N>::MakeConstant(0.01) };
 
     UseOneFixedStep(&solver);
@@ -193,7 +193,7 @@ size_t FindParticle(const MPMSystemData<N>& data, const VectorD<N>& position)
 template <size_t N>
 void ExpectEmptyUpdate()
 {
-    SnowMPMSolver<N> solver;
+    MPMSnowSolver<N> solver;
     solver.Update(Frame{ 0, 0.01 });
     EXPECT_EQ(solver.GetMPMSystemData()->NumberOfParticles(), 0u);
 }
@@ -201,7 +201,7 @@ void ExpectEmptyUpdate()
 template <size_t N>
 void ExpectEmptySemiImplicitUpdate()
 {
-    SnowMPMSolver<N> solver;
+    MPMSnowSolver<N> solver;
 
     solver.SetIsUsingSemiImplicit(true);
     solver.Update(Frame{ 0, 0.01 });
@@ -214,7 +214,7 @@ void ExpectEmptySemiImplicitUpdate()
 template <size_t N>
 void ExpectZeroResidualSemiImplicitUpdate()
 {
-    SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
+    MPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
     UseOneFixedStep(&solver);
     solver.SetIsUsingSemiImplicit(true);
     solver.SetGravity({});
@@ -233,7 +233,7 @@ template <size_t N>
 void ExpectSmallStepMatchesExplicit()
 {
     const auto run = [](bool semiImplicit) {
-        SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
+        MPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
         UseOneFixedStep(&solver);
         solver.SetIsUsingSemiImplicit(semiImplicit);
         solver.SetGravity({});
@@ -303,7 +303,7 @@ void ExpectSemiImplicitStiffStability()
 template <size_t N>
 void ExpectSemiImplicitFailureRollback()
 {
-    SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(10),
+    MPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(10),
                              VectorD<N>::MakeConstant(0.01) };
     UseOneFixedStep(&solver);
     solver.SetClosedDomainBoundaryFlag(DIRECTION_NONE);
@@ -347,7 +347,7 @@ void ExpectReferenceVolumeUsesCellVolume()
         spacing[2] = 2.0;
     }
 
-    SnowMPMSolver<N> solver{
+    MPMSnowSolver<N> solver{
         VectorUZ<N>::MakeConstant(8), spacing, {}, 0.1, 2.0
     };
 
@@ -376,7 +376,7 @@ void ExpectReferenceVolumeUsesCellVolume()
 template <size_t N>
 void ExpectUniformMotion()
 {
-    SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
+    MPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
     UseOneFixedStep(&solver);
     solver.SetGravity({});
     solver.SetDragCoefficient(0.0);
@@ -399,7 +399,7 @@ void ExpectUniformMotion()
 template <size_t N>
 void ExpectExternalForcesAppliedOnce()
 {
-    SnowMPMSolver<N> gravitySolver{ VectorUZ<N>::MakeConstant(8),
+    MPMSnowSolver<N> gravitySolver{ VectorUZ<N>::MakeConstant(8),
                                     VectorD<N>::MakeConstant(1.0),
                                     {},
                                     0.1,
@@ -419,7 +419,7 @@ void ExpectExternalForcesAppliedOnce()
 
     EXPECT_TRUE(gravityData->Velocities()[0].IsSimilar(0.1 * gravity, 1e-12));
 
-    SnowMPMSolver<N> dragSolver{ VectorUZ<N>::MakeConstant(8),
+    MPMSnowSolver<N> dragSolver{ VectorUZ<N>::MakeConstant(8),
                                  VectorD<N>::MakeConstant(1.0),
                                  {},
                                  0.1,
@@ -444,7 +444,7 @@ void ExpectExternalForcesAppliedOnce()
 template <size_t N>
 void ExpectLinearVelocityUpdatesDeformation()
 {
-    SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
+    MPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(8) };
     UseOneFixedStep(&solver);
     solver.SetGravity({});
     solver.SetDragCoefficient(0.0);
@@ -473,7 +473,7 @@ void ExpectAdaptiveRestrictions()
     const auto unit = VectorD<N>::MakeConstant(1.0);
     const auto position = InteriorPosition(unit);
 
-    TestableSnowMPMSolver<N> baseline{ resolution, unit };
+    TestableMPMSnowSolver<N> baseline{ resolution, unit };
     baseline.SetGravity({});
     baseline.GetMPMSystemData()->AddParticle(position);
     baseline.GetMPMSystemData()->InitialVolumes()[0] =
@@ -485,7 +485,7 @@ void ExpectAdaptiveRestrictions()
 
     EXPECT_EQ(baseline.NumberOfSubTimeSteps(0.1), 1u);
 
-    TestableSnowMPMSolver<N> finer{ resolution, VectorD<N>::MakeConstant(0.5) };
+    TestableMPMSnowSolver<N> finer{ resolution, VectorD<N>::MakeConstant(0.5) };
     finer.SetGravity({});
     finer.GetMPMSystemData()->AddParticle(0.5 * position);
     finer.GetMPMSystemData()->InitialVolumes()[0] =
@@ -494,7 +494,7 @@ void ExpectAdaptiveRestrictions()
 
     EXPECT_GT(finer.NumberOfSubTimeSteps(0.1), baselineSteps);
 
-    TestableSnowMPMSolver<N> fast{ resolution, unit };
+    TestableMPMSnowSolver<N> fast{ resolution, unit };
     fast.SetGravity({});
 
     VectorD<N> fastVelocity;
@@ -511,7 +511,7 @@ void ExpectAdaptiveRestrictions()
 
     EXPECT_GT(fast.NumberOfSubTimeSteps(0.1), 1u);
 
-    TestableSnowMPMSolver<N> softerDensity{ resolution, unit };
+    TestableMPMSnowSolver<N> softerDensity{ resolution, unit };
     softerDensity.SetGravity({});
     softerDensity.GetMPMSystemData()->AddParticle(position);
     softerDensity.GetMPMSystemData()->InitialVolumes()[0] =
@@ -520,7 +520,7 @@ void ExpectAdaptiveRestrictions()
 
     EXPECT_GT(softerDensity.NumberOfSubTimeSteps(0.1), baselineSteps);
 
-    TestableSnowMPMSolver<N> deforming{ resolution, unit };
+    TestableMPMSnowSolver<N> deforming{ resolution, unit };
     deforming.SetGravity({});
 
     AddLinearParticleLattice(&deforming, 100.0);
@@ -545,7 +545,7 @@ void ExpectAdaptiveRestrictions()
 template <size_t N>
 void ExpectParametersAndBuilder()
 {
-    SnowMPMSolver<N> solver;
+    MPMSnowSolver<N> solver;
     EXPECT_FALSE(solver.GetIsUsingSemiImplicit());
 
     solver.SetIsUsingSemiImplicit(true);
@@ -581,7 +581,7 @@ void ExpectParametersAndBuilder()
     const auto resolution = VectorUZ<N>::MakeConstant(7);
     const auto spacing = VectorD<N>::MakeConstant(0.25);
     const auto origin = VectorD<N>::MakeConstant(-1.0);
-    auto built = SnowMPMSolver<N>::GetBuilder()
+    auto built = MPMSnowSolver<N>::GetBuilder()
                      .WithResolution(resolution)
                      .WithGridSpacing(spacing)
                      .WithOrigin(origin)
@@ -596,7 +596,7 @@ void ExpectParametersAndBuilder()
     EXPECT_DOUBLE_EQ(data->Radius(), 0.2);
     EXPECT_DOUBLE_EQ(data->Mass(), 3.0);
 
-    EXPECT_NE(SnowMPMSolver<N>::GetBuilder().MakeShared(), nullptr);
+    EXPECT_NE(MPMSnowSolver<N>::GetBuilder().MakeShared(), nullptr);
 }
 
 template <size_t N>
@@ -613,7 +613,7 @@ void ExpectClosedDomainWallStopsVelocity(bool semiImplicit)
     {
         for (bool isUpper : { false, true })
         {
-            TestableSnowMPMSolver<N> solver{ resolution, spacing };
+            TestableMPMSnowSolver<N> solver{ resolution, spacing };
             solver.SetClosedDomainBoundaryFlag(isUpper ? upperFlags[axis]
                                                        : lowerFlags[axis]);
             solver.SetIsUsingSemiImplicit(semiImplicit);
@@ -649,7 +649,7 @@ void ExpectUnconstrainedDomainWallPreservesVelocity(bool semiImplicit)
 
     for (int boundaryFlag : { DIRECTION_NONE, DIRECTION_LEFT })
     {
-        TestableSnowMPMSolver<N> solver{ resolution, spacing };
+        TestableMPMSnowSolver<N> solver{ resolution, spacing };
         solver.SetClosedDomainBoundaryFlag(boundaryFlag);
         solver.SetIsUsingSemiImplicit(semiImplicit);
         solver.SetGravity({});
@@ -690,7 +690,7 @@ void ExpectSemiImplicitClosedDomainWall()
 template <size_t N>
 void ExpectMovingColliderAffectsGrid()
 {
-    TestableSnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
+    TestableMPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
                                      VectorD<N>::MakeConstant(1.0) };
     solver.SetClosedDomainBoundaryFlag(DIRECTION_NONE);
     solver.SetGravity({});
@@ -724,7 +724,7 @@ template <size_t N>
 void ExpectFrictionAffectsGrid()
 {
     const auto runCase = [](double frictionCoefficient) {
-        TestableSnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
+        TestableMPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
                                          VectorD<N>::MakeConstant(1.0) };
         solver.SetClosedDomainBoundaryFlag(DIRECTION_NONE);
         solver.SetGravity({});
@@ -771,7 +771,7 @@ template <size_t N>
 void ExpectParticleDomainProjection()
 {
     const auto runCase = [](int boundaryFlag) {
-        SnowMPMSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
+        MPMSnowSolver<N> solver{ VectorUZ<N>::MakeConstant(4),
                                  VectorD<N>::MakeConstant(1.0) };
         UseOneFixedStep(&solver);
         solver.SetClosedDomainBoundaryFlag(boundaryFlag);
@@ -821,87 +821,87 @@ void ExpectParticleDomainProjection()
         }                           \
     } while (false)
 
-TEST(SnowMPMSolver, EmptyUpdate)
+TEST(MPMSnowSolver, EmptyUpdate)
 {
     RUN_FOR_2D_AND_3D(ExpectEmptyUpdate);
 }
 
-TEST(SnowMPMSolver, EmptySemiImplicitUpdate)
+TEST(MPMSnowSolver, EmptySemiImplicitUpdate)
 {
     RUN_FOR_2D_AND_3D(ExpectEmptySemiImplicitUpdate);
 }
 
-TEST(SnowMPMSolver, ZeroResidualSemiImplicitUpdate)
+TEST(MPMSnowSolver, ZeroResidualSemiImplicitUpdate)
 {
     RUN_FOR_2D_AND_3D(ExpectZeroResidualSemiImplicitUpdate);
 }
 
-TEST(SnowMPMSolver, SmallStepImplicitAgreement)
+TEST(MPMSnowSolver, SmallStepImplicitAgreement)
 {
     RUN_FOR_2D_AND_3D(ExpectSmallStepMatchesExplicit);
 }
 
-TEST(SnowMPMSolver, SemiImplicitStiffStability)
+TEST(MPMSnowSolver, SemiImplicitStiffStability)
 {
     RUN_FOR_2D_AND_3D(ExpectSemiImplicitStiffStability);
 }
 
-TEST(SnowMPMSolver, SemiImplicitFailureRollback)
+TEST(MPMSnowSolver, SemiImplicitFailureRollback)
 {
     RUN_FOR_2D_AND_3D(ExpectSemiImplicitFailureRollback);
 }
 
-TEST(SnowMPMSolver, SemiImplicitClosedDomainWall)
+TEST(MPMSnowSolver, SemiImplicitClosedDomainWall)
 {
     RUN_FOR_2D_AND_3D(ExpectSemiImplicitClosedDomainWall);
 }
 
-TEST(SnowMPMSolver, ReferenceVolume)
+TEST(MPMSnowSolver, ReferenceVolume)
 {
     RUN_FOR_2D_AND_3D(ExpectReferenceVolumeUsesCellVolume);
 }
 
-TEST(SnowMPMSolver, UniformMotion)
+TEST(MPMSnowSolver, UniformMotion)
 {
     RUN_FOR_2D_AND_3D(ExpectUniformMotion);
 }
 
-TEST(SnowMPMSolver, ExternalForces)
+TEST(MPMSnowSolver, ExternalForces)
 {
     RUN_FOR_2D_AND_3D(ExpectExternalForcesAppliedOnce);
 }
 
-TEST(SnowMPMSolver, LinearVelocityGradient)
+TEST(MPMSnowSolver, LinearVelocityGradient)
 {
     RUN_FOR_2D_AND_3D(ExpectLinearVelocityUpdatesDeformation);
 }
 
-TEST(SnowMPMSolver, AdaptiveRestrictions)
+TEST(MPMSnowSolver, AdaptiveRestrictions)
 {
     RUN_FOR_2D_AND_3D(ExpectAdaptiveRestrictions);
 }
 
-TEST(SnowMPMSolver, ParametersAndBuilder)
+TEST(MPMSnowSolver, ParametersAndBuilder)
 {
     RUN_FOR_2D_AND_3D(ExpectParametersAndBuilder);
 }
 
-TEST(SnowMPMSolver, ClosedDomainWalls)
+TEST(MPMSnowSolver, ClosedDomainWalls)
 {
     RUN_FOR_2D_AND_3D(ExpectClosedDomainWalls);
 }
 
-TEST(SnowMPMSolver, MovingCollider)
+TEST(MPMSnowSolver, MovingCollider)
 {
     RUN_FOR_2D_AND_3D(ExpectMovingColliderAffectsGrid);
 }
 
-TEST(SnowMPMSolver, FrictionalCollider)
+TEST(MPMSnowSolver, FrictionalCollider)
 {
     RUN_FOR_2D_AND_3D(ExpectFrictionAffectsGrid);
 }
 
-TEST(SnowMPMSolver, ParticleDomainProjection)
+TEST(MPMSnowSolver, ParticleDomainProjection)
 {
     RUN_FOR_2D_AND_3D(ExpectParticleDomainProjection);
 }
